@@ -520,10 +520,6 @@ export function buildPresenceInput(args: {
 
 export function startTelemetryDriver(): () => void {
   if (driverTimer || !isTauri) return () => {};
-  // Re-apply persisted Discord settings before the first presence push so the
-  // engine isn't stuck at its `enabled: false` default until the Analytics
-  // panel is opened (the original "RPC doesn't work" bug).
-  void bootstrapDiscordSettings();
   let tickIndex = 0;
   // Last presence context, re-pushed on the in-between ticks so the Discord
   // carousel keeps rotating without re-running the heavy samplers.
@@ -599,16 +595,9 @@ export function startTelemetryDriver(): () => void {
       }
     }
 
-    await telemetryRecord({
-      category,
-      project_path: active?.path ?? null,
-      project_name: active?.name ?? null,
-      agent,
-      branch,
-      is_focused: focused,
-      duration_seconds: SAMPLE_POLL_SECONDS,
-    });
-
+    // Build the Discord context before writing telemetry. Rich Presence is an
+    // independent feature and must continue working if the analytics database
+    // is unavailable, locked, or still initializing during startup.
     lastPresence = buildPresenceInput({
       projectName: active?.name ?? null,
       branch,
@@ -618,6 +607,20 @@ export function startTelemetryDriver(): () => void {
       idleSeconds,
       nowUnix: Math.floor(Date.now() / 1000),
     });
+
+    try {
+      await telemetryRecord({
+        category,
+        project_path: active?.path ?? null,
+        project_name: active?.name ?? null,
+        agent,
+        branch,
+        is_focused: focused,
+        duration_seconds: SAMPLE_POLL_SECONDS,
+      });
+    } catch {
+      /* analytics persistence must never suppress Discord Rich Presence */
+    }
   };
 
   const tick = async () => {
@@ -656,8 +659,27 @@ export function startTelemetryDriver(): () => void {
     await tick();
     scheduleNext();
   };
+  const initialize = async () => {
+    // Apply settings before the first activity frame. Previously both operations
+    // raced, so persisted settings and the first SET_ACTIVITY could arrive in
+    // the wrong order during a Windows cold start.
+    await bootstrapDiscordSettings();
+    if (!driverRunning) return;
+    // Establish Discord IPC immediately instead of waiting for process, window,
+    // git and database samplers. The next tick replaces this fallback context
+    // with the richer project/activity presence.
+    if (prefs.collect && !prefs.paranoid) {
+      const nowUnix = Math.floor(Date.now() / 1000);
+      await discordUpdate({
+        session_seconds: 0,
+        session_start_unix: nowUnix,
+        idle: false,
+      }).catch(() => {});
+    }
+    await runTick();
+  };
   driverRunning = true;
-  void runTick();
+  void initialize();
   return stopTelemetryDriver;
 }
 

@@ -138,8 +138,15 @@ export function AnalyticsPanel() {
 
   if (error && !data) {
     return (
-      <div className="p-6 text-sm text-danger">
-        {t("Failed to load analytics")}: {error}
+      <div className="h-full overflow-auto bg-surface text-strong">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 p-6">
+          <div className="rounded-md border border-edge bg-surface/50 p-3 text-sm text-danger">
+            {t("Failed to load analytics")}: {error}
+          </div>
+          <Card title={t("Discord & Privacy")} icon={<Bot size={13} />}>
+            <DiscordPrivacy settings={settings} status={status} onChange={applySettings} />
+          </Card>
+        </div>
       </div>
     );
   }
