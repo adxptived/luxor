@@ -104,6 +104,8 @@ pub struct DiscordStatus {
     /// Most recent transport error (pipe not found, handshake rejected, …) so
     /// the settings UI can explain *why* the presence isn't showing.
     pub last_error: Option<String>,
+    /// Remaining reconnect backoff in milliseconds, if a retry is scheduled.
+    pub reconnect_in_ms: Option<u64>,
 }
 
 /// Stateful engine, held behind a `Mutex` in [`AppState`].
@@ -360,6 +362,7 @@ impl DiscordEngine {
             connected: self.ipc.has_recent_activity(now),
             ipc_connected: self.ipc.is_connected(),
             last_error: self.ipc.last_error().map(str::to_string),
+            reconnect_in_ms: self.ipc.reconnect_in_ms(now),
         }
     }
 }

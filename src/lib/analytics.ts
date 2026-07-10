@@ -138,6 +138,8 @@ export interface DiscordStatus {
   ipc_connected?: boolean;
   /** Most recent transport error (pipe not found, handshake rejected, …). */
   last_error?: string | null;
+  /** Remaining reconnect backoff while the IPC transport retries. */
+  reconnect_in_ms?: number | null;
 }
 
 export interface PresenceInput {
@@ -231,10 +233,17 @@ export function saveDiscordSettings(settings: DiscordSettings): void {
  */
 export async function bootstrapDiscordSettings(): Promise<void> {
   if (!isTauri) return;
-  try {
-    await discordApplySettings(loadDiscordSettings());
-  } catch {
-    /* backend not ready — re-applied when the user opens Discord settings */
+  const settings = loadDiscordSettings();
+  // Tauri setup and the webview can race during cold start. Retry briefly so
+  // RPC does not depend on the user opening the Analytics panel afterward.
+  for (const delayMs of [0, 250, 750]) {
+    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
+    try {
+      await discordApplySettings(settings);
+      return;
+    } catch {
+      /* retry while the backend finishes initializing */
+    }
   }
 }
 
@@ -635,14 +644,27 @@ export function startTelemetryDriver(): () => void {
       /* never let the driver throw into the timer */
     }
   };
-  driverTimer = setInterval(tick, PRESENCE_POLL_SECONDS * 1000);
-  void tick();
+  // Chain one-shot timers instead of setInterval. The samplers cross process,
+  // git, OS and SQLite boundaries, so a slow tick must finish before another
+  // starts; overlapping invocations were a major source of avoidable CPU/I/O.
+  const scheduleNext = () => {
+    if (!driverRunning) return;
+    driverTimer = setTimeout(runTick, PRESENCE_POLL_SECONDS * 1000);
+  };
+  const runTick = async () => {
+    if (!driverRunning) return;
+    await tick();
+    scheduleNext();
+  };
+  driverRunning = true;
+  void runTick();
   return stopTelemetryDriver;
 }
 
 export function stopTelemetryDriver(): void {
+  driverRunning = false;
   if (driverTimer) {
-    clearInterval(driverTimer);
+    clearTimeout(driverTimer);
     driverTimer = null;
   }
 }

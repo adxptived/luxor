@@ -1358,7 +1358,9 @@ function DiscordPrivacy({
           <span className="ml-auto text-muted">
             {status.ipc_connected
               ? t("Activity will appear after the next telemetry tick.")
-              : t("Is Discord, Vesktop or another RPC-compatible client running?")}
+              : status.reconnect_in_ms
+                ? `${t("Retrying Discord connection in")} ${Math.max(1, Math.ceil(status.reconnect_in_ms / 1000))}s`
+                : t("Is Discord, Vesktop or another RPC-compatible client running?")}
           </span>
         )}
       </div>

@@ -594,6 +594,13 @@ impl DiscordIpc {
         self.last_error.as_deref()
     }
 
+    /// Remaining reconnect backoff in milliseconds, for user-facing status.
+    pub fn reconnect_in_ms(&self, now: Instant) -> Option<u64> {
+        self.next_connect_at
+            .and_then(|deadline| deadline.checked_duration_since(now))
+            .map(|remaining| remaining.as_millis().min(u64::MAX as u128) as u64)
+    }
+
     /// True only after a SET_ACTIVITY frame was actually written recently. This
     /// avoids the misleading UI state where the handshake socket is open but no
     /// activity has been accepted/sent yet (rate-limit, stale socket, wrong client).
