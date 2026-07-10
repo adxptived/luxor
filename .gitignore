@@ -1,15 +1,84 @@
-# v0 sandbox internal files
-__v0_runtime_loader.js
-__v0_devtools.tsx
-__v0_jsx-dev-runtime.ts
-.snowflake/
-.v0-trash/
-.vercel/
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+frontend.log
 
-# Environment variables
-.env*.local
+# Diagnostic reports
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.ips
+crash-[0-9]*-*.txt
+crash-reports/
 
-# Common ignores
-node_modules
-.next/
+# Runtime data
+.pnp
+.pnp.js
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional Stylelint cache
+.stylelintcache
+
+# Output directories
+dist/
+build/
+bin/
+out/
+target/
+src-tauri/target/
+
+# IDEs and editors
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# Operating System Files
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Tauri-specific
+src-tauri/gen/
+src-tauri/binaries/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env
+!.env.example
+
+# Bun
+.bun/
+bun.lockb
+
+# Enforce a single package manager (bun). Keep only bun.lock committed.
+package-lock.json
+pnpm-lock.yaml
+yarn.lock

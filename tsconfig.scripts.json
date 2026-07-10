@@ -1,0 +1,10 @@
+{
+  "//": "Type-checks tooling that lives OUTSIDE src/ (audit 6.3): build scripts and benchmarks previously had type errors that CI never caught. Run via `bun run typecheck:scripts`.",
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["bun-types", "node"],
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
+  },
+  "include": ["scripts/**/*.ts", "bench/**/*.ts"]
+}

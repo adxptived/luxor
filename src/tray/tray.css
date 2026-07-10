@@ -1,0 +1,200 @@
+/*
+ * The tray popup is a tiny, self-contained window. A bare `@import "tailwindcss"`
+ * made Tailwind scan the whole project and emit every utility used anywhere —
+ * a full ~80 KB second copy of the framework for a menu. `source(none)` disables
+ * automatic detection; we then point `@source` at just the tray's own files, so
+ * only the handful of classes the popup actually uses get generated.
+ */
+@import "tailwindcss" source(none);
+@source "./**/*.{ts,tsx}";
+
+@theme {
+  --color-surface: var(--lx-surface);
+  --color-raised: var(--lx-raised);
+  --color-bar: var(--lx-bar);
+  --color-edge: var(--lx-edge);
+  --color-strong: var(--lx-strong);
+  --color-muted: var(--lx-muted);
+  --color-accent: var(--lx-accent);
+}
+
+:root,
+:root[data-theme="dark"] {
+  --lx-surface: #101014;
+  --lx-raised: #1a1a21;
+  --lx-bar: #14141a;
+  --lx-edge: #26262e;
+  --lx-strong: #d6d6dd;
+  --lx-muted: #8b8b96;
+  --lx-accent: #e8b059;
+  --lx-success: #3fb950;
+  --lx-warning: #d29922;
+  --lx-danger: #f85149;
+  --lx-info: #58a6ff;
+  --lx-radius-sm: 6px;
+  --lx-radius-md: 8px;
+  --lx-accent-soft: color-mix(in srgb, var(--lx-accent) 12%, transparent);
+  --lx-danger-soft: color-mix(in srgb, var(--lx-danger) 14%, transparent);
+  --lx-danger-soft-strong: color-mix(in srgb, var(--lx-danger) 26%, transparent);
+  --lx-accent-2: #f0c674;
+  --lx-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+  --lx-shadow-lg: 0 12px 40px -10px rgba(0, 0, 0, 0.6);
+}
+
+:root[data-theme="light"] {
+  --lx-surface: #fafafa;
+  --lx-raised: #ededf0;
+  --lx-bar: #f3f3f5;
+  --lx-edge: #d9d9e0;
+  --lx-strong: #1f2328;
+  --lx-muted: #6b7078;
+  --lx-accent: #b07818;
+  --lx-success: #1a7f37;
+  --lx-warning: #9a6700;
+  --lx-danger: #cf222e;
+  --lx-info: #0969da;
+  --lx-radius-sm: 6px;
+  --lx-radius-md: 8px;
+  --lx-accent-soft: color-mix(in srgb, var(--lx-accent) 12%, transparent);
+  --lx-danger-soft: color-mix(in srgb, var(--lx-danger) 12%, transparent);
+  --lx-danger-soft-strong: color-mix(in srgb, var(--lx-danger) 22%, transparent);
+  --lx-accent-2: #cf9b3c;
+  --lx-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.1);
+  --lx-shadow-lg: 0 12px 40px -10px rgba(0, 0, 0, 0.22);
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+.tray-popup-root {
+  background: transparent;
+  box-sizing: border-box;
+}
+
+/* Tray popup entry animation — quick and crisp */
+@keyframes lx-menu-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.lx-menu-pop {
+  animation: lx-menu-pop 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: var(--lx-shadow-lg);
+  transform-origin: top right;
+}
+
+/* Exit animation — added by TrayPopup right before the window hides so
+ * closing feels as deliberate as opening. Keep it shorter than the 110ms
+ * JS wait so it always completes. */
+@keyframes lx-menu-out {
+  from {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.97) translateY(-4px);
+  }
+}
+.lx-menu-out {
+  animation: lx-menu-out 0.1s ease-in forwards;
+}
+
+/* Staggered entrance for menu rows: every visible row carries
+ * `lx-menu-item-in` plus an inline `--lx-i` running index (TrayMenu), so the
+ * list cascades in right after the card pop. The card is re-keyed on every
+ * show (TrayPopup) so the cascade replays each time the popup opens. The
+ * delay is capped at ~170ms so long project lists don't keep the tail
+ * invisible. */
+@keyframes lx-item-in {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.lx-menu-item-in {
+  animation: lx-item-in 0.16s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: min(calc(var(--lx-i, 0) * 18ms + 25ms), 170ms);
+}
+
+/* Menu row hover: accent-tinted background plus a small icon nudge — closer
+ * to a polished native menu than a flat gray hover. Danger rows keep their
+ * own red tint via the Tailwind classes on the row. */
+.lx-menu-row {
+  transition: background-color 0.1s ease, color 0.1s ease;
+}
+/* :not(.lx-menu-danger) keeps this from out-cascading the Tailwind red hover
+ * on danger rows (equal specificity, later in the sheet would win). */
+.lx-menu-row:not(.lx-menu-danger):hover {
+  background: var(--lx-accent-soft);
+}
+.lx-menu-row:active {
+  transform: scale(0.985);
+}
+.lx-menu-row .lx-menu-row-icon {
+  transition: transform 0.12s ease, color 0.12s ease;
+}
+.lx-menu-row:hover .lx-menu-row-icon {
+  transform: translateX(1px);
+  color: var(--lx-accent);
+}
+
+/* Respect reduced-motion preferences. */
+@media (prefers-reduced-motion: reduce) {
+  .lx-menu-pop,
+  .lx-menu-out,
+  .lx-menu-item-in {
+    animation: none;
+  }
+  .lx-menu-row,
+  .lx-menu-row .lx-menu-row-icon {
+    transition: none;
+  }
+  .lx-menu-row:active,
+  .lx-menu-row:hover .lx-menu-row-icon {
+    transform: none;
+  }
+}
+
+/* Branded app mark in the popup header — subtle accent gradient. */
+.lx-brand-mark {
+  background: linear-gradient(135deg, var(--lx-accent), var(--lx-accent-2));
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.lx-brand-mark:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+/* Custom scrollbar for the popup content */
+.tray-popup ::-webkit-scrollbar {
+  width: 4px;
+}
+.tray-popup ::-webkit-scrollbar-thumb {
+  background: var(--lx-edge);
+  border-radius: 2px;
+}
+.tray-popup ::-webkit-scrollbar-track {
+  background: transparent;
+}

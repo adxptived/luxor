@@ -1,0 +1,2536 @@
+@import "tailwindcss";
+@import "dockview/dist/styles/dockview.css";
+
+@theme {
+  --color-surface: var(--lx-surface);
+  --color-raised: var(--lx-raised);
+  --color-bar: var(--lx-bar);
+  --color-edge: var(--lx-edge);
+  --color-strong: var(--lx-strong);
+  --color-muted: var(--lx-muted);
+  --color-accent: var(--lx-accent);
+  /* Readable foreground on an accent fill (computed per effective accent at
+     runtime — see applyAppearance). Replaces ad-hoc text-white / text-black. */
+  --color-on-accent: var(--lx-on-accent);
+  /* Readable foreground on a danger fill (computed per theme at runtime — see
+     applyAppearance). Falls back to white for the initial paint before JS runs. */
+  --color-on-danger: var(--lx-on-danger, #ffffff);
+  --color-success: var(--lx-success);
+  --color-warning: var(--lx-warning);
+  --color-danger: var(--lx-danger);
+  --color-info: var(--lx-info);
+  /* Soft (translucent) status fills + borders — follow each theme's semantic
+     color automatically. Use for badges/banners instead of raw *-400/500 +/10. */
+  --color-success-soft: var(--lx-success-soft);
+  --color-success-soft-strong: var(--lx-success-soft-strong);
+  --color-warning-soft: var(--lx-warning-soft);
+  --color-warning-soft-strong: var(--lx-warning-soft-strong);
+  --color-danger-soft: var(--lx-danger-soft);
+  --color-danger-soft-strong: var(--lx-danger-soft-strong);
+  --color-info-soft: var(--lx-info-soft);
+  --color-info-soft-strong: var(--lx-info-soft-strong);
+  /* Categorical chart/series palette — references semantic tokens so charts
+     repaint with the theme instead of using hardcoded hex. */
+  --color-chart-1: var(--lx-chart-1);
+  --color-chart-2: var(--lx-chart-2);
+  --color-chart-3: var(--lx-chart-3);
+  --color-chart-4: var(--lx-chart-4);
+  --color-chart-5: var(--lx-chart-5);
+  --color-chart-6: var(--lx-chart-6);
+}
+
+:root {
+  /* Customizable fonts (Settings → Appearance). Overridden at runtime via
+   * applyAppearance(); removing the inline prop falls back to these defaults. */
+  --lx-font-ui: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --lx-font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
+  --lx-tab-radius: 9px;
+
+  /* ── Design tokens (Phase 0) ──────────────────────────────────────
+   * Single source of truth for bar heights, caption button widths,
+   * animation durations, and easing. Every component should reference
+   * these variables instead of hardcoding magic numbers. */
+  --lx-titlebar-h: 36px;       /* top-bar height */
+  --lx-caption-w: 46px;        /* caption button width (Windows-style) */
+  --lx-ease: cubic-bezier(.22, 1, .36, 1);
+  --lx-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --lx-dur-fast: 120ms;
+  --lx-dur: 200ms;
+  --lx-dur-slow: 300ms;
+
+  /* ── Radius scale ─────────────────────────────────────────────────────── */
+  --lx-radius-xs: 4px;
+  --lx-radius-sm: 6px;
+  --lx-radius-md: 8px;
+  --lx-radius-lg: 12px;
+  --lx-radius-xl: 16px;
+
+  /* ── Semantic colors (overridden per-theme below) ─────────────────────── */
+  --lx-success: #3fb950;
+  --lx-warning: #d29922;
+  --lx-danger: #f85149;
+  --lx-info: #58a6ff;
+
+  /* ── Accent variants ──────────────────────────────────────────────────── */
+  --lx-accent-soft: color-mix(in srgb, var(--lx-accent) 12%, transparent);
+  --lx-accent-hover: color-mix(in srgb, var(--lx-accent) 20%, transparent);
+  --lx-accent-glow: color-mix(in srgb, var(--lx-accent) 35%, transparent);
+  /* Second accent stop for the small brand gradient (tray, etc.). */
+  --lx-accent-2: color-mix(in srgb, var(--lx-accent) 72%, #ffffff 28%);
+  /* Readable foreground on an accent fill. Default suits the standard dark
+     theme (light gold accent → dark text); recomputed at runtime for every
+     theme + custom accent in applyAppearance() via WCAG contrast. */
+  --lx-on-accent: #0b0b0e;
+
+  /* Soft (translucent) status fills + stronger variant for borders. Derived
+     from the per-theme semantic colors, so they follow every theme. */
+  --lx-danger-soft: color-mix(in srgb, var(--lx-danger) 14%, transparent);
+  --lx-danger-soft-strong: color-mix(in srgb, var(--lx-danger) 26%, transparent);
+  --lx-success-soft: color-mix(in srgb, var(--lx-success) 14%, transparent);
+  --lx-success-soft-strong: color-mix(in srgb, var(--lx-success) 26%, transparent);
+  --lx-warning-soft: color-mix(in srgb, var(--lx-warning) 14%, transparent);
+  --lx-warning-soft-strong: color-mix(in srgb, var(--lx-warning) 26%, transparent);
+  --lx-info-soft: color-mix(in srgb, var(--lx-info) 14%, transparent);
+  --lx-info-soft-strong: color-mix(in srgb, var(--lx-info) 26%, transparent);
+
+  /* Categorical palette for charts/series (Analytics, branch graph, agent
+     legends). References semantic tokens so every chart follows the theme. */
+  --lx-chart-1: var(--lx-accent);
+  --lx-chart-2: var(--lx-info);
+  --lx-chart-3: var(--lx-success);
+  --lx-chart-4: var(--lx-warning);
+  --lx-chart-5: var(--lx-danger);
+  --lx-chart-6: var(--lx-muted);
+
+  /* ── Shadow system ────────────────────────────────────────────────────── */
+  --lx-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.08);
+  --lx-shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.12);
+  --lx-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.18);
+  --lx-shadow-lg: 0 8px 32px -8px rgba(0, 0, 0, 0.28);
+  --lx-shadow-accent: 0 4px 20px -4px var(--lx-accent-glow);
+
+  /* ── Glass / depth ────────────────────────────────────────────────────── */
+  --lx-glass-bg: color-mix(in srgb, var(--lx-bar) 80%, transparent);
+  --lx-glass-border: color-mix(in srgb, var(--lx-edge) 60%, transparent);
+  --lx-glass-blur: 12px;
+
+  /* ── Surface gradient (subtle depth for panels/cards) ─────────────────── */
+  --lx-gradient-surface: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--lx-raised) 30%, transparent) 0%,
+    transparent 100%
+  );
+
+  /* ── Nav rail active indicator ────────────────────────────────────────── */
+  --lx-nav-indicator-w: 3px;
+
+  /* ── Z-index scale (audit S4) ──
+   * Named layers replace the ad-hoc 50 / 60 / 70 / 95 / 99 / 200 / 300 / 999 /
+   * 1000 zoo. Ascending = visually on top. Context menus sit ABOVE modals so a
+   * right-click menu is never hidden behind a dialog (this also fixes the DB
+   * cell editor previously rendering at z-[300], above the context menu). */
+  --lx-z-dropdown: 50;     /* popovers / select & TopBar dropdown menus */
+  --lx-z-overlay: 50;      /* full-screen modal scrims (Settings, palette, switcher) */
+  --lx-z-onboarding: 60;   /* onboarding tour */
+  --lx-z-sticky: 70;       /* fixed chrome popovers (TopBar add-menu) */
+  --lx-z-dialog: 95;       /* confirm dialog */
+  --lx-z-modal: 100;       /* centered sub-dialogs (DB cell editor) — below menus */
+  --lx-z-chrome: 150;      /* window caption buttons (min/max/close) — above every
+                              modal/overlay scrim so the window always stays
+                              minimizable and closable; below menus/toasts */
+  --lx-z-menu: 200;        /* context menus — top interactive layer */
+  --lx-z-toast: 250;       /* toasts — top transient layer, above menus/modals so
+                              critical feedback ("Push failed") is never hidden */
+  --lx-z-tooltip: 1000;    /* hover tooltips */
+  --lx-z-drag: 999;        /* drag ghost */
+}
+
+:root,
+:root[data-theme="dark"] {
+  --lx-surface: #101014;
+  --lx-raised: #1a1a21;
+  --lx-bar: #14141a;
+  --lx-edge: #26262e;
+  --lx-strong: #d6d6dd;
+  --lx-muted: #8b8b96;
+  --lx-accent: #e8b059;
+  --lx-success: #3fb950;
+  --lx-warning: #d29922;
+  --lx-danger: #f85149;
+  --lx-info: #58a6ff;
+  --lx-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --lx-shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.32);
+  --lx-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
+  --lx-shadow-lg: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+}
+
+:root[data-theme="light"] {
+  --lx-surface: #fafafa;
+  --lx-raised: #ededf0;
+  --lx-bar: #f3f3f5;
+  --lx-edge: #d9d9e0;
+  --lx-strong: #1f2328;
+  --lx-muted: #666a72; /* AA: 4.6:1 on surface (was #6b7078, 4.26) */
+  --lx-accent: #b07818;
+  --lx-success: #1a7f37;
+  --lx-warning: #9a6700;
+  --lx-danger: #cf222e;
+  --lx-info: #0969da;
+  --lx-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --lx-shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.08);
+  --lx-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.1);
+  --lx-shadow-lg: 0 8px 32px -8px rgba(0, 0, 0, 0.14);
+}
+
+:root[data-theme="tokyo_night"] {
+  --lx-surface: #1a1b26;
+  --lx-raised: #24283b;
+  --lx-bar: #16161e;
+  --lx-edge: #2f3349;
+  --lx-strong: #c0caf5;
+  --lx-muted: #8991b5; /* AA: 4.7:1 (was #565f89, 2.35) */
+  --lx-accent: #7aa2f7;
+
+  --lx-success: #9ece6a;
+  --lx-warning: #e0af68;
+  --lx-danger: #f7768e;
+  --lx-info: #7aa2f7;}
+
+:root[data-theme="catppuccin_mocha"] {
+  --lx-surface: #1e1e2e;
+  --lx-raised: #313244;
+  --lx-bar: #181825;
+  --lx-edge: #45475a;
+  --lx-strong: #cdd6f4;
+  --lx-muted: #999db0; /* AA: 4.65:1 (was #7f849c, 3.40) */
+  --lx-accent: #cba6f7;
+
+  --lx-success: #a6e3a1;
+  --lx-warning: #f9e2af;
+  --lx-danger: #f38ba8;
+  --lx-info: #89b4fa;}
+
+:root[data-theme="catppuccin_latte"] {
+  --lx-surface: #eff1f5;
+  --lx-raised: #e0e3ec;
+  --lx-bar: #e6e9ef;
+  --lx-edge: #bcc0cc;
+  --lx-strong: #4c4f69;
+  --lx-muted: #606376; /* AA: 4.63:1 (was #6c6f85, 3.85) */
+  --lx-accent: #8839ef;
+
+  --lx-success: #40a02b;
+  --lx-warning: #df8e1d;
+  --lx-danger: #d20f39;
+  --lx-info: #1e66f5;}
+
+:root[data-theme="dracula"] {
+  --lx-surface: #282a36;
+  --lx-raised: #343746;
+  --lx-bar: #21222c;
+  --lx-edge: #44475a;
+  --lx-strong: #f8f8f2;
+  --lx-muted: #97a2c3; /* AA: 4.65:1 (was #6272a4, 2.51) */
+  --lx-accent: #bd93f9;
+
+  --lx-success: #50fa7b;
+  --lx-warning: #f1fa8c;
+  --lx-danger: #ff5555;
+  --lx-info: #bd93f9;}
+
+:root[data-theme="nord"] {
+  --lx-surface: #2e3440;
+  --lx-raised: #3b4252;
+  --lx-bar: #272c36;
+  --lx-edge: #434c5e;
+  --lx-strong: #eceff4;
+  --lx-muted: #a8b0c1; /* AA: 4.64:1 (was #7b88a1, 2.82) */
+  --lx-accent: #88c0d0;
+
+  --lx-success: #a3be8c;
+  --lx-warning: #ebcb8b;
+  --lx-danger: #bf616a;
+  --lx-info: #81a1c1;}
+
+:root[data-theme="gruvbox_dark"] {
+  --lx-surface: #282828;
+  --lx-raised: #3c3836;
+  --lx-bar: #1d2021;
+  --lx-edge: #504945;
+  --lx-strong: #ebdbb2;
+  --lx-muted: #ada297; /* AA: 4.64:1 (was #928374, 3.16) */
+  --lx-accent: #fabd2f;
+
+  --lx-success: #b8bb26;
+  --lx-warning: #fabd2f;
+  --lx-danger: #fb4934;
+  --lx-info: #83a598;}
+
+:root[data-theme="one_dark"] {
+  --lx-surface: #282c34;
+  --lx-raised: #333842;
+  --lx-bar: #21252b;
+  --lx-edge: #3e4451;
+  --lx-strong: #abb2bf;
+  --lx-muted: #9ea4af; /* AA: 4.68:1 (was #5c6370, 1.95) */
+  --lx-accent: #61afef;
+
+  --lx-success: #98c379;
+  --lx-warning: #e5c07b;
+  --lx-danger: #e06c75;
+  --lx-info: #61afef;}
+
+:root[data-theme="solarized_light"] {
+  --lx-surface: #fdf6e3;
+  --lx-raised: #ece5cf;
+  --lx-bar: #eee8d5;
+  --lx-edge: #d5cdb4;
+  --lx-strong: #073642;
+  --lx-muted: #5a6868; /* AA: 4.62:1 (was #93a1a1, 2.12) */
+  --lx-accent: #b58900;
+  /* The theme accent (#b58900) is only 2.55:1 against the raised surface — below
+   * the WCAG 1.4.11 3:1 bar for the focus ring. Use a slightly darker gold for
+   * the ring only, leaving the accent itself (buttons/links) untouched. */
+  --lx-focus-ring: #9f7900;
+
+  --lx-success: #859900;
+  --lx-warning: #b58900;
+  --lx-danger: #dc322f;
+  --lx-info: #268bd2;}
+
+:root[data-theme="rose_pine"] {
+  --lx-surface: #191724;
+  --lx-raised: #26233a;
+  --lx-bar: #1f1d2e;
+  --lx-edge: #403d52;
+  --lx-strong: #e0def4;
+  --lx-muted: #908caa;
+  --lx-accent: #ebbcba;
+
+  --lx-success: #31748f;
+  --lx-warning: #ebbcba;
+  --lx-danger: #eb6f92;
+  --lx-info: #9ccfd8;}
+
+:root[data-theme="everforest_dark"] {
+  --lx-surface: #2d353b;
+  --lx-raised: #3d484d;
+  --lx-bar: #343f44;
+  --lx-edge: #475258;
+  --lx-strong: #d3c6aa;
+  --lx-muted: #b0b8b2; /* AA: 4.64:1 (was #859289, 2.90) */
+  --lx-accent: #a7c080;
+
+  --lx-success: #a7c080;
+  --lx-warning: #d9b875;
+  --lx-danger: #e67e80;
+  --lx-info: #7fbbb3;}
+
+:root[data-theme="ayu_mirage"] {
+  --lx-surface: #1f2430;
+  --lx-raised: #2a3141;
+  --lx-bar: #232834;
+  --lx-edge: #383e4c;
+  --lx-strong: #cccac2;
+  --lx-muted: #939ba9; /* AA: 4.66:1 (was #707a8c, 3.01) */
+  --lx-accent: #ffcc66;
+
+  --lx-success: #ffb454;
+  --lx-warning: #ffcc66;
+  --lx-danger: #f07178;
+  --lx-info: #59c2ff;}
+
+:root[data-theme="github_light"] {
+  --lx-surface: #ffffff;
+  --lx-raised: #f6f8fa;
+  --lx-bar: #f6f8fa;
+  --lx-edge: #d0d7de;
+  --lx-strong: #1f2328;
+  --lx-muted: #656d76;
+  --lx-accent: #0969da;
+
+  --lx-success: #1a7f37;
+  --lx-warning: #9a6700;
+  --lx-danger: #cf222e;
+  --lx-info: #0969da;}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--lx-surface);
+  color-scheme: dark;
+  font-family: var(--lx-font-ui);
+}
+
+/* ── Custom themed scrollbars ─────────────────────────────────────────────
+ * Slim, themed scrollbars that match the active theme. Auto-hides on
+ * WebKit; Firefox uses the thin variant via scrollbar-width. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--lx-edge) 70%, transparent) transparent;
+}
+/* Base scrollbar styling consolidated below (see ::-webkit-scrollbar group). */
+/* Thinner scrollbars for panels/sidebars */
+.lx-nav-rail::-webkit-scrollbar,
+.lx-anim-side-panel::-webkit-scrollbar,
+.lx-anim-right-panel::-webkit-scrollbar {
+  width: 4px;
+}
+
+/* ── Sidebar collapse/expand animation ───────────────────────────────────── */
+.lx-anim-side-panel,
+.lx-anim-right-panel {
+  transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: width;
+  overflow: hidden;
+}
+.lx-anim-side-panel > *,
+.lx-anim-right-panel > * {
+  transition: opacity 140ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* Fade out content when collapsing to rail width */
+.lx-anim-side-panel[data-collapsing="true"] > *,
+.lx-anim-right-panel[data-collapsing="true"] > * {
+  opacity: 0;
+  pointer-events: none;
+}
+
+:root[data-theme="light"] body,
+:root[data-theme="catppuccin_latte"] body,
+:root[data-theme="solarized_light"] body,
+:root[data-theme="github_light"] body {
+  color-scheme: light;
+}
+
+/* Toast + popup animations */
+@keyframes lx-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes lx-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.lx-slide-in {
+  animation: lx-slide-in 0.16s ease-out;
+}
+.lx-pop-in {
+  animation: lx-pop-in 0.12s ease-out;
+}
+
+/* Indeterminate sweep for the embedded browser's top progress bar. */
+@keyframes lx-browser-progress {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+.lx-browser-progress {
+  animation: lx-browser-progress 1.1s ease-in-out infinite;
+}
+
+/* Checkerboard backdrop for the image viewer */
+.lx-checker {
+  background-image:
+    linear-gradient(45deg, rgb(128 128 128 / 0.12) 25%, transparent 25%),
+    linear-gradient(-45deg, rgb(128 128 128 / 0.12) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, rgb(128 128 128 / 0.12) 75%),
+    linear-gradient(-45deg, transparent 75%, rgb(128 128 128 / 0.12) 75%);
+  background-size: 16px 16px;
+  background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+}
+
+/* Floating chip used as the drag preview image (tabs, nav buttons, segments) */
+.lx-drag-ghost {
+  position: absolute;
+  top: -1000px;
+  left: -1000px;
+  z-index: var(--lx-z-drag);
+  pointer-events: none;
+  max-width: 240px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 4px 12px;
+  border: 1px solid var(--lx-accent);
+  border-radius: 6px;
+  background: var(--lx-raised);
+  color: var(--lx-strong);
+  font-size: 12px;
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.4);
+}
+
+/* Make dockview drag & drop zones clearly visible (accent-tinted overlay) */
+.dockview-theme-dark,
+.dockview-theme-light {
+  --dv-drag-over-background-color: color-mix(in srgb, var(--lx-accent) 18%, transparent);
+  --dv-drag-over-border-color: var(--lx-accent);
+  --dv-drag-over-border: 2px solid var(--lx-accent);
+}
+
+/* ---------------------------------------------------------------------------
+ * Interaction polish (v0.6.9)
+ * Keyboard focus rings, smooth hover transitions and clearer active states for
+ * the app chrome. Never touches the terminal (xterm) or editor (CodeMirror),
+ * which render and animate their own surfaces.
+ * ------------------------------------------------------------------------- */
+
+/* Keyboard focus ring — only for keyboard users (:focus-visible), so mouse
+ * clicks keep the chrome clean. :where() keeps specificity at 0 so component
+ * colors always win; only the outline is added. */
+:where(button, a, input, textarea, select, summary, [role="button"], [tabindex]):focus-visible {
+  /* Inset offset (drawn *inside* the box) so the ring is never clipped by an
+   * `overflow:hidden` ancestor (segmented controls / toolbars used to lose
+   * their top edge) and never overlaps a tightly-packed neighbour. The ring
+   * follows the element's own border-radius automatically.
+   *
+   * Uses the theme accent (not --lx-muted): the accent clears the WCAG 1.4.11
+   * 3:1 non-text-contrast bar against every theme surface, whereas muted fell
+   * below 3:1 in 6 themes and left keyboard focus effectively invisible. */
+  outline: 2px solid var(--lx-focus-ring, var(--lx-accent));
+  outline-offset: -2px;
+}
+.xterm :where(*):focus-visible,
+.cm-editor :where(*):focus-visible {
+  outline: none;
+}
+
+/* ── Accent reaches native controls too ──────────────────────────────────────
+ * `accent-color` is an inherited property, so setting it once on the root makes
+ * every built-in checkbox, radio, range slider and progress bar follow the
+ * user's configured accent instead of the browser's default blue/grey. This is
+ * the cheapest way to spread the accent into the many small controls scattered
+ * across Settings and the panels. */
+html {
+  accent-color: var(--lx-accent);
+}
+/* Text caret in inputs follows the accent too (kept off xterm/CodeMirror, which
+ * paint their own cursors). */
+:where(input, textarea):not(.xterm input):not(.cm-content) {
+  caret-color: var(--lx-accent);
+}
+
+/* App-wide text selection tinted with the theme accent (instead of the OS
+ * default blue, which clashed with every theme). The terminal and editor draw
+ * their own selection, so leave their native ::selection untouched. */
+::selection {
+  /* Accent at low alpha: clearly branded but light enough that the underlying
+     --lx-strong text stays readable across all 14 themes (DS-09). */
+  background: color-mix(in srgb, var(--lx-accent) 28%, transparent);
+}
+
+/* Smooth hover/press feedback on interactive chrome. Short and subtle so the
+ * UI still feels instant. Terminal/editor internals opt out below. */
+button,
+a,
+summary,
+[role="button"],
+[draggable="true"] {
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease,
+    border-color 0.12s ease,
+    box-shadow 0.14s ease,
+    opacity 0.12s ease;
+}
+.xterm button,
+.xterm a,
+.cm-editor button,
+.cm-editor a,
+.xterm [draggable="true"] {
+  transition: none;
+}
+
+/* Browser-style Dockview tabs: a calm, transparent strip where the active tab
+ * reads as a raised, lighter "card" (instead of a coloured accent underline),
+ * with thin vertical dividers between neighbouring inactive tabs. */
+.dockview-theme-dark,
+.dockview-theme-light {
+  --dv-tabs-and-actions-container-height: 42px;
+  --dv-tabs-and-actions-container-background-color: var(--lx-bar);
+  --dv-group-view-background-color: var(--lx-surface);
+  --dv-activegroup-visiblepanel-tab-background-color: transparent;
+  --dv-activegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-inactivegroup-visiblepanel-tab-background-color: transparent;
+  --dv-inactivegroup-hiddenpanel-tab-background-color: transparent;
+  --dv-tab-divider-color: transparent;
+  --dv-activegroup-visiblepanel-tab-color: var(--lx-strong);
+  --dv-activegroup-hiddenpanel-tab-color: var(--lx-muted);
+  --dv-inactivegroup-visiblepanel-tab-color: var(--lx-muted);
+  --dv-inactivegroup-hiddenpanel-tab-color: var(--lx-muted);
+}
+.dockview-theme-dark .dv-tabs-and-actions-container,
+.dockview-theme-light .dv-tabs-and-actions-container {
+  min-width: 0;
+}
+/* Browser-style tabs: wide, contiguous (no gaps) so they read as a real tab
+ * strip; the active one lifts into a lighter rounded card. */
+.dockview-theme-dark .dv-tab,
+.dockview-theme-light .dv-tab {
+  position: relative;
+  min-width: 132px;
+  max-width: 220px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--lx-tab-radius) var(--lx-tab-radius) 0 0;
+  background: transparent;
+  transition:
+    background-color 0.16s ease,
+    box-shadow 0.16s ease,
+    color 0.16s ease;
+}
+.dockview-theme-dark .dv-tab:hover,
+.dockview-theme-light .dv-tab:hover {
+  background: color-mix(in srgb, var(--lx-raised) 52%, transparent);
+  color: var(--lx-strong);
+}
+
+/* Thin vertical separator in the gap between neighbouring tabs (chrome-style).
+ * Hidden on the first tab and on both sides of the active/hovered tab so the
+ * raised card floats cleanly without stray ticks next to it. */
+.dockview-theme-dark .dv-tab::before,
+.dockview-theme-light .dv-tab::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 18px;
+  background: color-mix(in srgb, var(--lx-edge) 45%, var(--lx-muted) 55%);
+  opacity: 1;
+}
+.dockview-theme-dark .dv-tab:first-child::before,
+.dockview-theme-light .dv-tab:first-child::before,
+.dockview-theme-dark .dv-active-tab::before,
+.dockview-theme-light .dv-active-tab::before,
+.dockview-theme-dark .dv-active-tab + .dv-tab::before,
+.dockview-theme-light .dv-active-tab + .dv-tab::before,
+.dockview-theme-dark .dv-tab:hover::before,
+.dockview-theme-light .dv-tab:hover::before,
+.dockview-theme-dark .dv-tab:hover + .dv-tab::before,
+.dockview-theme-light .dv-tab:hover + .dv-tab::before {
+  opacity: 0;
+}
+
+/* Active tab: takes the content-area colour and merges into the panel below it
+ * (browser / VS Code style) — rounded top corners, no bottom edge, flush with
+ * the content so there's no seam between the tab and its panel. */
+.dockview-theme-dark .dv-active-tab,
+.dockview-theme-light .dv-active-tab {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  margin-top: 0;
+  /* Pull the tab down so its flat bottom overlaps the panel top — the tab and
+   * the content below it share the exact same colour, so there's no seam: the
+   * selected tab truly melts into the content area. */
+  margin-bottom: -2px;
+  /* Selection is shown by the background ALONE — no outline/border. The active
+   * tab takes the exact content colour and melts into the panel below it.
+   * A subtle accent glow at the top edge adds a premium "lifted" feel. */
+  background: var(--lx-surface) !important;
+  color: var(--lx-strong) !important;
+  border: none !important;
+  border-radius: var(--lx-tab-radius) var(--lx-tab-radius) 0 0 !important;
+  box-shadow: none !important;
+}
+.dockview-theme-light .dv-active-tab {
+  box-shadow: none !important;
+}
+
+/* Optional active-tab outline (Settings → Interface → "Active tab outline").
+ * Default is OFF: selection is shown by the background colour alone (rules
+ * above). When ON, the active tab gets a visible border on top + sides plus a
+ * soft upward lift so it reads as a distinct raised card. */
+:root[data-tab-outline="on"] .dockview-theme-dark .dv-active-tab,
+:root[data-tab-outline="on"] .dockview-theme-light .dv-active-tab {
+  border: 1px solid color-mix(in srgb, var(--lx-edge) 80%, var(--lx-strong) 20%) !important;
+  border-bottom: none !important;
+  box-shadow:
+    0 -4px 12px -6px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 color-mix(in srgb, var(--lx-strong) 14%, transparent) !important;
+}
+:root[data-tab-outline="on"] .dockview-theme-light .dv-active-tab {
+  box-shadow:
+    0 -3px 10px -6px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ===========================================================================
+ * Git diff (DiffPanel → @codemirror/merge) — VS Code-style presentation.
+ * The merge addon ships a base theme, but its defaults are extremely faint
+ * (0.08-alpha line tints, a hairline change gutter) and it doesn't fill the
+ * alignment spacers, so a Luxor diff read as a flat textarea. These rules lift
+ * it to a familiar split diff: clear green/red line bands, a solid change-bar
+ * gutter, word-level highlights, diagonal-hatched spacers for "no line here",
+ * a divider between panes and a tidy collapsed-region band. Colors come from
+ * the theme tokens so every theme (and light mode) stays consistent.
+ * ------------------------------------------------------------------------- */
+
+/* Fill the panel and let each side scroll (the merge view is height:auto by
+ * default, which left long diffs overflowing the panel with no scrollbar). */
+.lx-diff-codemirror .cm-mergeView {
+  height: 100%;
+  overflow: auto;
+}
+.lx-diff-codemirror .cm-mergeViewEditors,
+.lx-diff-codemirror > .cm-editor {
+  height: 100%;
+}
+
+/* Added lines: new (b) side and inline insertions. */
+.lx-diff-codemirror .cm-merge-b .cm-changedLine,
+.lx-diff-codemirror .cm-inlineChangedLine,
+.lx-diff-codemirror .cm-insertedLine {
+  background-color: color-mix(in srgb, var(--lx-success) 15%, transparent) !important;
+}
+/* Removed lines: old (a) side and deleted chunks. */
+.lx-diff-codemirror .cm-merge-a .cm-changedLine,
+.lx-diff-codemirror .cm-deletedChunk,
+.lx-diff-codemirror .cm-deletedLine {
+  background-color: color-mix(in srgb, var(--lx-danger) 14%, transparent) !important;
+}
+
+/* Word-level changes: a filled chip instead of the default thin underline, so
+ * the exact edited token pops the way it does in a VS Code inline diff. */
+.lx-diff-codemirror .cm-merge-b .cm-changedText,
+.lx-diff-codemirror .cm-inlineChangedText {
+  background: color-mix(in srgb, var(--lx-success) 34%, transparent) !important;
+  border-radius: 2px;
+}
+.lx-diff-codemirror .cm-merge-a .cm-changedText,
+.lx-diff-codemirror .cm-deletedChunk .cm-deletedText,
+.lx-diff-codemirror .cm-merge-b .cm-deletedText {
+  background: color-mix(in srgb, var(--lx-danger) 34%, transparent) !important;
+  border-radius: 2px;
+}
+
+/* Kill the merge addon's base-theme text decorations: deleted text ships with
+ * `line-through` and changed/inserted text with a dotted underline, which made
+ * the unified diff look struck-out and scribbled (the "ugly diff" report).
+ * VS Code shows plain text on colored bands — so do we. */
+.lx-diff-codemirror .cm-deletedText,
+.lx-diff-codemirror .cm-changedText,
+.lx-diff-codemirror .cm-inlineChangedText,
+.lx-diff-codemirror .cm-deletedChunk,
+.lx-diff-codemirror .cm-deletedLine,
+.lx-diff-codemirror .cm-insertedLine,
+.lx-diff-codemirror .cm-changedLine {
+  text-decoration: none !important;
+}
+/* The base theme paints word chips via background-image (a pair of underline
+ * gradients) on some versions — clear that too so only our tints remain. */
+.lx-diff-codemirror .cm-deletedText,
+.lx-diff-codemirror .cm-changedText {
+  background-image: none !important;
+}
+
+/* Unified (inline) mode: give the deleted block breathing room and mute its
+ * text slightly so old code reads as context, not as active content. */
+.lx-diff-codemirror .cm-deletedChunk {
+  padding: 1px 2px 1px 4px;
+}
+.lx-diff-codemirror .cm-deletedChunk .cm-deletedLine {
+  opacity: 0.82;
+}
+
+/* The change-bar gutter (the colored strip beside the line numbers). A 4px
+ * rounded bar with a faint track reads better than the old 3px hairline. */
+.lx-diff-codemirror .cm-changeGutter {
+  width: 6px;
+  padding-left: 1px;
+}
+.lx-diff-codemirror .cm-merge-a .cm-changedLineGutter,
+.lx-diff-codemirror .cm-deletedLineGutter {
+  background: var(--lx-danger) !important;
+  border-radius: 2px;
+}
+.lx-diff-codemirror .cm-merge-b .cm-changedLineGutter,
+.lx-diff-codemirror .cm-inlineChangedLineGutter {
+  background: var(--lx-success) !important;
+  border-radius: 2px;
+}
+
+/* Diagonal hatch on alignment spacers — VS Code's "this side has no line here"
+ * fill, so deletions/insertions read as a gap rather than blank space. */
+.lx-diff-codemirror .cm-mergeSpacer {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--lx-muted) 14%, transparent),
+    color-mix(in srgb, var(--lx-muted) 14%, transparent) 5px,
+    transparent 5px,
+    transparent 11px
+  );
+}
+
+/* Thin divider between the two panes in split mode. */
+.lx-diff-codemirror .cm-merge-a {
+  border-right: 1px solid var(--lx-edge);
+}
+
+/* Collapsed "N unchanged lines" rows → a clean, clickable band. */
+.lx-diff-codemirror .cm-collapsedLines {
+  color: var(--lx-muted);
+  font-size: 11px;
+  background: color-mix(in srgb, var(--lx-muted) 8%, transparent) !important;
+  border-top: 1px solid var(--lx-edge);
+  border-bottom: 1px solid var(--lx-edge);
+}
+.lx-diff-codemirror .cm-collapsedLines:hover {
+  color: var(--lx-strong);
+  background: color-mix(in srgb, var(--lx-accent) 12%, transparent) !important;
+}
+
+/* Reference-style square chrome buttons: flat enough to feel native, but with
+ * visible hit targets instead of the old floating chevron/arrow look. */
+.lx-square-btn {
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+.lx-square-btn:hover {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--lx-raised) 84%, transparent);
+}
+.lx-square-btn:active {
+  transform: translateY(1px);
+}
+.lx-square-btn.is-active {
+  /* Selection shown by subtle background only — no accent indicator. */
+  border-color: transparent;
+  background: color-mix(in srgb, var(--lx-raised) 70%, transparent);
+  color: var(--lx-strong);
+}
+
+/* ── NavRail active indicator: left accent bar ────────────────────────────
+ * A 3px accent-colored bar on the left edge of the active nav button,
+ * similar to VS Code's activity bar indicator. */
+.lx-nav-rail button.is-active,
+.lx-nav-rail button[data-active="true"] {
+  position: relative;
+  color: var(--lx-strong);
+  background: transparent;
+  transition:
+    color var(--lx-dur) var(--lx-ease),
+    background var(--lx-dur) var(--lx-ease);
+}
+/* Active indicator: a clean accent strip on the left edge (like a workspace
+ * tab's underline, rotated for the vertical rail) — no pill / rounded fill. */
+.lx-nav-rail button.is-active::before,
+.lx-nav-rail button[data-active="true"]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: var(--lx-nav-indicator-w);
+  height: 70%;
+  background: var(--lx-accent);
+  border-radius: 0;
+  opacity: 1;
+  transition:
+    height var(--lx-dur) var(--lx-ease),
+    opacity var(--lx-dur) var(--lx-ease);
+}
+
+/* ── NavRail hover: subtle background, no accent color �����─────────────────── */
+.lx-active-strip {
+  position: relative;
+}
+.lx-active-strip::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 56%;
+  width: 3px;
+  transform: translateY(-50%);
+  background: var(--lx-accent);
+  border-radius: 0 2px 2px 0;
+}
+
+.lx-nav-rail button:hover {
+  background: color-mix(in srgb, var(--lx-raised) 50%, transparent);
+  color: var(--lx-strong);
+}
+
+/* ── NavRail tooltip on hover: small floating label ─────────────────────── */
+.lx-nav-rail button[data-nav-id]:hover::after {
+  content: attr(title);
+  position: absolute;
+  left: calc(100% + 8px);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 4px 10px;
+  background: var(--lx-raised);
+  color: var(--lx-strong);
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--lx-radius-sm);
+  border: 1px solid var(--lx-edge);
+  box-shadow: var(--lx-shadow-md);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: var(--lx-z-tooltip);
+  opacity: 1;
+}
+@keyframes lx-tooltip-in {
+  from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
+  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+}
+
+/* ── Caption buttons (Phase 1) ─────────────────────────────────────
+ * Full-height, no rounding, no gaps — Windows-style window controls.
+ * Hover fills the entire rectangle; close gets a red hover. */
+.lx-titlebar {
+  display: flex;
+  align-items: stretch;
+  height: var(--lx-titlebar-h);
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--lx-edge);
+  background: var(--lx-glass-bg);
+  backdrop-filter: blur(var(--lx-glass-blur));
+  -webkit-backdrop-filter: blur(var(--lx-glass-blur));
+  /* Keep the titlebar (drag region + caption buttons) above full-screen modal
+   * scrims — the window must always stay movable and closable. */
+  position: relative;
+  z-index: var(--lx-z-chrome);
+  padding-left: 8px;
+  box-shadow: 0 1px 0 0 color-mix(in srgb, var(--lx-edge) 30%, transparent);
+}
+.lx-drag {
+  -webkit-app-region: drag;
+}
+.lx-caption-group {
+  display: flex;
+  align-items: stretch;
+  flex: 0 0 auto;
+  -webkit-app-region: no-drag;
+  /* In the horizontal TopBar (no .lx-titlebar wrapper) the caption buttons
+   * must still stack above modal scrims: the TopBar root has no stacking
+   * context, so this z-index resolves against the page root. */
+  position: relative;
+  z-index: var(--lx-z-chrome);
+}
+.lx-caption-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--lx-caption-w);
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--lx-muted);
+  transition:
+    background-color var(--lx-dur-fast) var(--lx-ease),
+    color var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-caption-btn svg {
+  transition: transform var(--lx-dur) var(--lx-ease-spring);
+}
+.lx-caption-btn:active svg {
+  transform: scale(0.85);
+}
+.lx-caption-btn:hover {
+  background: color-mix(in srgb, var(--lx-raised) 70%, transparent);
+  color: var(--lx-strong);
+}
+.lx-caption-btn:active {
+  background: color-mix(in srgb, var(--lx-raised) 55%, transparent);
+}
+.lx-caption-close:hover {
+  background: #e81123;
+  color: #fff;
+}
+.lx-caption-close:active {
+  background: #c50f1f;
+  color: #fff;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lx-caption-btn {
+    transition: none;
+  }
+}
+
+/* Respect users who prefer reduced motion (keeps the startup spinner spinning,
+ * a meaningful "still loading" signal, but drops UI transitions). */
+@media (prefers-reduced-motion: reduce) {
+  button,
+  a,
+  summary,
+  [role="button"],
+  [draggable="true"],
+  .lx-slide-in,
+  .lx-pop-in,
+  .lx-browser-progress {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* Rendered Markdown preview (EditorPanel) */
+.lx-markdown {
+  color: var(--lx-strong);
+  font-size: 14px;
+  line-height: 1.65;
+  word-wrap: break-word;
+}
+.lx-markdown h1,
+.lx-markdown h2,
+.lx-markdown h3,
+.lx-markdown h4 {
+  margin: 1.2em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.25;
+}
+.lx-markdown h1:first-child,
+.lx-markdown h2:first-child {
+  margin-top: 0;
+}
+.lx-markdown h1 {
+  font-size: 1.7em;
+  border-bottom: 1px solid var(--lx-edge);
+  padding-bottom: 0.3em;
+}
+.lx-markdown h2 {
+  font-size: 1.35em;
+  border-bottom: 1px solid var(--lx-edge);
+  padding-bottom: 0.25em;
+}
+.lx-markdown h3 {
+  font-size: 1.15em;
+}
+.lx-markdown p,
+.lx-markdown ul,
+.lx-markdown ol,
+.lx-markdown blockquote,
+.lx-markdown table {
+  margin: 0.6em 0;
+}
+.lx-markdown ul,
+.lx-markdown ol {
+  padding-left: 1.6em;
+}
+.lx-markdown ul {
+  list-style: disc;
+}
+.lx-markdown ol {
+  list-style: decimal;
+}
+.lx-markdown a {
+  color: var(--lx-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.lx-markdown code {
+  background: var(--lx-raised);
+  border: 1px solid var(--lx-edge);
+  border-radius: 4px;
+  padding: 0.1em 0.35em;
+  font-family: var(--lx-font-mono);
+  font-size: 0.85em;
+}
+.lx-markdown pre {
+  background: var(--lx-bar);
+  border: 1px solid var(--lx-edge);
+  border-radius: 8px;
+  padding: 10px 14px;
+  overflow-x: auto;
+  margin: 0.8em 0;
+}
+.lx-markdown pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.85em;
+}
+.lx-markdown blockquote {
+  border-left: 3px solid var(--lx-accent);
+  padding: 0.1em 1em;
+  color: var(--lx-muted);
+}
+.lx-markdown table {
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+.lx-markdown th,
+.lx-markdown td {
+  border: 1px solid var(--lx-edge);
+  padding: 5px 10px;
+  text-align: left;
+}
+.lx-markdown th {
+  background: var(--lx-raised);
+  font-weight: 600;
+}
+.lx-markdown hr {
+  border: none;
+  border-top: 1px solid var(--lx-edge);
+  margin: 1.2em 0;
+}
+.lx-markdown img {
+  max-width: 100%;
+  border-radius: 6px;
+}
+
+/* xterm fills its panel */
+.xterm,
+.xterm .xterm-viewport,
+.xterm .xterm-screen {
+  height: 100%;
+  width: 100%;
+}
+
+/* Overlay-style, auto-hiding scrollbars: no persistent bar cluttering the
+ * workspace/panels — the thumb only fades in while the container is hovered
+ * or actively scrolling. Scrolling itself stays fully functional. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: transparent;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 6px;
+  min-height: 32px; /* keep the thumb grabbable in very long lists */
+}
+:hover::-webkit-scrollbar-thumb {
+  background: var(--lx-edge);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lx-muted);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* ── Slim themed range sliders ────────────────────────────────────────────
+ * Replace the chunky native range input with a thin 3px track and a small
+ * accent thumb. Applies everywhere (settings, analytics, etc.). */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px; /* touch target stays comfortable; the visible track is 3px */
+  background: transparent;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--lx-edge);
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px; /* center the 12px thumb on the 3px track */
+  border-radius: 50%;
+  border: none;
+  background: var(--lx-accent);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+  transition: transform 120ms ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover,
+input[type="range"]:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+input[type="range"]::-moz-range-track {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--lx-edge);
+}
+input[type="range"]::-moz-range-progress {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--lx-accent);
+}
+input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: none;
+  border-radius: 50%;
+  background: var(--lx-accent);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
+}
+input[type="range"]:focus-visible {
+  outline: none;
+}
+
+/* Opt-in: hide the scrollbar on a strip that still scrolls (e.g. an overflowing
+ * tab bar in a narrow panel) — keeps the scroll gesture without the visual bar. */
+.lx-noscrollbar {
+  scrollbar-width: none;
+}
+.lx-noscrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* The dockview grid/tab area should never show its own scrollbars. */
+.dv-scrollable::-webkit-scrollbar,
+.dv-tabs-container::-webkit-scrollbar,
+.dv-content-container::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+/* Fully hide the scrollbar while keeping the area scrollable. Used for the
+ * workspace tab strip / sidebar so no scrollbar is ever visible there. */
+.lx-no-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* legacy Edge */
+}
+.lx-no-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* ---------------------------------------------------------------------------
+ * Smooth scrolling (v0.4.1)
+ * Applies to every scrollable UI container; the xterm viewport is excluded
+ * because the terminal manages its own scrolling and smooth behavior would
+ * lag fast output.
+ * ------------------------------------------------------------------------- */
+html,
+body,
+.overflow-auto,
+.overflow-y-auto,
+.overflow-x-auto,
+.overflow-scroll,
+.overflow-y-scroll,
+.overflow-x-scroll {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+/* The terminal and editor manage their own scrolling; smooth behavior there
+ * lags fast output / large files, so opt them back out. */
+.xterm .xterm-viewport,
+.cm-editor .cm-scroller {
+  scroll-behavior: auto;
+}
+
+/* ---------------------------------------------------------------------------
+ * File editor (EditorPanel) chrome polish — a cleaner, more comfortable
+ * toolbar + status bar around the editor surface.
+ * ------------------------------------------------------------------------- */
+.lx-editor-toolbar {
+  background-image: linear-gradient(
+    to bottom,
+    transparent 55%,
+    color-mix(in srgb, var(--lx-bar) 32%, transparent)
+  );
+}
+/* Unify the height/feel of every control in the toolbar (buttons + the
+ * language / theme / font-size selectors) so the row looks tidy, not ragged. */
+.lx-editor-toolbar > button,
+.lx-editor-toolbar > label {
+  min-height: 26px;
+  transition:
+    background-color 0.13s ease,
+    border-color 0.13s ease,
+    color 0.13s ease,
+    box-shadow 0.13s ease;
+}
+.lx-editor-toolbar > button:active {
+  transform: translateY(0.5px);
+}
+.lx-editor-toolbar > button:focus-visible,
+.lx-editor-toolbar select:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--lx-accent) 60%, transparent);
+  outline-offset: 1px;
+}
+/* Status bar: tighter, calmer, with hover affordance on its inline buttons. */
+.lx-editor-statusbar button {
+  transition:
+    background-color 0.12s ease,
+    color 0.12s ease;
+}
+
+/* ---------------------------------------------------------------------------
+ * Editor surface polish (v0.6.13) — remove the white seam around the editor and
+ * the off-color tab divider on light themes.
+ * ------------------------------------------------------------------------- */
+
+/* CodeMirror can paint a 1px border/outline on .cm-editor that reads as a white
+ * seam on light themes (and as a visible 1px line on dark themes with the active
+ * tab outline on). Kill it and let the editor fill its container edge-to-edge. */
+.cm-editor,
+.cm-editor .cm-scroller {
+  border: 0 !important;
+  outline: 0 !important;
+}
+
+/* Safety net: ensure the CodeMirror editor always fills its container.
+ * The theme sets height:100% on .cm-editor, but if the flex chain breaks
+ * (e.g. a dockview panel hasn't sized yet), the editor can collapse to 0.
+ * These rules guarantee a usable editing area in any layout state.
+ * v0.6.13: Made максимально надёжно — explicit flex, height, width, overflow
+ * on every CM element so the text layer ALWAYS renders. */
+.cm-editor {
+  min-height: 60px;
+  height: 100%;
+  width: 100%;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.cm-editor .cm-scroller {
+  min-height: 60px;
+  height: 100%;
+  width: 100%;
+  overflow: auto !important;
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: stretch !important;
+  position: relative;
+}
+.cm-editor .cm-gutters {
+  display: flex !important;
+  flex-shrink: 0 !important;
+  align-items: stretch !important;
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+.cm-editor .cm-gutter {
+  display: flex !important;
+  flex-direction: column !important;
+  flex-shrink: 0 !important;
+  box-sizing: border-box;
+}
+.cm-editor .cm-content {
+  min-width: 100%;
+  width: max-content;
+  min-height: 100%;
+  padding: 0 4px;
+  flex: 1 0 auto;
+  box-sizing: border-box;
+}
+
+/* Hard fallback for CodeMirror syntax highlighting. The editor theme also
+ * installs inline colours, but older WebViews / duplicated CM runtime edge cases
+ * can leave token spans classed but visually unstyled. These `.tok-*` classes are
+ * emitted by Lezer's classHighlighter and make syntax colouring unconditional. */
+.cm-editor .tok-keyword,
+.cm-editor .tok-atom,
+.cm-editor .tok-bool,
+.cm-editor .tok-null,
+.cm-editor .tok-labelName {
+  color: #e8b059;
+}
+.cm-editor .tok-string,
+.cm-editor .tok-character,
+.cm-editor .tok-regexp,
+.cm-editor .tok-escape,
+.cm-editor .tok-attributeValue {
+  color: #9ece6a;
+}
+.cm-editor .tok-number,
+.cm-editor .tok-integer,
+.cm-editor .tok-float,
+.cm-editor .tok-literal,
+.cm-editor .tok-constant {
+  color: #d19a66;
+}
+.cm-editor .tok-typeName,
+.cm-editor .tok-className,
+.cm-editor .tok-namespace,
+.cm-editor .tok-propertyName,
+.cm-editor .tok-attributeName {
+  color: #7aa2f7;
+}
+.cm-editor .tok-function,
+.cm-editor .tok-functionName,
+.cm-editor .tok-macroName,
+.cm-editor .tok-definition {
+  color: #e0af68;
+}
+.cm-editor .tok-comment,
+.cm-editor .tok-lineComment,
+.cm-editor .tok-blockComment,
+.cm-editor .tok-docComment,
+.cm-editor .tok-meta,
+.cm-editor .tok-processingInstruction,
+.cm-editor .tok-annotation {
+  color: #6f6f7a;
+  font-style: italic;
+}
+.cm-editor .tok-heading {
+  color: #e8b059;
+  font-weight: 700;
+}
+.cm-editor .tok-link,
+.cm-editor .tok-url {
+  color: #7aa2f7;
+  text-decoration: underline;
+}
+.cm-editor .tok-invalid {
+  color: #f7768e;
+}
+
+/* The dockview tab strip paints a 1px vertical divider on .dv-tab::before.
+ * The color-mix produces a near-white tick on light themes (github_light,
+ * catppuccin_latte, …) which reads as a "white border around" the editor
+ * tab. We already hide it next to the active tab and the first tab; on
+ * light themes, hide it entirely — light themes don't need the visual
+ * separation, the surface contrast is enough. */
+:root[data-theme="github_light"] .dockview-theme-light .dv-tab::before,
+:root[data-theme="catppuccin_latte"] .dockview-theme-light .dv-tab::before,
+:root[data-theme="solarized_light"] .dockview-theme-light .dv-tab::before,
+:root[data-theme="light"] .dockview-theme-light .dv-tab::before {
+  opacity: 0;
+}
+
+/* --------------------------------------------------------------------------- * * UX polish (audit pass 3) — small but meaningful interaction improvements.
+ * ------------------------------------------------------------------------- */
+
+/* 1. Disabled buttons get a not-allowed cursor so users *see* they can't click.
+ *    The existing opacity-40/50 dim is visual; the cursor change is the UX
+ *    signal that completes the affordance. */
+button:disabled,
+[role="button"][aria-disabled="true"],
+input:disabled,
+textarea:disabled,
+select:disabled {
+  cursor: not-allowed;
+}
+
+/* 2. Inputs/textarea focus ring consistency: the global :focus-visible rule
+ *    covers buttons, but text fields on some themes show no visible focus
+ *    border when clicked (mouse focus). Add a subtle accent border on :focus
+ *    (not just :focus-visible) so keyboard and mouse users both see focus. */
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: color-mix(in srgb, var(--lx-accent) 50%, var(--lx-edge));
+}
+
+/* 3. Textarea vertical resize handle is invisible on dark themes. Give it a
+ *    subtle accent tint so users discover they can resize text areas. */
+textarea {
+  resize: vertical;
+}
+
+/* 4. Long-press / active feedback on list items (file tree, git entries, task
+ *    rows) — a tiny scale-down so the row "responds" to the click.
+ *    Note: generic button:active scale(0.97) is handled in the animation
+ *    system (pass 5) below — this rule only applies to .lx-square-btn. */
+.lx-square-btn:active {
+  transform: translateY(0.5px);
+}
+
+/* 5. Empty-state illustration: a gentle pulse on the accent icon to draw the
+ *    eye toward the primary action in empty panels. */
+@keyframes lx-empty-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+.lx-empty-icon {
+  animation: lx-empty-pulse 2.4s ease-in-out infinite;
+}
+
+/* 6. Tooltip-like title attributes: style native browser tooltips is not
+ *    possible, but we can ensure hoverable elements with title= show a
+ *    pointer cursor (some buttons lose it after CSS resets). */
+/* cursor:help is opt-in via .lx-help[title]; titled elements keep the default
+ * cursor (a blanket [title]{cursor:help} mislabeled truncated text & chips). */
+.lx-help[title] {
+  cursor: help;
+}
+
+/* 7. Selection highlight in lists: when a row is selected (e.g. file tree,
+ *    git file list), add a left accent bar so the selection is visible even
+ *    when the background tint is subtle on some themes. */
+.lx-selected-row {
+  position: relative;
+}
+.lx-selected-row::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--lx-muted);
+  border-radius: 0 2px 2px 0;
+  opacity: 0.4;
+}
+
+/* 8. Smooth opacity transition for lazy-loaded panels (Suspense fallback
+ *    disappears, content fades in). Prevents the jarring "pop" when a
+ *    heavy panel like Settings or DbPanel first renders. */
+.lx-fade-in {
+  animation: lx-fade-in 0.18s ease-out;
+}
+@keyframes lx-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 9. Better drag cursor for draggable elements — the default is often
+ *    `default` or `text`, which doesn't communicate draggability. */
+[draggable="true"] {
+  cursor: grab;
+}
+[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+/* 10. High-contrast focus ring for users who need it. The default 2px
+ *     outline is good, but on very busy toolbars it can get lost. This
+ *     adds a subtle box-shadow halo on focus-visible for the app chrome. */
+:where(button, a, [role="button"], [tabindex]):focus-visible {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lx-accent) 25%, transparent);
+}
+.xterm :where(*):focus-visible,
+.cm-editor :where(*):focus-visible {
+  box-shadow: none;
+}
+
+/* ===========================================================================
+ * ANIMATION SYSTEM (audit pass 4)
+ * Beautiful, performant animations for sidebars, tabs, panels, menus,
+ * dialogs, toasts, and loading states. All use only transform + opacity
+ * (compositor-only properties) for 60fps GPU-accelerated motion.
+ * Respects prefers-reduced-motion (see the media query block above).
+ * =========================================================================*/
+
+/* --- Keyframes ---------------------------------------------------------- */
+
+@keyframes lx-nav-slide-in {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes lx-nav-item-in {
+  from { opacity: 0; transform: translateX(-8px) scale(0.92); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+@keyframes lx-panel-slide-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes lx-panel-slide-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes lx-panel-enter {
+  from { opacity: 0; transform: scale(0.985); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes lx-bar-slide-down {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lx-bar-slide-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes lx-tab-open {
+  from { opacity: 0; transform: scaleX(0.92); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+
+@keyframes lx-tab-close {
+  from { opacity: 1; transform: scaleX(1); }
+  to   { opacity: 0; transform: scaleX(0.85); }
+}
+
+@keyframes lx-menu-pop {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Branded app mark used in the tray popup header (and its settings preview). */
+.lx-brand-mark {
+  background: linear-gradient(135deg, var(--lx-accent), var(--lx-accent-2));
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.lx-brand-mark:hover {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+}
+
+@keyframes lx-dialog-enter {
+  from { opacity: 0; transform: scale(0.95) translateY(4px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes lx-toast-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes lx-dropdown-in {
+  from { opacity: 0; transform: scaleY(0.92); transform-origin: top; }
+  to   { opacity: 1; transform: scaleY(1); transform-origin: top; }
+}
+
+@keyframes lx-modal-enter {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes lx-palette-enter {
+  from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes lx-spinner {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Animation utility classes ------------------------------------------ */
+
+/* NavRail sidebar: slides in from the left on mount */
+.lx-anim-nav {
+  animation: lx-nav-slide-in 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* NavRail buttons: staggered fade-in (set --lx-i per item for cascade) */
+.lx-anim-nav-item {
+  animation: lx-nav-item-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--lx-i, 0) * 0.04s);
+}
+
+/* Right panel: slides in from the right */
+.lx-anim-panel-right {
+  animation: lx-panel-slide-right 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Side panel: slides in from the left */
+.lx-anim-panel-left {
+  animation: lx-panel-slide-left 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Generic panel content: subtle fade + scale on mount */
+.lx-anim-panel {
+  animation: lx-panel-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* TopBar: slides down from the top */
+.lx-anim-bar-top {
+  animation: lx-bar-slide-down 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* StatusBar: slides up from the bottom */
+.lx-anim-bar-bottom {
+  animation: lx-bar-slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Dockview tabs: scale-in when a new tab opens */
+.dv-tab {
+  animation: lx-tab-open 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: left center;
+}
+
+/* Context menu: pop-in with scale */
+.lx-anim-menu {
+  animation: lx-menu-pop 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top left;
+}
+
+/* Dialog / prompt: scale + fade */
+.lx-anim-dialog {
+  animation: lx-dialog-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Toast: slide up + scale (replaces the older lx-slide-in for toasts) */
+.lx-anim-toast {
+  animation: lx-toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Dropdown menus: expand from top */
+.lx-anim-dropdown {
+  animation: lx-dropdown-in 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top;
+}
+
+/* Settings modal: scale + fade */
+.lx-anim-modal {
+  animation: lx-modal-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Command palette / project switcher: slide down + scale */
+.lx-anim-palette {
+  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Smooth spinner (replaces ad-hoc border-spin) */
+.lx-anim-spin {
+  animation: lx-spinner 0.8s linear infinite;
+}
+
+/* --- Component-specific animation applications -------------------------- */
+
+/* NavRail: the sidebar container slides in, and each button cascades */
+.lx-nav-rail {
+  animation: none;
+}
+.lx-nav-rail > * {
+  animation: none;
+}
+/* NavRail cascade delays removed — instant render */
+
+/* Right panel container — no animation (instant show/hide) */
+.lx-anim-right-panel {
+  animation: none;
+}
+
+/* Side panel container — no animation (instant show/hide) */
+.lx-anim-side-panel {
+  animation: none;
+}
+
+/* TopBar container — no animation */
+.lx-anim-topbar {
+  animation: none;
+}
+
+/* StatusBar container — no animation */
+.lx-anim-statusbar {
+  animation: none;
+}
+
+/* NOTE: the dockview panel-enter animation for `.dv-content-container > .dv-panel`
+   lives further down (lx-content-slide). An earlier duplicate of this selector
+   used lx-panel-enter but was fully overridden by that later rule (identical
+   specificity, later in the cascade), so it was dead and has been removed. */
+
+/* Context menu overlay */
+.lx-context-menu {
+  animation: lx-menu-pop 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top left;
+}
+
+/* Dialog overlay (confirm/prompt) */
+.lx-dialog-overlay {
+  animation: lx-dialog-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Toast notifications */
+.lx-toast {
+  animation: lx-toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Toast auto-dismiss countdown: a thin bar that shrinks over the toast's ttl.
+ * Duration comes from an inline style; hover on the stack sets
+ * animation-play-state: paused inline, mirroring the frozen dismiss timers. */
+@keyframes lx-toast-countdown {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+.lx-toast-progress {
+  /* A linear countdown is information ("time left"), not decoration, so it is
+   * intentionally NOT in the reduced-motion kill list (like the spinner). */
+  animation-name: lx-toast-countdown;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}
+
+/* Settings modal */
+.lx-settings-modal {
+  animation: lx-modal-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Command palette */
+.lx-command-palette {
+  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Project switcher */
+.lx-project-switcher {
+  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ===========================================================================
+ * Glass mode (Settings → Appearance → "Transparent elements")
+ * ===========================================================================
+ * Every floating/chrome surface (context menus, palettes, the settings card,
+ * quick actions, status bar, nav rail, …) already draws from the
+ * `--lx-glass-bg` / `--lx-glass-blur` tokens, so the toggle simply redefines
+ * those at the root instead of overriding individual components:
+ *   - on:  surface opacity comes from the strength slider via
+ *          `--lx-glass-alpha` (set inline by applyAppearance; 100% = opaque).
+ *   - off: surfaces go fully opaque and the blur is disabled.
+ * Content panes (terminal, editor, diffs) never used the token and stay
+ * opaque either way. */
+:root[data-glass="on"] {
+  --lx-glass-bg: color-mix(in srgb, var(--lx-bar) var(--lx-glass-alpha, 80%), transparent);
+}
+:root[data-glass="off"] {
+  --lx-glass-bg: var(--lx-bar);
+  --lx-glass-blur: 0px;
+}
+
+/* --- Exit animations & micro-interactions (pass 5) -------------------- */
+
+/* Toast exit: shrink + fade down */
+@keyframes lx-toast-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(8px) scale(0.92); }
+}
+.lx-toast.lx-toast-leaving {
+  animation: lx-toast-out 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Hover lift on cards & list rows */
+.lx-hover-lift {
+  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s ease;
+}
+.lx-hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px -8px rgba(0,0,0,0.3);
+}
+
+/* Button press feedback (global, subtle) */
+button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
+  transform: scale(0.97);
+  transition: transform 0.08s ease;
+}
+
+/* Tab hover: subtle lift */
+.dv-tab:not(.dv-active-tab):hover {
+  transform: translateY(-1px);
+  transition: transform 0.12s ease;
+}
+
+/* Panel content slide-in on tab switch */
+@keyframes lx-content-slide {
+  from { opacity: 0; transform: translateX(6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.dv-content-container > .dv-panel {
+  animation: lx-content-slide 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* NavRail button hover: icon scale */
+.lx-nav-rail button:hover svg {
+  transform: none;
+}
+.lx-nav-rail button svg {
+  transition: none;
+}
+
+/* Sidebar collapse/expand smooth width already has transition-[width];
+   add opacity fade for inner content */
+.lx-anim-right-panel > div,
+.lx-anim-side-panel > div {
+  transition: opacity 0.2s ease;
+}
+
+/* Loading spinner pulse */
+@keyframes lx-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.lx-anim-pulse {
+  animation: lx-pulse 1.5s ease-in-out infinite;
+}
+
+/* Skeleton shimmer for loading placeholders */
+@keyframes lx-shimmer {
+  from { background-position: -200% 0; }
+  to   { background-position: 200% 0; }
+}
+.lx-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--lx-raised) 25%,
+    color-mix(in srgb, var(--lx-edge) 50%, var(--lx-raised)) 50%,
+    var(--lx-raised) 75%
+  );
+  background-size: 200% 100%;
+  animation: lx-shimmer 1.4s ease-in-out infinite;
+}
+
+/* Dropdown expand/collapse */
+@keyframes lx-expand-down {
+  from { opacity: 0; max-height: 0; transform: scaleY(0.9); }
+  to   { opacity: 1; max-height: 500px; transform: scaleY(1); }
+}
+.lx-anim-expand {
+  animation: lx-expand-down 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  transform-origin: top;
+  overflow: hidden;
+}
+
+/* Simple fade-in for the right-panel edit mode. */
+@keyframes lx-fade-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lx-anim-fade-in {
+  animation: lx-fade-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Right panel widgets ─────────────────────────────────────────────────────
+ * Staggered entrance (delay set inline per index) when the panel opens or the
+ * layout changes in edit mode. */
+@keyframes lx-widget-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.lx-anim-widget-in {
+  animation: lx-widget-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Per-widget / per-panel accent override: `--lx-accent` is swapped inline on
+ * the wrapper; re-derive the dependent mixes so soft fills, hovers and glows
+ * follow the local accent instead of the app-level one. */
+.lx-rp-accented {
+  --lx-accent-soft: color-mix(in srgb, var(--lx-accent) 12%, transparent);
+  --lx-accent-hover: color-mix(in srgb, var(--lx-accent) 20%, transparent);
+  --lx-accent-glow: color-mix(in srgb, var(--lx-accent) 35%, transparent);
+  --lx-accent-2: color-mix(in srgb, var(--lx-accent) 72%, #ffffff 28%);
+}
+/* Accent surfaces inside widgets: header icon chip and progress bars pick up
+ * the (possibly overridden) accent so custom tints are actually visible. */
+.lx-rp-widget .lx-rp-widget-icon {
+  background: var(--lx-accent-soft);
+  color: var(--lx-accent);
+}
+.lx-rp-widget .lx-rp-bar {
+  background: var(--lx-accent);
+}
+/* Smooth width changes on the stat bars while values update. */
+.lx-rp-bar {
+  transition: width 0.4s ease;
+}
+
+/* Focus glow pulse for primary action buttons */
+@keyframes lx-focus-glow {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lx-accent) 40%, transparent); }
+  50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--lx-accent) 10%, transparent); }
+}
+.lx-anim-focus-glow:focus-visible {
+  animation: lx-focus-glow 1.8s ease-in-out infinite;
+}
+
+/* ===========================================================================
+ * PHASE 2 — Top-bar menu polish
+ * Unified height, tab overflow, accessibility
+ * =========================================================================== */
+
+/* Tab overflow edge shadows — fade indicators when tabs overflow horizontally.
+ * The container gets data-overflow-left / data-overflow-right attributes
+ * via scroll-position detection in TopBar.tsx. */
+.lx-tab-overflow {
+  position: relative;
+}
+.lx-tab-overflow::before,
+.lx-tab-overflow::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 20px;
+  pointer-events: none;
+  z-index: 5;
+  opacity: 0;
+  transition: opacity var(--lx-dur) var(--lx-ease);
+}
+.lx-tab-overflow::before {
+  left: 0;
+  background: linear-gradient(to right, var(--lx-bar), transparent);
+}
+.lx-tab-overflow::after {
+  right: 0;
+  background: linear-gradient(to left, var(--lx-bar), transparent);
+}
+.lx-tab-overflow[data-overflow-left]::before {
+  opacity: 1;
+}
+.lx-tab-overflow[data-overflow-right]::after {
+  opacity: 1;
+}
+
+/* "More tabs" dropdown button — appears when tabs overflow the available width */
+.lx-more-tabs-btn {
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Toolbar roving-focus: arrow-key navigation highlight.
+ * No boxed outline frame around top-bar buttons — focus is shown by a subtle
+ * accent-tinted background fill instead, so the buttons stay clean. */
+.lx-toolbar-item:focus-visible {
+  outline: none;
+  z-index: 10;
+  border-radius: 7px;
+  background: var(--lx-accent-soft);
+  color: var(--lx-strong);
+}
+
+/* Tooltip with hotkey hint — styled title fallback */
+.lx-hotkey-hint {
+  opacity: 0.7;
+  font-size: 10px;
+  margin-left: 4px;
+}
+
+/* ===========================================================================
+ * PHASE 4 — Animation enhancements
+ * Dockview transitions, exit animations, micro-interactions, skeletons
+ * =========================================================================== */
+
+/* Dockview panel split/close/drag: smooth flex transitions */
+.dv-groupview {
+  transition: flex-grow var(--lx-dur) var(--lx-ease);
+}
+/* Smooth resizer handle — see BRAND POLISH section for enhanced version */
+
+/* Exit animations for Command Palette / ProjectSwitcher / Settings / Dialogs */
+@keyframes lx-modal-exit {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.96); }
+}
+@keyframes lx-palette-exit {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-12px) scale(0.97); }
+}
+@keyframes lx-dialog-exit {
+  from { opacity: 1; transform: scale(1) translateY(0); }
+  to   { opacity: 0; transform: scale(0.95) translateY(4px); }
+}
+.lx-modal-leaving {
+  animation: lx-modal-exit 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.lx-palette-leaving {
+  animation: lx-palette-exit 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.lx-dialog-leaving {
+  animation: lx-dialog-exit 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* Ripple effect on quick action button press */
+@keyframes lx-ripple {
+  from { transform: scale(0); opacity: 0.4; }
+  to   { transform: scale(2.5); opacity: 0; }
+}
+.lx-ripple {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: lx-ripple 0.5s ease-out forwards;
+  background: color-mix(in srgb, var(--lx-accent) 40%, transparent);
+}
+
+/* Theme switch crossfade — applied to the root on theme change */
+@keyframes lx-theme-crossfade {
+  from { opacity: 0.85; }
+  to   { opacity: 1; }
+}
+.lx-theme-fade {
+  animation: lx-theme-crossfade var(--lx-dur-slow) ease-out;
+}
+
+/* Status bar: pulse indicator when a value changes */
+@keyframes lx-status-pulse {
+  0%   { color: var(--lx-accent); transform: scale(1.05); }
+  100% { color: var(--lx-muted); transform: scale(1); }
+}
+.lx-status-changed {
+  animation: lx-status-pulse 0.6s var(--lx-ease);
+}
+/* Auto-trigger pulse when data-pulse attribute changes (StatusBar segments) */
+[data-pulse] {
+  animation: lx-status-pulse 0.6s var(--lx-ease);
+}
+
+/* Skeleton loading for heavy panels (Files/Git/DB/Docker/GitHub) */
+.lx-panel-skeleton {
+  padding: 12px;
+}
+.lx-panel-skeleton-line {
+  height: 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--lx-raised) 25%,
+    color-mix(in srgb, var(--lx-edge) 50%, var(--lx-raised)) 50%,
+    var(--lx-raised) 75%
+  );
+  background-size: 200% 100%;
+  animation: lx-shimmer 1.4s ease-in-out infinite;
+}
+.lx-panel-skeleton-line:last-child {
+  width: 60%;
+}
+
+/* will-change utilities — use sparingly, only during active animation */
+.lx-will-change-transform { will-change: transform; }
+.lx-will-change-opacity { will-change: opacity; }
+
+/* SidePanel / RightPanel widget stagger (cascade entrance) */
+.lx-anim-side-panel > section,
+.lx-anim-right-panel > section {
+  animation: none;
+}
+.lx-anim-side-panel > section:nth-child(1),
+.lx-anim-right-panel > section:nth-child(1) { animation-delay: 0.02s; }
+.lx-anim-side-panel > section:nth-child(2),
+.lx-anim-right-panel > section:nth-child(2) { animation-delay: 0.06s; }
+.lx-anim-side-panel > section:nth-child(3),
+.lx-anim-right-panel > section:nth-child(3) { animation-delay: 0.10s; }
+.lx-anim-side-panel > section:nth-child(4),
+.lx-anim-right-panel > section:nth-child(4) { animation-delay: 0.14s; }
+.lx-anim-side-panel > section:nth-child(5),
+.lx-anim-right-panel > section:nth-child(5) { animation-delay: 0.18s; }
+.lx-anim-side-panel > section:nth-child(6),
+.lx-anim-right-panel > section:nth-child(6) { animation-delay: 0.22s; }
+
+/* ===========================================================================
+ * BRAND POLISH — Unified button system & surface depth
+ * =========================================================================== */
+
+/* ── Primary action button: accent-filled, premium feel ─────────────────── */
+.lx-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  /* DS-08: a "primary" button should read as the accent action, not a neutral
+     raised chrome button. Fill it with the accent and use the computed
+     on-accent foreground so the label stays legible in every theme. */
+  border: 1px solid transparent;
+  border-radius: var(--lx-radius-md);
+  background: var(--lx-accent);
+  color: var(--lx-on-accent);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--lx-dur) var(--lx-ease),
+    border-color var(--lx-dur) var(--lx-ease),
+    transform var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-btn-primary:hover {
+  background: color-mix(in srgb, var(--lx-accent) 88%, black);
+}
+.lx-btn-primary:active {
+  transform: scale(0.97);
+}
+.lx-btn-primary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ── Ghost button: transparent, subtle border ───────────────────────────── */
+.lx-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--lx-edge);
+  border-radius: var(--lx-radius-md);
+  background: transparent;
+  color: var(--lx-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--lx-dur) var(--lx-ease),
+    border-color var(--lx-dur) var(--lx-ease),
+    color var(--lx-dur) var(--lx-ease),
+    transform var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-btn-ghost:hover {
+  background: color-mix(in srgb, var(--lx-raised) 50%, transparent);
+  border-color: var(--lx-muted);
+  color: var(--lx-strong);
+}
+.lx-btn-ghost:active {
+  transform: scale(0.97);
+}
+
+/* ── Danger button: red-tinted for destructive actions ──────────────────── */
+.lx-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid color-mix(in srgb, var(--lx-danger) 50%, transparent);
+  border-radius: var(--lx-radius-md);
+  background: color-mix(in srgb, var(--lx-danger) 10%, transparent);
+  color: var(--lx-danger);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background var(--lx-dur) var(--lx-ease),
+    border-color var(--lx-dur) var(--lx-ease),
+    box-shadow var(--lx-dur) var(--lx-ease),
+    transform var(--lx-dur-fast) var(--lx-ease);
+}
+.lx-btn-danger:hover {
+  background: color-mix(in srgb, var(--lx-danger) 20%, transparent);
+  border-color: var(--lx-danger);
+  box-shadow: 0 4px 20px -4px color-mix(in srgb, var(--lx-danger) 35%, transparent);
+}
+.lx-btn-danger:active {
+  transform: scale(0.97);
+}
+
+/* ── Card / panel surface depth ─────────────────────────────────────────── */
+.lx-card {
+  border: 1px solid var(--lx-edge);
+  border-radius: var(--lx-radius-lg);
+  background: var(--lx-raised);
+  box-shadow: var(--lx-shadow-sm);
+  transition: box-shadow var(--lx-dur) var(--lx-ease), border-color var(--lx-dur) var(--lx-ease);
+}
+.lx-card:hover {
+  box-shadow: var(--lx-shadow-md);
+  border-color: var(--lx-edge);
+}
+
+/* ── Glass panel: frosted glass effect for overlays/popups ──────────────── */
+.lx-glass {
+  background: var(--lx-glass-bg);
+  backdrop-filter: blur(var(--lx-glass-blur));
+  -webkit-backdrop-filter: blur(var(--lx-glass-blur));
+  border: 1px solid var(--lx-glass-border);
+  box-shadow: var(--lx-shadow-lg);
+}
+
+/* ── Badge: small status indicator ──────────────────────────────────────── */
+.lx-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: var(--lx-radius-xl);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.lx-badge-success {
+  background: color-mix(in srgb, var(--lx-success) 15%, transparent);
+  color: var(--lx-success);
+}
+.lx-badge-warning {
+  background: color-mix(in srgb, var(--lx-warning) 15%, transparent);
+  color: var(--lx-warning);
+}
+.lx-badge-danger {
+  background: color-mix(in srgb, var(--lx-danger) 15%, transparent);
+  color: var(--lx-danger);
+}
+.lx-badge-info {
+  background: color-mix(in srgb, var(--lx-info) 15%, transparent);
+  color: var(--lx-info);
+}
+.lx-badge-accent {
+  background: var(--lx-accent-soft);
+  color: var(--lx-accent);
+}
+
+/* ── Status dot: live indicator with pulse ──────────────────────────────── */
+.lx-status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+.lx-status-dot::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  background: inherit;
+  opacity: 0.4;
+  animation: lx-dot-pulse 2s ease-in-out infinite;
+}
+@keyframes lx-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.4); opacity: 0; }
+}
+.lx-status-dot-success { background: var(--lx-success); }
+.lx-status-dot-warning { background: var(--lx-warning); }
+.lx-status-dot-danger { background: var(--lx-danger); }
+.lx-status-dot-info { background: var(--lx-info); }
+
+/* ── Empty state: premium radial gradient with accent tint ──────────────── */
+.lx-empty-state {
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--lx-raised) 40%, transparent) 0%, transparent 50%),
+    var(--lx-surface);
+}
+
+/* ── Divider with accent tint ───────────────────────────────────────────── */
+.lx-divider {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    var(--lx-edge) 20%,
+    var(--lx-edge) 80%,
+    transparent
+  );
+}
+
+/* ── Input field polish: accent focus ring + subtle inner shadow ────────── */
+.lx-input {
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--lx-radius-sm);
+  background: var(--lx-raised);
+  color: var(--lx-strong);
+  font-size: 13px;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  box-shadow: none !important;
+  transition:
+    box-shadow var(--lx-dur) var(--lx-ease),
+    background var(--lx-dur) var(--lx-ease);
+}
+.lx-input:focus {
+  outline: none;
+  box-shadow: none !important;
+  background: var(--lx-surface);
+}
+.lx-input:hover:not(:focus) {
+  box-shadow: none !important;
+}
+  .lx-input::placeholder {
+  /* --lx-muted is now AA (>=4.5:1) in every theme; the old opacity:0.6 dragged
+   * placeholders back to ~1.5-2.7:1 (invisible hints like "…or paste a path").
+   * Full opacity keeps the placeholder readable while still clearly softer than
+   * entered text (which is --lx-strong). */
+  color: var(--lx-muted);
+  opacity: 1;
+  }
+
+/* ── Resizer handle: accent on hover with smooth transition ─────────────── */
+.dv-resize-handle {
+  transition: background-color var(--lx-dur-fast) var(--lx-ease);
+  background: var(--lx-edge);
+  position: relative;
+}
+.dv-resize-handle::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+}
+.dv-resize-handle:hover,
+.dv-resize-handle:active {
+  background: var(--lx-muted);
+}
+
+
+/* ── Hide scrollbars on tab strips and horizontal scrollers ─────────────── */
+.lx-hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.lx-hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Dockview tab container: hide its scrollbar */
+.dv-tabs-and-actions-container {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.dv-tabs-and-actions-container::-webkit-scrollbar {
+  display: none;
+}
+/* Belt-and-braces: never render a scrollbar anywhere inside the workspace tab
+ * strip (the panel tab row). Some dockview builds scroll on an inner wrapper
+ * whose scrollbar slipped through the rules above — kill it on every child. */
+.dv-tabs-and-actions-container,
+.dv-tabs-and-actions-container *,
+.dv-tabs-container,
+.dv-scrollable {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+.dv-tabs-and-actions-container::-webkit-scrollbar,
+.dv-tabs-and-actions-container *::-webkit-scrollbar,
+.dv-tabs-container::-webkit-scrollbar,
+.dv-scrollable::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+/* --- Reduced motion: disable all animations ----------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .lx-anim-nav,
+  .lx-anim-nav-item,
+  .lx-anim-panel-right,
+  .lx-anim-panel-left,
+  .lx-anim-panel,
+  .lx-anim-bar-top,
+  .lx-anim-bar-bottom,
+  .lx-anim-menu,
+  .lx-anim-dialog,
+  .lx-anim-toast,
+  .lx-anim-dropdown,
+  .lx-anim-modal,
+  .lx-anim-palette,
+  .lx-anim-spin,
+  .lx-nav-rail,
+  .lx-nav-rail > *,
+  .lx-anim-right-panel,
+  .lx-anim-side-panel,
+  .lx-anim-topbar,
+  .lx-anim-statusbar,
+  .lx-context-menu,
+  .lx-dialog-overlay,
+  .lx-toast,
+  .lx-settings-modal,
+  .lx-command-palette,
+  .lx-project-switcher,
+  .dv-tab,
+  .dv-content-container > .dv-panel,
+  .lx-toast-leaving,
+  .lx-hover-lift,
+  .lx-anim-pulse,
+  .lx-skeleton,
+  .lx-anim-expand,
+  .lx-anim-fade-in,
+  .lx-anim-widget-in,
+  .lx-rp-bar,
+  .lx-anim-focus-glow,
+  .lx-modal-leaving,
+  .lx-palette-leaving,
+  .lx-dialog-leaving,
+  .lx-status-changed,
+  .lx-theme-fade,
+  .lx-panel-skeleton-line,
+  .lx-anim-side-panel > section,
+  .lx-anim-right-panel > section,
+  .lx-status-dot::after,
+  .lx-nav-rail button[data-nav-id]:hover::after,
+  /* P2AX-07: these looping animations were still pulsing under reduce. */
+  .lx-empty-icon,
+  [data-pulse],
+  .lx-browser-progress {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* Kill the infinite loop entirely so the empty-state icon sits still. */
+  .lx-empty-icon,
+  .lx-browser-progress {
+    animation-iteration-count: 1 !important;
+  }
+  .lx-status-dot::after {
+    display: none;
+  }
+}
+
+/* ── Filter bar inputs: no native border/outline artifacts ──────────────── */
+/* The input itself is intentionally chrome-less because its wrapper
+ * (`.lx-filter-bar`) draws the border and the focus ring via :focus-within
+ * below. We deliberately do NOT add `outline:none` on :focus here — doing so
+ * previously (with !important) overrode the themed :focus-visible indicator and
+ * left keyboard users with no visible focus. Keeping focus indication on the
+ * wrapper satisfies WCAG 2.4.7 without a per-input outline. */
+.lx-filter-bar input,
+.lx-search-input {
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+}
+/* Visible keyboard focus lives on the container: a clear accent border plus a
+ * faint halo (mirrors the global text-input :focus-visible treatment) so the
+ * indicator clears WCAG 1.4.11 3:1 in every theme. */
+.lx-filter-bar:focus-within {
+  border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge)) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
+}
+
+
+/* ====== Global Input Cleanup ======
+ * Keep inputs visually clean by default, but NEVER strip the keyboard focus
+ * indicator. The previous `outline:none !important` made it impossible to see
+ * which field was focused via the keyboard (an accessibility regression that
+ * also undid the :focus-visible work earlier in this file). Mouse focus stays
+ * subtle; keyboard focus (:focus-visible) gets a clear, themed accent ring.
+ * The terminal (xterm) and editor (CodeMirror) paint their own focus surfaces,
+ * so they opt back out below. */
+input, textarea, select {
+  border-color: transparent;
+}
+:where(input, textarea, select):focus-visible {
+  /* Calm, themed focus: a thin accent-tinted border plus a faint 1px halo.
+   * The previous bright 2px solid-accent ring (`var(--lx-accent)`) painted a
+   * loud yellow/amber box around every text field (Settings search, task
+   * filter, preset name, …) which read as garish "yellow stripes". Keyboard
+   * focus stays clearly visible, just no longer shouty. */
+  outline: none;
+  border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
+}
+.xterm :where(input, textarea):focus-visible,
+.cm-editor :where(*):focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Virtualized scroll containers (Files tree, Git history, Search results).
+ * `contain: content` isolates their layout/paint from the rest of the page so
+ * a scroll re-render can never trigger reflow outside the list, and
+ * `overflow-anchor: none` stops the browser's scroll anchoring from fighting
+ * the virtualizer when rows are swapped in/out mid-scroll (visible "jumps"). */
+.lx-virtual-scroll {
+  contain: content;
+  overflow-anchor: none;
+}
+
+@keyframes lx-session-fade {
+  0% { opacity: 0; transform: translateY(4px); }
+  10% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(0); }
+}
+.animate-session-fade {
+  animation: lx-session-fade 2.2s ease-in-out forwards;
+}

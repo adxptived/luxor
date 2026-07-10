@@ -1,0 +1,62 @@
+name: Visual Regression
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "e2e/**"
+      - "shot.mjs"
+      - "playwright.config.ts"
+
+jobs:
+  visual-regression:
+    name: Visual Regression (shot.mjs)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+      - name: Start Vite dev server
+        # Retry loop instead of a fixed `sleep 3` (audit 7.3): a slow Vite
+        # cold start no longer fails the job spuriously.
+        run: |
+          bunx vite --port 5173 --strictPort &
+          for i in $(seq 1 30); do
+            if curl -sSf http://localhost:5173 > /dev/null 2>&1; then
+              echo "Vite ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Vite did not become ready within 30s" >&2
+          exit 1
+      - name: Run visual regression snapshots
+        run: node shot.mjs
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-screenshots
+          path: /tmp/shot_*.png
+          if-no-files-found: warn
+
+  e2e:
+    name: E2E Tests (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps chromium
+      - name: Run E2E tests
+        run: bun run e2e
+      - name: Upload E2E traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-traces
+          path: test-results/
+          if-no-files-found: warn

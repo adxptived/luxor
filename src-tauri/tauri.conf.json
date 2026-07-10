@@ -1,0 +1,64 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Luxor",
+  "version": "0.1.0",
+  "identifier": "com.luxor.app",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:5173",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Luxor",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 480,
+        "minHeight": 400,
+        "resizable": true,
+        "decorations": false,
+        "label": "main",
+        "visible": false,
+        "backgroundColor": "#101014",
+        "dragDropEnabled": false,
+        "additionalBrowserArguments": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --enable-smooth-scrolling"
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: asset: http://asset.localhost; font-src 'self' data:; worker-src 'self' blob:; connect-src 'self' ipc: http://ipc.localhost; frame-src 'self' blob: data: asset: http://asset.localhost https: http:; media-src 'self' blob: data: asset: http://asset.localhost",
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$APPDATA/**", "$APPCONFIG/**", "$APPCACHE/**", "$TEMP/luxor/**"]
+      }
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "category": "DeveloperTool",
+    "shortDescription": "A desktop cockpit for AI-assisted coding",
+    "longDescription": "Luxor is an open-source desktop cockpit for AI-assisted coding: real multi-terminals with savable layouts, project tabs, a full Git explorer and quick actions.",
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "//": "Disabled until release signing keys exist. Before re-enabling: run `tauri signer generate`, put the public key in `pubkey`, and keep the private key in CI secrets. Never ship `active: true` with an empty pubkey — that is an unsigned update channel.",
+      "active": false,
+      "endpoints": ["https://github.com/luxor-app/luxor/releases/latest/download/latest.json"],
+      "pubkey": "",
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

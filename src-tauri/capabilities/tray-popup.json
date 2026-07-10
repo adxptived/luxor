@@ -1,0 +1,16 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "tray-popup",
+  "description": "Capabilities for the custom tray popup window. Minimum permissions: invoke commands, emit/listen events, hide/show/close/set-focus on itself.",
+  "windows": ["tray-popup"],
+  "permissions": [
+    "core:default",
+    "core:event:default",
+    "core:window:allow-hide",
+    "core:window:allow-show",
+    "core:window:allow-set-focus",
+    "core:window:allow-unminimize",
+    "core:window:allow-close",
+    "core:window:allow-is-visible"
+  ]
+}

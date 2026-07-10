@@ -1,0 +1,34 @@
+[package]
+name = "luxor-core"
+description = "Core logic for Luxor: PTY sessions, git, projects, layouts and launcher"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+toml = "0.8"
+portable-pty = "0.9"
+git2 = { version = "0.20", default-features = false, features = ["vendored-libgit2", "vendored-openssl", "https"] }
+rusqlite = { version = "0.36", features = ["bundled"] }
+keyring = { version = "3", features = ["windows-native", "apple-native", "async-secret-service", "tokio", "crypto-rust"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+which = "7"
+dirs = "6"
+uuid = { version = "1", features = ["v4"] }
+chrono = { version = "0.4", features = ["serde"] }
+sysinfo = { version = "0.33", default-features = false, features = ["system", "network"] }
+base64 = "0.22"
+encoding_rs = "0.8"
+regex = "1"
+ignore = "0.4"
+sha2 = "0.10"
+
+[dev-dependencies]
+tempfile = "3"

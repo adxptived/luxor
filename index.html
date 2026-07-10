@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Luxor</title>
+    <!-- Startup timing: this runs the instant the webview begins parsing. -->
+    <script>window.__lx = { head: performance.now() };</script>
+  </head>
+  <body style="background:#101014">
+    <!-- Instant splash: visible the moment the webview paints, removed by
+         React after the first frame (src/App.tsx). Inline styles only. -->
+    <div id="splash" style="position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#101014;z-index:9999;transition:opacity .18s ease">
+      <div style="font:600 22px/1 system-ui,sans-serif;color:#e8b059;letter-spacing:.35em;margin-left:.35em">LUXOR</div>
+      <div style="width:22px;height:22px;border:2px solid #2a2a32;border-top-color:#e8b059;border-radius:50%;animation:lxspin .8s linear infinite"></div>
+      <style>@keyframes lxspin{to{transform:rotate(360deg)}}</style>
+    </div>
+    <div id="root"></div>
+    <!-- Runs when the parser reaches the end of <body>, BEFORE the deferred
+         module below executes. Gap to perfMark's moduleStart = bundle
+         fetch + compile time. -->
+    <script>window.__lx.bodyParsed = performance.now();</script>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
