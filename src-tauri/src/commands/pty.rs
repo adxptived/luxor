@@ -3,11 +3,15 @@ use luxor_core::pty::{SessionInfo, SpawnOptions};
 use luxor_core::Error;
 use tauri::State;
 
+use crate::pathguard::ensure_within_projects;
 use crate::state::AppState;
 
 #[tauri::command(async)]
 pub fn pty_spawn(state: State<'_, AppState>, opts: SpawnOptions) -> Result<SessionInfo, Error> {
     let mut opts = opts;
+    if let Some(cwd) = opts.cwd.as_deref() {
+        ensure_within_projects(&state, cwd)?;
+    }
     // Apply configured default shell when none was requested.
     if opts.shell.is_none() {
         let cfg = state
@@ -30,9 +34,16 @@ pub fn pty_write(
     session_id: String,
     data_b64: String,
 ) -> Result<(), Error> {
+    const MAX_INPUT_BYTES: usize = 1024 * 1024;
+    if data_b64.len() > MAX_INPUT_BYTES * 2 {
+        return Err(Error::InvalidInput("terminal input frame is too large".into()));
+    }
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(data_b64.as_bytes())
         .map_err(|e| Error::InvalidInput(format!("invalid base64 input: {e}")))?;
+    if bytes.len() > MAX_INPUT_BYTES {
+        return Err(Error::InvalidInput("terminal input frame is too large".into()));
+    }
     state.pty.write(&session_id, &bytes)
 }
 

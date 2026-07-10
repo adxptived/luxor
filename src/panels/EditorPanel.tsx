@@ -543,10 +543,11 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
           });
         });
 
-        // Delayed refreshes: dockview panels may resize after the editor mounts.
-        // Each delayed refresh re-measures the editor so the text layer fills the
-        // now-correct container size. Belt-and-suspenders fix for blank-editor.
-        const refreshDelays = [100, 500, 1000];
+        // One delayed recovery refresh covers WebView dock transitions that do
+        // not notify ResizeObserver. Continuous resize and visibility changes
+        // are already handled below, so three unconditional passes only caused
+        // extra layout work for every opened file.
+        const refreshDelays = [500];
         refreshTimers = refreshDelays.map((ms) =>
           setTimeout(() => {
             if (!disposed && editorRef.current) {

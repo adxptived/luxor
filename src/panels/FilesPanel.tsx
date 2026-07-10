@@ -153,17 +153,25 @@ export function FilesPanel() {
   const [detectedIdes, setDetectedIdes] = useState<DetectedIde[]>([]);
   const [searching, setSearching] = useState(false);
   const treeRef = useRef<HTMLDivElement>(null);
+  const loadVersionsRef = useRef(new Map<string, number>());
+  const rootRef = useRef<string | null>(null);
   const root = project && project.path !== "" ? project.path : null;
+  rootRef.current = root;
   const ideActions = mergeIdeActions(config?.custom_ides, detectedIdes, true);
   const defaultIde = resolveDefaultIde(ideActions, project?.preferred_ide ?? config?.default_ide ?? null);
   const defaultIdeLabel = defaultIde ? t(defaultIde.label) : t("IDE");
 
   const load = useCallback(
     async (dir: string) => {
+      const version = (loadVersionsRef.current.get(dir) ?? 0) + 1;
+      loadVersionsRef.current.set(dir, version);
+      const requestedRoot = rootRef.current;
       try {
         const entries = await ipc.fsListDir(dir);
+        if (loadVersionsRef.current.get(dir) !== version || rootRef.current !== requestedRoot) return;
         setChildren((c) => ({ ...c, [dir]: entries }));
       } catch (e) {
+        if (loadVersionsRef.current.get(dir) !== version || rootRef.current !== requestedRoot) return;
         toast(`${t("Cannot read folder:")} ${errorMessage(e)}`, "error");
       }
     },
@@ -197,6 +205,7 @@ export function FilesPanel() {
   }, []);
 
   useEffect(() => {
+    loadVersionsRef.current.clear();
     setChildren({});
     setExpanded({});
     setSelected(new Set());
