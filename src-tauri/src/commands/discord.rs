@@ -152,7 +152,16 @@ impl DiscordEngine {
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect();
-        settings.buttons.retain(|b| b.url.starts_with("https://"));
+        settings.buttons.retain(|button| {
+            tauri::Url::parse(&button.url)
+                .map(|url| {
+                    url.scheme() == "https"
+                        && url.host_str().is_some()
+                        && url.username().is_empty()
+                        && url.password().is_none()
+                })
+                .unwrap_or(false)
+        });
         settings.buttons.truncate(2);
         // Cleared template inputs fall back to the English defaults so an
         // empty textbox never produces a blank Discord status line.
@@ -418,8 +427,8 @@ pub fn discord_push_event(
         _ => Priority::Background,
     };
     let presence = Presence {
-        details: Some(details),
-        state: label,
+        details: Some(details.chars().take(512).collect()),
+        state: label.map(|value| value.chars().take(512).collect()),
         ..Default::default()
     }
     .sanitized();

@@ -11,6 +11,10 @@ use luxor_core::procs::{self, ProcessNode};
 use luxor_core::search::{self, ReplaceReport, SearchReport};
 use luxor_core::{crashlog, diag, Error};
 use std::collections::HashMap;
+use tauri::State;
+
+use crate::pathguard::ensure_within_projects;
+use crate::state::AppState;
 
 async fn blocking<T, F>(f: F) -> Result<T, Error>
 where
@@ -50,6 +54,7 @@ pub async fn search_in_project(
 
 #[tauri::command]
 pub async fn replace_in_project(
+    state: State<'_, AppState>,
     root: String,
     query: String,
     replacement: String,
@@ -57,6 +62,7 @@ pub async fn replace_in_project(
     case_sensitive: bool,
     only_paths: Option<Vec<String>>,
 ) -> Result<ReplaceReport, Error> {
+    ensure_within_projects(&state, &root)?;
     blocking(move || {
         search::replace_in_files(
             &root,

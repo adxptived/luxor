@@ -122,6 +122,12 @@ pub async fn launcher_find_executables(
 }
 
 #[tauri::command(async)]
-pub fn launcher_run_executable(project_dir: String, exe_path: String) -> Result<(), Error> {
+pub fn launcher_run_executable(
+    state: State<'_, AppState>,
+    project_dir: String,
+    exe_path: String,
+) -> Result<(), Error> {
+    crate::pathguard::ensure_within_projects(&state, &project_dir)?;
+    crate::pathguard::ensure_within_projects(&state, &exe_path)?;
     launcher::run_executable(&project_dir, &exe_path)
 }
