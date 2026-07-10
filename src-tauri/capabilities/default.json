@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "Default capabilities for every Luxor window (main, secondary main-N, and the in-app browser). Decorations are off, so the frontend draws the title bar itself and must be allowed to drag / maximize / close every window — not just `main`.",
-  "windows": ["main", "main-*", "luxor-browser"],
+  "description": "Default capabilities for trusted Luxor application windows. Remote pages loaded by the standalone in-app browser are intentionally excluded from all application capabilities.",
+  "windows": ["main", "main-*"],
   "permissions": [
     "core:default",
     "core:event:default",

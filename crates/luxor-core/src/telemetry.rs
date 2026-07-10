@@ -212,8 +212,9 @@ impl TelemetryStore {
         Ok(store)
     }
 
-    /// In-memory store for tests.
-    #[cfg(test)]
+    /// Open an ephemeral in-memory store. Used by tests and as the final
+    /// best-effort fallback when neither the config nor temp directory is
+    /// writable; analytics must not make the desktop application crash.
     pub fn open_in_memory() -> Result<Self> {
         let conn = Connection::open_in_memory()?;
         let mut store = Self { conn, mask_projects: false };

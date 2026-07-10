@@ -62,8 +62,22 @@ fn open_telemetry_store() -> luxor_core::telemetry::TelemetryStore {
         Ok(store) => store,
         Err(e) => {
             tracing::warn!("telemetry store unavailable at {}: {e}; using temp", path.display());
-            let tmp = std::env::temp_dir().join("luxor-local_stats.db");
-            TelemetryStore::open(&tmp).expect("telemetry temp store")
+            // Use a per-process file so a stale/corrupt fallback from another
+            // instance cannot prevent startup. If temp storage is unavailable
+            // too, keep analytics ephemeral rather than crashing the whole app.
+            let tmp = std::env::temp_dir().join(format!(
+                "luxor-local_stats-{}.db",
+                std::process::id()
+            ));
+            TelemetryStore::open(&tmp).unwrap_or_else(|temp_error| {
+                tracing::error!(
+                    "telemetry temp store unavailable at {}: {temp_error}; using memory",
+                    tmp.display()
+                );
+                TelemetryStore::open_in_memory().unwrap_or_else(|memory_error| {
+                    panic!("failed to initialize SQLite even in memory: {memory_error}")
+                })
+            })
         }
     }
 }

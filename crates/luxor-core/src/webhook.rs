@@ -38,8 +38,16 @@ pub fn digest_message(digest: &WeeklyDigest) -> String {
 
 /// Post a message to a Slack Incoming Webhook URL.
 pub async fn send_slack(webhook_url: &str, text: &str) -> Result<()> {
-    if !webhook_url.starts_with("https://") {
-        return Err(Error::InvalidInput("slack webhook must be https".into()));
+    let parsed = reqwest::Url::parse(webhook_url)
+        .map_err(|_| Error::InvalidInput("invalid Slack webhook URL".into()))?;
+    let trusted_host = matches!(
+        parsed.host_str(),
+        Some("hooks.slack.com") | Some("hooks.slack-gov.com")
+    );
+    if parsed.scheme() != "https" || !trusted_host || !parsed.path().starts_with("/services/") {
+        return Err(Error::InvalidInput(
+            "Slack webhook must use an official hooks.slack.com URL".into(),
+        ));
     }
     let resp = reqwest::Client::new()
         .post(webhook_url)
