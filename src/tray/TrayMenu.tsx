@@ -119,20 +119,20 @@ export function TrayMenu(props: TrayMenuProps) {
       <button
         onClick={onOpenApp}
         title={t("Open Luxor")}
-        className="group flex items-center gap-2.5 border-b border-[var(--lx-edge)] bg-[var(--lx-bar)] px-2.5 py-2 text-left transition-colors hover:bg-[var(--lx-raised)]"
+        className="group flex items-center gap-2.5 border-b border-[var(--lx-edge)] bg-[var(--lx-bar)] px-3 py-2.5 text-left transition-colors hover:bg-[var(--lx-raised)]"
       >
-        <span className="lx-brand-mark flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[var(--lx-surface)]">
-          <span className="text-[13px] font-black">L</span>
+        <span className="lx-brand-mark flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[var(--lx-surface)]">
+          <span className="text-[14px] font-black">L</span>
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[12px] font-semibold leading-tight">{t("Open Luxor")}</span>
-          <span className="block truncate text-[10px] text-[var(--lx-muted)]">
+          <span className="block text-[12.5px] font-semibold leading-tight">{t("Open Luxor")}</span>
+          <span className="block truncate text-[10px] leading-relaxed text-[var(--lx-muted)]">
             {version ? `v${version}` : t("Desktop cockpit")}
           </span>
         </span>
         <ExternalLink
           size={13}
-          className="shrink-0 text-[var(--lx-muted)] transition-colors group-hover:text-[var(--lx-accent)]"
+          className="shrink-0 text-[var(--lx-muted)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--lx-accent)]"
         />
       </button>
 
@@ -143,14 +143,19 @@ export function TrayMenu(props: TrayMenuProps) {
           <div className="mb-1">
             <div
               style={stagger(next())}
-              className="lx-menu-item-in px-2 pb-0.5 pt-1 text-[9px] font-semibold uppercase tracking-wider text-[var(--lx-muted)]"
+              className="lx-menu-item-in flex items-center gap-1.5 px-2 pb-1 pt-1.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[var(--lx-muted)]"
             >
-              {t("Projects")}
+              <span>{t("Projects")}</span>
+              {safeProjects.length > 0 && (
+                <span className="rounded-full border border-[var(--lx-edge)] px-1.5 py-px text-[8px] font-medium tabular-nums">
+                  {safeProjects.length}
+                </span>
+              )}
             </div>
             {safeProjects.length === 0 ? (
               <div
                 style={stagger(next())}
-                className="lx-menu-item-in px-2 py-1 text-[11px] text-[var(--lx-muted)]"
+                className="lx-menu-item-in mx-1 rounded-md border border-dashed border-[var(--lx-edge)] px-2 py-2 text-center text-[11px] text-[var(--lx-muted)]"
               >
                 {t("No projects")}
               </div>
@@ -163,14 +168,14 @@ export function TrayMenu(props: TrayMenuProps) {
                   style={stagger(next())}
                   className="lx-menu-item-in lx-menu-row group flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left"
                 >
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-[var(--lx-edge)] bg-[var(--lx-bar)] text-[10px] font-semibold text-[var(--lx-muted)] transition-colors group-hover:border-[var(--lx-accent)] group-hover:text-[var(--lx-accent)]">
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-[var(--lx-edge)] bg-[var(--lx-bar)] text-[10px] font-semibold text-[var(--lx-muted)] transition-colors group-hover:border-[var(--lx-accent)] group-hover:bg-[var(--lx-accent-soft)] group-hover:text-[var(--lx-accent)]">
                     {initial(p.name)}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-[12px]">{p.name}</span>
                 </button>
               ))
             )}
-            <div className="my-1 h-px bg-[var(--lx-edge)]" />
+            <div className="mx-1 my-1.5 h-px bg-[var(--lx-edge)]" />
           </div>
         )}
 
@@ -190,23 +195,25 @@ export function TrayMenu(props: TrayMenuProps) {
           <button
             onClick={onToggleCloseToTray}
             title={t("Keep running when window closes")}
+            role="menuitemcheckbox"
+            aria-checked={closeToTray}
             style={stagger(next())}
             className="lx-menu-item-in lx-menu-row flex w-full items-center gap-2.5 rounded-md px-2 py-1.5 text-left text-[12px] text-[var(--lx-strong)]"
           >
             <span
-              className={`flex h-[14px] w-[14px] shrink-0 items-center justify-center rounded border transition-colors ${
+              className={`flex h-[15px] w-[15px] shrink-0 items-center justify-center rounded-[4px] border transition-all ${
                 closeToTray
-                  ? "border-[var(--lx-accent)] bg-[var(--lx-accent)] text-[var(--lx-surface)]"
+                  ? "scale-100 border-[var(--lx-accent)] bg-[var(--lx-accent)] text-[var(--lx-surface)]"
                   : "border-[var(--lx-edge)] text-transparent"
               }`}
             >
-              <Check size={10} />
+              <Check size={10} strokeWidth={3} />
             </span>
             <span className="min-w-0 flex-1 truncate">{t("Keep running when window closes")}</span>
           </button>
         )}
 
-        <div className="my-1 h-px bg-[var(--lx-edge)]" />
+        <div className="mx-1 my-1.5 h-px bg-[var(--lx-edge)]" />
         <MenuRow icon={Power} label={t("Quit Luxor")} index={next()} onClick={onQuit} danger />
       </div>
     </div>

@@ -96,8 +96,30 @@ body {
 }
 .lx-menu-pop {
   animation: lx-menu-pop 0.16s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: var(--lx-shadow-lg);
+  /* Layered depth: a wide ambient shadow, a tighter contact shadow, and a
+   * 1px inner top highlight that reads as light hitting the card edge. */
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--lx-strong) 7%, transparent),
+    0 2px 8px -2px rgba(0, 0, 0, 0.35),
+    var(--lx-shadow-lg);
   transform-origin: top right;
+}
+
+/* Card surface: a barely-there vertical tint so the menu doesn't look like a
+ * flat slab — the top edge is a touch lighter, like native macOS/Win11 menus. */
+.tray-popup {
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--lx-strong) 3%, var(--lx-surface)),
+    var(--lx-surface) 42%
+  );
+}
+
+/* Keyboard navigation: menus are keyboard-first surfaces, so rows need a
+ * visible focus ring that doesn't rely on hover. */
+.lx-menu-row:focus-visible {
+  outline: 1.5px solid var(--lx-accent);
+  outline-offset: -1.5px;
 }
 
 /* Exit animation — added by TrayPopup right before the window hides so
@@ -172,19 +194,25 @@ body {
     transition: none;
   }
   .lx-menu-row:active,
-  .lx-menu-row:hover .lx-menu-row-icon {
+  .lx-menu-row:hover .lx-menu-row-icon,
+  .group:hover .lx-brand-mark {
     transform: none;
   }
 }
 
-/* Branded app mark in the popup header — subtle accent gradient. */
+/* Branded app mark in the popup header — subtle accent gradient with a soft
+ * glow so the header reads as the anchor of the menu. */
 .lx-brand-mark {
   background: linear-gradient(135deg, var(--lx-accent), var(--lx-accent-2));
-  transition: transform 0.12s ease, filter 0.12s ease;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 35%, transparent),
+    0 2px 8px -2px color-mix(in srgb, var(--lx-accent) 45%, transparent);
+  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
 }
-.lx-brand-mark:hover {
-  filter: brightness(1.06);
-  transform: translateY(-1px);
+.group:hover .lx-brand-mark {
+  filter: brightness(1.08);
+  transform: scale(1.04);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 50%, transparent),
+    0 3px 12px -2px color-mix(in srgb, var(--lx-accent) 60%, transparent);
 }
 
 /* Custom scrollbar for the popup content */
