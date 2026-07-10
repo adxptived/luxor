@@ -76,26 +76,31 @@ pub struct HttpResponse {
 
 /// Run one scratch-pad request. Only http/https URLs are allowed.
 pub async fn http_request(req: HttpRequest) -> Result<HttpResponse> {
-    if !req.url.starts_with("http://") && !req.url.starts_with("https://") {
+    let parsed = reqwest::Url::parse(&req.url)
+        .map_err(|_| Error::InvalidInput("invalid request URL".into()))?;
+    if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
         return Err(Error::InvalidInput(
-            "only http(s) URLs are supported".into(),
+            "only absolute http(s) URLs are supported".into(),
+        ));
+    }
+    if !parsed.username().is_empty() || parsed.password().is_some() {
+        return Err(Error::InvalidInput(
+            "URL credentials are not supported; use an Authorization header".into(),
         ));
     }
     if req.block_private {
-        if let Ok(parsed) = reqwest::Url::parse(&req.url) {
-            if let Some(host) = parsed.host_str() {
-                if is_private_host(host) {
-                    return Err(Error::InvalidInput(format!(
-                        "blocked request to private/loopback host: {host}"
-                    )));
-                }
+        if let Some(host) = parsed.host_str() {
+            if is_private_host(host) {
+                return Err(Error::InvalidInput(format!(
+                    "blocked request to private/loopback host: {host}"
+                )));
             }
         }
     }
     let method = reqwest::Method::from_bytes(req.method.to_uppercase().as_bytes())
         .map_err(|_| Error::InvalidInput(format!("invalid method {}", req.method)))?;
     let client = client(req.timeout_ms.unwrap_or(30_000))?;
-    let mut builder = client.request(method.clone(), &req.url);
+    let mut builder = client.request(method.clone(), parsed);
     for (name, value) in &req.headers {
         if !name.trim().is_empty() {
             builder = builder.header(name.trim(), value.trim());

@@ -23,7 +23,7 @@
         "visible": false,
         "backgroundColor": "#101014",
         "dragDropEnabled": false,
-        "additionalBrowserArguments": "--disable-features=msWebOOUI,msPdfOOUI,msSmartScreenProtection --enable-smooth-scrolling"
+        "additionalBrowserArguments": "--disable-features=msWebOOUI,msPdfOOUI --enable-smooth-scrolling"
       }
     ],
     "security": {

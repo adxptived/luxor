@@ -59,24 +59,3 @@ jobs:
           # The updater endpoint — Tauri checks this URL for new releases.
           # The latest release's JSON is published here automatically by tauri-action.
           updaterJsonPreferTag: true
-
-  publish-updater:
-    name: Publish updater JSON
-    needs: release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download all release assets
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Generate latest.json for auto-updater
-        run: |
-          # The tauri-action generates a `latest.json` manifest for the updater.
-          # This step ensures it's attached to the release as a stable asset
-          # so the in-app updater can find it at:
-          #   https://github.com/<owner>/<repo>/releases/latest/download/latest.json
-          echo "Updater JSON is automatically published by tauri-action."
-          echo "In-app updater endpoint: releases/latest/download/latest.json"

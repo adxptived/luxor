@@ -281,7 +281,12 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
           </button>
           {showIntervalPicker && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowIntervalPicker(false)} />
+              <button
+                type="button"
+                className="fixed inset-0 z-40 cursor-default"
+                aria-label={t("Close refresh interval menu")}
+                onClick={() => setShowIntervalPicker(false)}
+              />
               <div className="absolute right-0 top-full z-[var(--lx-z-dropdown)] mt-1 flex flex-col overflow-hidden rounded-lg border border-edge bg-surface shadow-xl">
                 {AUTO_REFRESH_INTERVALS.map((opt) => (
                   <button
