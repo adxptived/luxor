@@ -366,6 +366,10 @@ export function FilesPanel() {
     setChildren((cur) => {
       const next: Record<string, FsEntry[]> = { ...cur };
       const addEntry = (parent: string, entry: FsEntry) => {
+        // A row must never be its own parent (paths without separators make
+        // parentOf() return the path itself). Such an entry creates a cycle in
+        // the children map and the recursive tree walk overflows the stack.
+        if (parent === entry.path || entry.path === root) return;
         const rows = next[parent] ? [...next[parent]] : [];
         if (!rows.some((row) => row.path === entry.path)) {
           rows.push(entry);
@@ -395,7 +399,10 @@ export function FilesPanel() {
       };
       for (const entry of entries) {
         ensureAncestors(entry.path);
-        addEntry(parentOf(entry.path), entry);
+        // Fall back to the project root when the path has no resolvable
+        // parent, so the result still shows up instead of being dropped.
+        const parent = parentOf(entry.path);
+        addEntry(parent === entry.path ? root : parent, entry);
       }
       return next;
     });
@@ -498,7 +505,12 @@ export function FilesPanel() {
   /** Flat list of currently visible rows (range select + keyboard nav). */
   const visibleRows = useCallback((): FsEntry[] => {
     const out: FsEntry[] = [];
+    // Cycle guard: symlink loops or a corrupted children map must not send
+    // the recursive walk into infinite recursion (stack overflow).
+    const seen = new Set<string>();
     const walk = (dir: string) => {
+      if (seen.has(dir)) return;
+      seen.add(dir);
       for (const entry of children[dir] ?? []) {
         if (!isVisible(entry)) continue;
         out.push(entry);
@@ -833,7 +845,12 @@ export function FilesPanel() {
    *  (audit 3.1: the tree used to render every loaded node into the DOM). */
   const flatRows = useMemo(() => {
     const out: { entry: FsEntry; depth: number }[] = [];
+    // Cycle guard: same protection as visibleRows — a cyclic children map
+    // must degrade to a truncated tree, not crash the whole panel.
+    const seen = new Set<string>();
     const walk = (dir: string, depth: number) => {
+      if (seen.has(dir)) return;
+      seen.add(dir);
       for (const entry of children[dir] ?? []) {
         if (!isVisible(entry)) continue;
         out.push({ entry, depth });
