@@ -33,6 +33,17 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
             librsvg2-dev patchelf libgtk-3-dev
       - run: bun install --frozen-lockfile
+      - name: Verify release version consistency
+        shell: bash
+        run: |
+          PACKAGE_VERSION="$(bun -e "console.log((await Bun.file('package.json').json()).version)")"
+          TAURI_VERSION="$(bun -e "console.log((await Bun.file('src-tauri/tauri.conf.json').json()).version)")"
+          CARGO_VERSION="$(bun -e "const text=await Bun.file('Cargo.toml').text(); const version=text.match(/\[workspace\.package\][\s\S]*?version\s*=\s*\"([^\"]+)\"/)?.[1]; if(!version) process.exit(2); console.log(version)")"
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [[ "$PACKAGE_VERSION" != "$TAURI_VERSION" || "$PACKAGE_VERSION" != "$CARGO_VERSION" || "$PACKAGE_VERSION" != "$TAG_VERSION" ]]; then
+            echo "Version mismatch: tag=$TAG_VERSION package=$PACKAGE_VERSION tauri=$TAURI_VERSION cargo=$CARGO_VERSION" >&2
+            exit 1
+          fi
       - name: Build and release Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
