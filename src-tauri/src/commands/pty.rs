@@ -54,6 +54,12 @@ pub fn pty_resize(
     cols: u16,
     rows: u16,
 ) -> Result<(), Error> {
+    const MAX_DIMENSION: u16 = 10_000;
+    if cols == 0 || rows == 0 || cols > MAX_DIMENSION || rows > MAX_DIMENSION {
+        return Err(Error::InvalidInput(format!(
+            "invalid terminal size: {cols}x{rows}"
+        )));
+    }
     state.pty.resize(&session_id, cols, rows)
 }
 

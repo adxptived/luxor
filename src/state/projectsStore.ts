@@ -120,12 +120,15 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
 
   setActive: (id) => {
     set({ activeId: id });
-    if (id) {
-      localStorage.setItem(ACTIVE_KEY, id);
-      void ipc.projectTouch(id).catch(() => {});
-    } else {
-      localStorage.removeItem(ACTIVE_KEY);
+    // Storage can be unavailable (privacy mode, disabled WebView storage, full
+    // quota). Project switching must still succeed when persistence does not.
+    try {
+      if (id) localStorage.setItem(ACTIVE_KEY, id);
+      else localStorage.removeItem(ACTIVE_KEY);
+    } catch {
+      /* best-effort preference persistence */
     }
+    if (id) void ipc.projectTouch(id).catch(() => {});
   },
 
   cycleActive: (delta) => {

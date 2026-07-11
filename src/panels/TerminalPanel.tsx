@@ -182,7 +182,8 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     let sessionId: string | null = null;
     let disposed = false;
     let opened = false;
-    const pendingWrites: Array<string | Uint8Array> = [];
+    const pendingWrites: Array<{ data: string | Uint8Array; size: number }> = [];
+    let pendingWriteBytes = 0;
     const unlisteners: Array<() => void> = [];
 
     // PTY output can arrive before a hidden dock panel has enough layout to
@@ -191,7 +192,16 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     const writeTerminal = (data: string | Uint8Array) => {
       if (disposed) return;
       if (!opened) {
-        pendingWrites.push(data);
+        // A noisy process in a permanently hidden panel must not grow memory
+        // without bound. Retain the newest ~2 MiB, matching terminal semantics
+        // where recent output is more useful than the oldest unseen output.
+        const MAX_PENDING_BYTES = 2 * 1024 * 1024;
+        const size = typeof data === "string" ? new TextEncoder().encode(data).byteLength : data.byteLength;
+        pendingWrites.push({ data, size });
+        pendingWriteBytes += size;
+        while (pendingWriteBytes > MAX_PENDING_BYTES && pendingWrites.length > 1) {
+          pendingWriteBytes -= pendingWrites.shift()?.size ?? 0;
+        }
         return;
       }
       term.write(data);
@@ -220,7 +230,8 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       term.open(el);
       // Flush output captured while this dock panel was hidden. Do this only
       // after open() has synchronously created xterm's renderer services.
-      for (const data of pendingWrites.splice(0)) term.write(data);
+      for (const write of pendingWrites.splice(0)) term.write(write.data);
+      pendingWriteBytes = 0;
 
       if (cfg?.webgl !== false) {
         // WebGL renderer is much faster; fall back silently when unavailable.
@@ -328,7 +339,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       // Drop listeners from the previous session before spawning a new one.
       unlisteners.splice(0).forEach((u) => u());
       if (opened) term.clear();
-      else pendingWrites.length = 0;
+      else {
+        pendingWrites.length = 0;
+        pendingWriteBytes = 0;
+      }
       void start();
     };
 
