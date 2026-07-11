@@ -4,8 +4,11 @@
  */
 
 import {
+  AlertCircle,
   AlertTriangle,
   AppWindow,
+  CheckCircle2,
+  CircleDashed,
   Bug,
   Code2,
   Copy,
@@ -34,6 +37,7 @@ import { useCallback, useEffect, useState, useRef } from "react";
 
 import { NoFolderCta } from "@/components/NoFolderCta";
 import { useDockStore } from "@/layout/dockStore";
+import { diagnosticReportText, runDiagnostics, type DiagnosticCheck, type DiagnosticGroup, type DiagnosticReport, type DiagnosticState } from "@/lib/diagnostics";
 import { t } from "@/lib/i18n";
 import { isFileManagerIde, isSystemDefaultIde, mergeIdeActions, resolveDefaultIde } from "@/lib/ideActions";
 import * as ipc from "@/lib/ipc";
@@ -55,10 +59,11 @@ import { confirmDestructive } from "@/state/uiStore";
 import { startPerfCollection, stopPerfCollection, getPerfSamples, getPerfSummary, clearPerfSamples, subscribePerf, type PerfSample, type PerfSummary } from "@/lib/perfMetrics";
 import { subscribeLogs, getLogsFiltered, clearLogs, type LogLine, type LogLevel } from "@/lib/logBuffer";
 
-type Tab = "run" | "html" | "env" | "logs" | "disk" | "deps" | "procs" | "perf" | "crashes";
+type Tab = "run" | "diagnostics" | "html" | "env" | "logs" | "disk" | "deps" | "procs" | "perf" | "crashes";
 
 const TABS: { id: Tab; label: string; icon: LucideIcon }[] = [
   { id: "run", label: "Run", icon: Rocket },
+  { id: "diagnostics", label: "Diagnostics", icon: Activity },
   { id: "html", label: "HTML Preview", icon: AppWindow },
   { id: "env", label: ".env", icon: FileWarning },
   { id: "logs", label: "Logs", icon: ScrollText },
@@ -73,7 +78,7 @@ export function DevToolsPanel() {
   const project = useActiveProject();
   const [tab, setTab] = useState<Tab>("run");
   const root = project?.path || "";
-  const needsProject = tab !== "procs" && tab !== "crashes" && tab !== "logs";
+  const needsProject = tab !== "diagnostics" && tab !== "procs" && tab !== "crashes" && tab !== "logs";
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const compact = width > 0 && width < 430;
 
@@ -107,6 +112,7 @@ export function DevToolsPanel() {
         ) : (
           <>
             {tab === "run" && <RunTab root={root} compact={compact} />}
+            {tab === "diagnostics" && <DiagnosticsTab root={root} />}
             {tab === "html" && <HtmlTab root={root} />}
             {tab === "env" && <EnvTab root={root} />}
             {tab === "logs" && <LogsTab root={root} />}
@@ -119,6 +125,125 @@ export function DevToolsPanel() {
         )}
       </div>
     </div>
+  );
+}
+
+const DIAGNOSTIC_GROUPS: DiagnosticGroup[] = ["Runtime", "Discord RPC", "Tooling", "Services", "App features"];
+
+const diagnosticStateUi: Record<DiagnosticState, { label: string; icon: LucideIcon; className: string }> = {
+  pass: { label: "Passed", icon: CheckCircle2, className: "text-success" },
+  warn: { label: "Warning", icon: AlertTriangle, className: "text-warning" },
+  fail: { label: "Failed", icon: AlertCircle, className: "text-danger" },
+  skip: { label: "Skipped", icon: CircleDashed, className: "text-muted" },
+};
+
+function DiagnosticsTab({ root }: { root: string }) {
+  const toast = useAppStore((s) => s.toast);
+  const [report, setReport] = useState<DiagnosticReport | null>(null);
+  const [running, setRunning] = useState(false);
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(["discord"]));
+
+  const run = useCallback(async () => {
+    setRunning(true);
+    try {
+      setReport(await runDiagnostics(root));
+    } catch (error) {
+      toast(`Diagnostics failed: ${errorMessage(error)}`, "error");
+    } finally {
+      setRunning(false);
+    }
+  }, [root, toast]);
+
+  useEffect(() => { void run(); }, [run]);
+
+  const copyReport = async () => {
+    if (!report) return;
+    try {
+      await navigator.clipboard.writeText(diagnosticReportText(report));
+      toast("Diagnostic report copied (secrets redacted)", "success");
+    } catch (error) {
+      toast(errorMessage(error), "error");
+    }
+  };
+
+  const counts = report?.checks.reduce<Record<DiagnosticState, number>>(
+    (acc, check) => ({ ...acc, [check.state]: acc[check.state] + 1 }),
+    { pass: 0, warn: 0, fail: 0, skip: 0 },
+  );
+
+  const toggle = (id: string) => setExpanded((current) => {
+    const next = new Set(current);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
+
+  return (
+    <div className="flex min-h-full flex-col gap-3 p-3">
+      <div className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-edge bg-bar/35 p-3 shadow-sm">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <div className="rounded-lg border border-accent/30 bg-accent/10 p-2 text-accent"><Activity size={17} /></div>
+          <div className="min-w-0">
+            <div className="font-semibold text-strong">Developer diagnostics</div>
+            <p className="mt-0.5 max-w-xl text-xs leading-5 text-muted">Read-only health checks for Discord RPC, native IPC, project tooling and desktop integrations. Checks never send notifications or modify your project.</p>
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <button onClick={() => void copyReport()} disabled={!report || running} className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs text-muted transition hover:border-accent hover:text-accent disabled:opacity-40"><Copy size={12} /> Copy report</button>
+          <button onClick={() => void run()} disabled={running} className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-2.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/15 disabled:opacity-50"><RefreshCw size={12} className={running ? "animate-spin" : ""} /> {running ? "Checking…" : "Run all"}</button>
+        </div>
+      </div>
+
+      {counts && (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {(["pass", "warn", "fail", "skip"] as DiagnosticState[]).map((state) => {
+            const ui = diagnosticStateUi[state];
+            const Icon = ui.icon;
+            return <div key={state} className="flex items-center gap-2 rounded-lg border border-edge bg-surface px-3 py-2"><Icon size={14} className={ui.className} /><span className="text-lg font-semibold text-strong">{counts[state]}</span><span className="text-xs text-muted">{ui.label}</span></div>;
+          })}
+        </div>
+      )}
+
+      {!report && running ? (
+        <div className="flex flex-1 items-center justify-center gap-2 py-16 text-sm text-muted"><RefreshCw size={16} className="animate-spin text-accent" /> Inspecting subsystems…</div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          {DIAGNOSTIC_GROUPS.map((group) => {
+            const checks = report?.checks.filter((check) => check.group === group) ?? [];
+            if (!checks.length) return null;
+            return (
+              <section key={group} aria-labelledby={`diagnostic-${group}`} className="overflow-hidden rounded-xl border border-edge bg-surface shadow-sm">
+                <div className="flex items-center justify-between border-b border-edge bg-bar/30 px-3 py-2">
+                  <h3 id={`diagnostic-${group}`} className="text-xs font-semibold uppercase tracking-wide text-muted">{group}</h3>
+                  <span className="text-[11px] text-muted">{checks.filter((check) => check.state === "pass").length}/{checks.length} passed</span>
+                </div>
+                <div className="divide-y divide-edge/60">
+                  {checks.map((check) => <DiagnosticRow key={check.id} check={check} open={expanded.has(check.id)} onToggle={() => toggle(check.id)} />)}
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      )}
+      {report && <div className="px-1 text-[11px] text-muted">Completed in {report.duration_ms} ms · {report.runtime === "tauri" ? "Native desktop runtime" : "Browser preview (native checks mocked)"}</div>}
+    </div>
+  );
+}
+
+function DiagnosticRow({ check, open, onToggle }: { check: DiagnosticCheck; open: boolean; onToggle: () => void }) {
+  const ui = diagnosticStateUi[check.state];
+  const Icon = ui.icon;
+  return (
+    <button type="button" onClick={onToggle} aria-expanded={open} className="flex w-full flex-col gap-0 px-3 py-2.5 text-left transition hover:bg-raised/40">
+      <span className="flex w-full items-center gap-2.5">
+        <Icon size={15} className={`shrink-0 ${ui.className}`} />
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-medium text-strong">{check.label}</span>
+          <span className="block truncate text-[11px] text-muted">{check.summary}</span>
+        </span>
+        <span className="shrink-0 font-mono text-[10px] text-muted">{check.duration_ms} ms</span>
+      </span>
+      {open && check.detail && <span className="ml-6 mt-2 block rounded-md border border-edge bg-bar/35 px-2.5 py-2 font-mono text-[11px] leading-5 text-muted">{check.detail}</span>}
+    </button>
   );
 }
 
