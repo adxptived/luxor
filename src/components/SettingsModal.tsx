@@ -870,15 +870,17 @@ export function SettingsModal() {
             fade/slide entrance instead of an abrupt content swap. */}
         <div className="flex min-w-0 flex-1 flex-col">
           <div key={section} className="lx-anim-fade-in min-h-0 flex-1 overflow-auto p-4">
-            <div className="mb-4 rounded-lg border border-edge bg-surface/40 p-4">
+            {/* Compact section heading: a boxed card here wasted a full row of
+                vertical space before the first setting appeared. */}
+            <div className="mb-3 border-b border-edge/50 px-2 pb-3">
               <div className="flex items-center gap-2 text-base font-semibold text-strong">
                 {(() => {
                   const active = SECTIONS.find((s) => s.id === section);
                   const Icon = active?.icon;
-                  return <>{Icon && <Icon size={16} className="text-muted" />} {active?.label}</>;
+                  return <>{Icon && <Icon size={16} className="text-accent" />} {active?.label}</>;
                 })()}
               </div>
-              <div className="mt-1 text-xs leading-5 text-muted">{t(`settings.desc.${section}`, SECTION_DESCRIPTIONS[section])}</div>
+              <div className="mt-0.5 text-xs leading-5 text-muted">{t(`settings.desc.${section}`, SECTION_DESCRIPTIONS[section])}</div>
             </div>
             {section === "appearance" && (
               <>
@@ -1096,7 +1098,7 @@ export function SettingsModal() {
                     onChange={(v) => set({ confirm_destructive: v })}
                   />
                 </Row>
-                <Row label="Share settings" help="Export the whole config as JSON (themes, hotkeys, everything) or apply someone else's file.">
+                <Row wide label="Share settings" help="Export the whole config as JSON (themes, hotkeys, everything) or apply someone else's file.">
                   <span className="flex flex-wrap items-center gap-1.5">
                     <button
                       className="flex items-center gap-1 rounded border border-edge px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
@@ -1131,6 +1133,7 @@ export function SettingsModal() {
 
                 {/* Built-in quick presets: one-click partial patches. */}
                 <Row
+                  wide
                   label={t("settings.quick_presets", "Quick presets")}
                   help={t("settings.quick_presets_help", "One-click setups. Each changes only its own settings — hotkeys, shells and paths stay untouched.")}
                 >
@@ -1159,6 +1162,7 @@ export function SettingsModal() {
 
                 {/* Phase 21: Settings profiles (custom presets, shareable). */}
                 <Row
+                  wide
                   label={t("settings.profiles", "My presets")}
                   help={t("settings.profiles_help", "Named presets you can switch instantly, share as a link, or import from a link.")}
                 >
@@ -2346,18 +2350,40 @@ function AboutLink(props: {
   );
 }
 
-function Row({ label, help, children }: { label: string; help?: string; children: React.ReactNode }) {
+function Row({
+  label,
+  help,
+  wide = false,
+  children,
+}: {
+  label: string;
+  help?: string;
+  /** Stack the control below the label at full width — for button groups, card grids and other wide content. */
+  wide?: boolean;
+  children: React.ReactNode;
+}) {
+  // Settings-list row: label (+ always-visible help text) on the left,
+  // control on the right, hairline divider between rows. Help used to hide
+  // behind an ⓘ tooltip, which made every setting a guessing game; showing
+  // it as a subtitle is the standard, scannable settings pattern.
+  if (wide) {
+    return (
+      <div className="group flex flex-col gap-2 border-b border-edge/50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-raised/40">
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="text-pretty leading-snug text-strong">{label}</span>
+          {help && <span className="text-pretty text-[11px] leading-4 text-muted">{help}</span>}
+        </span>
+        <div className="min-w-0">{children}</div>
+      </div>
+    );
+  }
   return (
-    // Keep the label and control side by side at every width: stacking them
-    // (grid-cols-1) doubled each row's height in narrow windows and read as
-    // huge empty gaps between settings. The label column shrinks first and
-    // wraps to multiple lines when space is tight.
-    <div className="mb-1 grid grid-cols-[minmax(7rem,11rem)_1fr] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1 transition-colors md:grid-cols-[13rem_1fr]">
-      <span className="text-pretty leading-snug text-muted" title={help}>
-        {label}
-        {help && <span className="ml-1 cursor-help text-xs opacity-60">ⓘ</span>}
+    <div className="group grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-center gap-x-4 border-b border-edge/50 px-2 py-2 transition-colors last:border-b-0 hover:bg-raised/40">
+      <span className="flex min-w-0 flex-col gap-0.5">
+        <span className="text-pretty leading-snug text-strong">{label}</span>
+        {help && <span className="text-pretty text-[11px] leading-4 text-muted">{help}</span>}
       </span>
-      <div className="min-w-0">{children}</div>
+      <div className="flex min-w-0 items-center justify-end">{children}</div>
     </div>
   );
 }
