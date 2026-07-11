@@ -182,7 +182,20 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     let sessionId: string | null = null;
     let disposed = false;
     let opened = false;
+    const pendingWrites: Array<string | Uint8Array> = [];
     const unlisteners: Array<() => void> = [];
+
+    // PTY output can arrive before a hidden dock panel has enough layout to
+    // open xterm. Writing before term.open() makes xterm schedule viewport work
+    // without a renderer and crashes while reading renderer dimensions.
+    const writeTerminal = (data: string | Uint8Array) => {
+      if (disposed) return;
+      if (!opened) {
+        pendingWrites.push(data);
+        return;
+      }
+      term.write(data);
+    };
 
     // xterm's renderer initializes asynchronously; calling fit() before
     // open() or while the container has no size makes Viewport.syncScrollArea
@@ -205,6 +218,9 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       if (!el.isConnected || el.clientWidth === 0 || el.clientHeight === 0) return false;
       opened = true;
       term.open(el);
+      // Flush output captured while this dock panel was hidden. Do this only
+      // after open() has synchronously created xterm's renderer services.
+      for (const data of pendingWrites.splice(0)) term.write(data);
 
       if (cfg?.webgl !== false) {
         // WebGL renderer is much faster; fall back silently when unavailable.
@@ -286,10 +302,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           attachPty(id, {
             onOutput: (dataB64) => {
               trackerRef.current?.output(Date.now());
-              term.write(ipc.b64ToBytes(dataB64));
+              writeTerminal(ipc.b64ToBytes(dataB64));
             },
             onExit: (exitCode) => {
-              term.write(`\r\n\x1b[90m[process exited ${exitCode ?? ""}]\x1b[0m\r\n`);
+              writeTerminal(`\r\n\x1b[90m[process exited ${exitCode ?? ""}]\x1b[0m\r\n`);
               if (sessionId === id) {
                 sessionId = null;
                 sessionRef.current = null;
@@ -303,7 +319,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           }),
         );
       } catch (e) {
-        term.write(`\r\n\x1b[31mfailed to start shell: ${errorMessage(e)}\x1b[0m\r\n`);
+        writeTerminal(`\r\n\x1b[31mfailed to start shell: ${errorMessage(e)}\x1b[0m\r\n`);
         if (!disposed) setExited(-1);
       }
     };
@@ -311,7 +327,8 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     restartRef.current = () => {
       // Drop listeners from the previous session before spawning a new one.
       unlisteners.splice(0).forEach((u) => u());
-      term.clear();
+      if (opened) term.clear();
+      else pendingWrites.length = 0;
       void start();
     };
 

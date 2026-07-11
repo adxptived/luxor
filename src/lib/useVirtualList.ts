@@ -78,9 +78,16 @@ export function useVirtualList(opts: VirtualListOptions): VirtualListResult {
     const el = containerRef.current;
     if (!el) return;
     setViewportHeight(el.clientHeight);
-    const ro = new ResizeObserver(() => setViewportHeight(el.clientHeight));
+    let resizeRaf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => setViewportHeight(el.clientHeight));
+    });
     ro.observe(el);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(resizeRaf);
+      ro.disconnect();
+    };
   }, []);
 
   // Throttle scroll → state to one update per animation frame. Scroll events

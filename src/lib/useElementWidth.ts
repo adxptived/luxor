@@ -14,12 +14,18 @@ export function useElementWidth<T extends HTMLElement = HTMLDivElement>() {
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === "undefined") return;
+    let resizeRaf = 0;
     const ro = new ResizeObserver((entries) => {
-      for (const e of entries) setWidth(Math.round(e.contentRect.width));
+      const nextWidth = Math.round(entries.at(-1)?.contentRect.width ?? el.clientWidth);
+      cancelAnimationFrame(resizeRaf);
+      resizeRaf = requestAnimationFrame(() => setWidth(nextWidth));
     });
     ro.observe(el);
     setWidth(el.clientWidth);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(resizeRaf);
+      ro.disconnect();
+    };
   }, []);
 
   return { ref, width };

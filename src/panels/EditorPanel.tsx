@@ -341,6 +341,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
     // mount once the editor is created.
     let refreshTimers: ReturnType<typeof setTimeout>[] = [];
     let resizeObs: ResizeObserver | null = null;
+    let resizeRaf: number | null = null;
     const mountStart = performance.now();
     setLang(languageForPath(path));
     setShortcutsOpen(false);
@@ -561,10 +562,17 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
           }, ms),
         );
 
-        // ResizeObserver: re-measure the editor whenever the container resizes.
+        // ResizeObserver callbacks run during layout. Refreshing CodeMirror
+        // synchronously from there mutates layout again and causes Chromium's
+        // "ResizeObserver loop completed with undelivered notifications".
+        // Coalesce measurements to one refresh on the next animation frame.
         if (typeof ResizeObserver !== "undefined" && containerRef.current) {
           resizeObs = new ResizeObserver(() => {
-            if (!disposed && editorRef.current) editorRef.current.refresh();
+            if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
+            resizeRaf = requestAnimationFrame(() => {
+              resizeRaf = null;
+              if (!disposed && editorRef.current) editorRef.current.refresh();
+            });
           });
           resizeObs.observe(containerRef.current);
         }
@@ -609,6 +617,8 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       visibilityObsRef.current = null;
       resizeObs?.disconnect();
       resizeObs = null;
+      if (resizeRaf !== null) cancelAnimationFrame(resizeRaf);
+      resizeRaf = null;
       refreshTimers.forEach(clearTimeout);
       const hadEditor = !!editorRef.current;
       editorRef.current?.destroy();
