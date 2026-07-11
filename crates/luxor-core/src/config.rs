@@ -223,6 +223,11 @@ pub struct UiConfig {
     pub glass_enabled: bool,
     /// Glass strength in percent (0 = opaque, 100 = most transparent). 0–60.
     pub glass_opacity: u16,
+    /// Show the Diagnostics tab in Dev Tools (subsystem health checks:
+    /// Discord RPC, IPC, tooling). Off by default — it is a developer aid,
+    /// not something every user needs in their tab strip.
+    #[serde(default)]
+    pub diagnostics_tab: bool,
 }
 
 /// Nav buttons hidden on a fresh install. The visible set is Terminal, Git,
@@ -285,6 +290,7 @@ impl Default for UiConfig {
             // bar colour. Turning the toggle off makes those surfaces opaque.
             glass_enabled: true,
             glass_opacity: 20,
+            diagnostics_tab: false,
         }
     }
 }

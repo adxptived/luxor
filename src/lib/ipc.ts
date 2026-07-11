@@ -913,6 +913,7 @@ function defaultMockConfig(): AppConfig {
       },
       glass_enabled: true,
       glass_opacity: 20,
+      diagnostics_tab: false,
     },
     notifications: {
       enabled: true,

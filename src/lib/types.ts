@@ -143,6 +143,10 @@ export interface UiConfig {
   glass_enabled: boolean;
   /** Glass strength in percent (0 = opaque, 100 = most transparent). 0–60. */
   glass_opacity: number;
+  /** Show the Diagnostics tab in Dev Tools (Discord RPC & subsystem health
+   *  checks). Off by default — enable it in Settings → Developer. Optional so
+   *  configs saved by older builds still parse. */
+  diagnostics_tab?: boolean;
 }
 
 /** Visibility of the custom tray-popup entries. The header (open Luxor) and

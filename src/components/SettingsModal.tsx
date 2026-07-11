@@ -232,7 +232,7 @@ const SECTION_KEYWORDS: Record<SectionId, string> = {
   launcher: "ide editor custom default detect explorer system open with",
   statusbar: "status bar segments cpu ram network ping project order clock time zoom tasks",
   hotkeys: "keyboard shortcuts keybindings chord",
-  developer: "developer dev logs log panel frontend.log diagnostics share copy export clear startup timing performance first paint errors freeze console troubleshoot bug report",
+    developer: "developer dev logs log panel frontend.log diagnostics share copy export clear startup timing performance first paint errors freeze console troubleshoot bug report diagnostics tab discord rpc health checks devtools",
   about: "about version author adxptived github repository update check release changelog license credits",
 };
 
@@ -2243,7 +2243,20 @@ export function SettingsModal() {
               </>
             )}
 
-            {section === "developer" && <DeveloperSection />}
+            {section === "developer" && (
+              <>
+                <Row
+                  label={t("settings.diagnostics_tab", "Diagnostics tab in Dev Tools")}
+                  help={t("settings.diagnostics_tab_help", "Adds a Diagnostics tab with read-only health checks (Discord RPC, IPC, Git, Docker and more). Off by default.")}
+                >
+                  <Toggle
+                    checked={draft.ui.diagnostics_tab ?? false}
+                    onChange={(v) => set({ ui: { ...draft.ui, diagnostics_tab: v } })}
+                  />
+                </Row>
+                <DeveloperSection />
+              </>
+            )}
 
             {section === "about" && (
               <>

@@ -81,11 +81,21 @@ export function DevToolsPanel() {
   const needsProject = tab !== "diagnostics" && tab !== "procs" && tab !== "crashes" && tab !== "logs";
   const { ref, width } = useElementWidth<HTMLDivElement>();
   const compact = width > 0 && width < 430;
+  // The Diagnostics tab is a developer aid, hidden by default. It is enabled
+  // from Settings → Developer so regular users never see the extra tab.
+  const showDiagnostics = useAppStore((s) => s.config?.ui.diagnostics_tab ?? false);
+  const visibleTabs = showDiagnostics ? TABS : TABS.filter((tb) => tb.id !== "diagnostics");
+
+  // If the setting is turned off while Diagnostics is the active tab, fall
+  // back to Run instead of rendering a tab that no longer has a button.
+  useEffect(() => {
+    if (!showDiagnostics && tab === "diagnostics") setTab("run");
+  }, [showDiagnostics, tab]);
 
   return (
     <div ref={ref} className="flex h-full flex-col bg-surface text-sm">
       <div className="flex gap-1 overflow-x-auto border-b border-edge bg-bar/55 px-2 py-2 lx-noscrollbar select-none">
-        {TABS.map((tb) => {
+        {visibleTabs.map((tb) => {
           const Icon = tb.icon;
           const active = tab === tb.id;
           return (
@@ -112,7 +122,7 @@ export function DevToolsPanel() {
         ) : (
           <>
             {tab === "run" && <RunTab root={root} compact={compact} />}
-            {tab === "diagnostics" && <DiagnosticsTab root={root} />}
+            {tab === "diagnostics" && showDiagnostics && <DiagnosticsTab root={root} />}
             {tab === "html" && <HtmlTab root={root} />}
             {tab === "env" && <EnvTab root={root} />}
             {tab === "logs" && <LogsTab root={root} />}
