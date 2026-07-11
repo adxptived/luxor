@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   Bell,
+  BellOff,
   Bug,
   Check,
   ClipboardCheck,
@@ -16,7 +17,9 @@ import {
   Code2,
   Info,
   Keyboard,
+  Minimize2,
   Minus,
+  MonitorPlay,
   Palette,
   PanelTop,
   Plus,
@@ -43,6 +46,14 @@ import { effectiveShellArgs, formatShellArgs, parseShellArgs } from "@/lib/shell
 import pkg from "../../package.json";
 
 const APP_VERSION: string = (pkg as { version: string }).version;
+
+/** Icons for built-in quick presets; falls back to Rocket for unknown ids. */
+const PRESET_ICONS: Record<string, LucideIcon> = {
+  focus: Eye,
+  presentation: MonitorPlay,
+  compact: Minimize2,
+  "quiet-terminal": BellOff,
+};
 import { HOTKEY_ACTIONS, chordFromEvent, effectiveHotkeys, normalizeChord } from "@/lib/hotkeys";
 import { NAV_BUTTONS, nudgeNavButton, resolveNavOrder } from "@/lib/navButtons";
 import { isMac } from "@/lib/platform";
@@ -609,47 +620,72 @@ export function SettingsModal() {
     }
   };
 
-  /** Copy a share string for one saved profile. */
+  /**
+   * Copy a share string for one saved profile. Clipboard access can be denied
+   * (WebView policies, Linux portals) — fall back to a dialog whose input is
+   * preselected so the user can copy the link manually.
+   */
   const shareProfile = async (profile: SettingsProfile) => {
     const toast = useAppStore.getState().toast;
+    const url = encodePresetToUrl(profile.name, profile.config, profile.description);
+    if (!url) {
+      toast("Failed to encode preset", "error");
+      return;
+    }
     try {
-      const url = encodePresetToUrl(profile.name, profile.config, profile.description);
-      if (!url) {
-        toast("Failed to encode preset", "error");
-        return;
-      }
-      await navigator.clipboard?.writeText(url);
+      await navigator.clipboard.writeText(url);
       toast(t("settings.preset_copied", `Preset "${profile.name}" copied — send it to anyone`), "success");
-    } catch (e) {
-      toast(`Failed to share: ${errorMessage(e)}`, "error");
+    } catch {
+      // Clipboard blocked: show the link in a prompt for manual copying.
+      await useUiStore.getState().prompt({
+        title: t("settings.share_preset", "Copy share link"),
+        message: t("settings.share_preset_manual", "Clipboard is unavailable — copy the link below manually."),
+        initial: url,
+        confirmLabel: t("Done"),
+      });
     }
   };
 
-  /** Import a shared preset from the clipboard: saves it as a profile and applies it. */
+  /** Import a shared preset string: saves it as a profile and applies it. */
+  const importPresetText = (text: string): boolean => {
+    const toast = useAppStore.getState().toast;
+    const shared = decodePresetFromUrl(text);
+    if (shared) {
+      const next = applyImportedConfig(JSON.stringify(shared.config));
+      const profile = createProfile(shared.name, next, shared.description);
+      persistProfiles([profile, ...profiles.filter((p) => p.name !== shared.name)]);
+      toast(t("settings.preset_imported", `Preset "${shared.name}" imported and applied`), "success");
+      return true;
+    }
+    // Fall back to whole-config settings URLs so one button handles both.
+    const config = decodeConfigFromUrl(text);
+    if (!config) return false;
+    applyImportedConfig(JSON.stringify(config));
+    toast("Settings imported from URL — applied automatically", "success");
+    return true;
+  };
+
+  /** Import a shared preset from the clipboard, with a manual-paste fallback. */
   const importPresetFromClipboard = async () => {
     const toast = useAppStore.getState().toast;
     try {
-      const text = await navigator.clipboard?.readText();
-      if (!text) {
-        toast("Clipboard is empty", "info");
-        return;
+      let text = "";
+      try {
+        text = (await navigator.clipboard.readText()) ?? "";
+      } catch {
+        /* clipboard read denied — ask below */
       }
-      const shared = decodePresetFromUrl(text);
-      if (shared) {
-        const next = applyImportedConfig(JSON.stringify(shared.config));
-        const profile = createProfile(shared.name, next, shared.description);
-        persistProfiles([profile, ...profiles.filter((p) => p.name !== shared.name)]);
-        toast(t("settings.preset_imported", `Preset "${shared.name}" imported and applied`), "success");
-        return;
+      if (!text.trim() || !importPresetText(text)) {
+        // No usable clipboard content: let the user paste the link directly.
+        const pasted = await useUiStore.getState().prompt({
+          title: t("settings.import_preset", "Paste a shared preset link"),
+          placeholder: "luxor://preset#…",
+        });
+        if (!pasted?.trim()) return;
+        if (!importPresetText(pasted)) {
+          toast("Not a valid Luxor preset or settings link", "error");
+        }
       }
-      // Fall back to whole-config settings URLs so one button handles both.
-      const config = decodeConfigFromUrl(text);
-      if (!config) {
-        toast("No Luxor preset or settings URL found in clipboard", "error");
-        return;
-      }
-      applyImportedConfig(JSON.stringify(config));
-      toast("Settings imported from URL — applied automatically", "success");
     } catch (e) {
       toast(`Import failed: ${errorMessage(e)}`, "error");
     }
@@ -1098,18 +1134,26 @@ export function SettingsModal() {
                   label={t("settings.quick_presets", "Quick presets")}
                   help={t("settings.quick_presets_help", "One-click setups. Each changes only its own settings — hotkeys, shells and paths stay untouched.")}
                 >
-                  <span className="flex flex-wrap items-center gap-1.5">
-                    {BUILTIN_PRESETS.map((p) => (
-                      <button
-                        key={p.id}
-                        onClick={() => applyBuiltinPreset(p.id)}
-                        className="flex items-center gap-1 rounded border border-edge px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
-                        title={p.description}
-                        data-testid={`preset-${p.id}`}
-                      >
-                        <Rocket size={12} /> {p.name}
-                      </button>
-                    ))}
+                  <span className="grid w-full grid-cols-1 gap-1.5 sm:grid-cols-2">
+                    {BUILTIN_PRESETS.map((p) => {
+                      const PresetIcon = PRESET_ICONS[p.id] ?? Rocket;
+                      return (
+                        <button
+                          key={p.id}
+                          onClick={() => applyBuiltinPreset(p.id)}
+                          className="group flex items-start gap-2.5 rounded-md border border-edge bg-raised px-3 py-2 text-left transition-colors hover:border-accent"
+                          data-testid={`preset-${p.id}`}
+                        >
+                          <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-edge text-muted transition-colors group-hover:border-accent group-hover:text-accent">
+                            <PresetIcon size={14} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-xs font-semibold">{p.name}</span>
+                            <span className="block text-[11px] leading-snug text-muted">{p.description}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
                   </span>
                 </Row>
 
@@ -1133,28 +1177,38 @@ export function SettingsModal() {
                     >
                       <Upload size={12} /> {t("Paste preset")}
                     </button>
+                    {profiles.length === 0 && (
+                      <span className="w-full rounded-md border border-dashed border-edge px-3 py-2 text-[11px] text-muted">
+                        {t("settings.no_presets", "No saved presets yet. Save the current settings, or paste a preset link a friend shared with you.")}
+                      </span>
+                    )}
                     {profiles.map((p) => (
-                      <span key={p.id} className="flex items-center gap-1 rounded border border-edge px-2 py-1 text-xs">
+                      <span
+                        key={p.id}
+                        className="flex items-center gap-1.5 rounded-md border border-edge bg-raised px-2.5 py-1.5 text-xs"
+                      >
                         <button
                           onClick={() => applyProfile(p)}
-                          className="text-muted hover:text-accent"
-                          title={p.description ?? p.modifiedAt}
+                          className="font-medium hover:text-accent"
+                          title={p.description ?? t("settings.apply_preset", "Apply this preset")}
                         >
                           {p.name}
                         </button>
                         <button
                           onClick={() => void shareProfile(p)}
-                          className="text-muted hover:text-accent"
+                          className="rounded p-0.5 text-muted hover:text-accent"
                           title={t("settings.share_preset", "Copy share link")}
+                          aria-label={t("settings.share_preset_named", `Share preset ${p.name}`)}
                         >
-                          <Copy size={10} />
+                          <Copy size={11} />
                         </button>
                         <button
                           onClick={() => removeProfile(p.id)}
-                          className="text-muted hover:text-danger"
+                          className="rounded p-0.5 text-muted hover:text-danger"
                           title={t("Delete")}
+                          aria-label={t("settings.delete_preset_named", `Delete preset ${p.name}`)}
                         >
-                          <Trash2 size={10} />
+                          <Trash2 size={11} />
                         </button>
                       </span>
                     ))}
