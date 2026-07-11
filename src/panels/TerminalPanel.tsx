@@ -181,10 +181,28 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       return true;
     });
 
+    let sessionId: string | null = null;
+    let disposed = false;
+    const unlisteners: Array<() => void> = [];
+
+    // xterm's renderer initializes asynchronously; calling fit() while the
+    // container has no size (dockview panel not laid out yet, hidden window)
+    // or after dispose makes Viewport.syncScrollArea crash with
+    // "Cannot read properties of undefined (reading 'dimensions')".
+    const safeFit = () => {
+      if (disposed || !el.isConnected || el.clientWidth === 0 || el.clientHeight === 0) return;
+      try {
+        fit.fit();
+      } catch {
+        /* renderer not ready yet — the next resize/visibility event retries */
+      }
+    };
+
     if (cfg?.webgl !== false) {
       // WebGL renderer is much faster; fall back silently when unavailable.
       import("@xterm/addon-webgl")
         .then(({ WebglAddon }) => {
+          if (disposed) return;
           try {
             const webgl = new WebglAddon();
             // Browsers cap the number of live WebGL contexts; with many
@@ -197,6 +215,9 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               } catch {
                 /* already disposed */
               }
+              // The DOM renderer takes over with stale dimensions — re-measure
+              // on the next frame instead of crashing the scroll viewport.
+              requestAnimationFrame(safeFit);
             });
             term.loadAddon(webgl);
           } catch {
@@ -205,11 +226,9 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         })
         .catch(() => {});
     }
-    fit.fit();
-
-    let sessionId: string | null = null;
-    let disposed = false;
-    const unlisteners: Array<() => void> = [];
+    // Defer the initial fit one frame: at mount dockview may not have laid the
+    // panel out yet, and fitting a 0×0 container breaks xterm's viewport.
+    requestAnimationFrame(safeFit);
 
     const start = async () => {
       try {
@@ -346,8 +365,13 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       }
     });
 
+    // Fit on the next animation frame instead of synchronously inside the
+    // ResizeObserver callback: fit() itself mutates layout, which triggers
+    // "ResizeObserver loop completed with undelivered notifications".
+    let fitRaf = 0;
     const observer = new ResizeObserver(() => {
-      if (el.clientWidth > 0 && el.clientHeight > 0) fit.fit();
+      cancelAnimationFrame(fitRaf);
+      fitRaf = requestAnimationFrame(safeFit);
     });
     observer.observe(el);
 
@@ -357,8 +381,13 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     const onVisible = () => {
       if (document.visibilityState !== "visible") return;
       requestAnimationFrame(() => {
-        if (el.clientWidth > 0 && el.clientHeight > 0) fit.fit();
-        term.refresh(0, term.rows - 1);
+        if (disposed) return;
+        safeFit();
+        try {
+          term.refresh(0, term.rows - 1);
+        } catch {
+          /* renderer mid-initialization after visibility change — safe to skip */
+        }
       });
     };
     document.addEventListener("visibilitychange", onVisible);
@@ -371,6 +400,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
     return () => {
       disposed = true;
+      cancelAnimationFrame(fitRaf);
       clearInterval(tickInterval);
       trackerRef.current = null;
       document.removeEventListener("visibilitychange", onVisible);
