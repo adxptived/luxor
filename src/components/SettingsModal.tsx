@@ -35,7 +35,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
 import { parseConfigImport, serializeConfig } from "@/lib/configShare";
-import { loadProfiles, createProfile, deleteProfile, encodeConfigToUrl, decodeConfigFromUrl, type SettingsProfile } from "@/lib/settingsProfiles";
+import { loadProfiles, createProfile, deleteProfile, saveProfiles, encodeConfigToUrl, decodeConfigFromUrl, type SettingsProfile } from "@/lib/settingsProfiles";
+import { BUILTIN_PRESETS, decodePresetFromUrl, encodePresetToUrl } from "@/lib/settingsPresets";
 import { searchSettings } from "@/lib/settingsSearch";
 import { effectiveShellArgs, formatShellArgs, parseShellArgs } from "@/lib/shellArgs";
 
@@ -561,13 +562,20 @@ export function SettingsModal() {
     }
   };
 
+  /** Persist a new profile list to storage and state together. */
+  const persistProfiles = (next: SettingsProfile[]) => {
+    const capped = next.slice(0, 20);
+    saveProfiles(capped);
+    setProfiles(capped);
+  };
+
   const saveProfile = async () => {
     const toast = useAppStore.getState().toast;
     try {
       const name = await useUiStore.getState().prompt({ title: t("settings.profile_name", "Profile name"), placeholder: "e.g. Dark + large fonts" });
       if (!name?.trim()) return;
       const updated = createProfile(name.trim(), draft);
-      setProfiles([updated, ...profiles].slice(0, 20));
+      persistProfiles([updated, ...profiles]);
       toast(`Profile "${name}" saved`, "success");
     } catch (e) {
       toast(`Failed to save profile: ${errorMessage(e)}`, "error");
@@ -586,6 +594,65 @@ export function SettingsModal() {
 
   const removeProfile = (id: string) => {
     setProfiles(deleteProfile(id));
+  };
+
+  /** Apply a built-in quick preset (partial patch, type-checked merge). */
+  const applyBuiltinPreset = (presetId: string) => {
+    const toast = useAppStore.getState().toast;
+    const preset = BUILTIN_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    try {
+      applyImportedConfig(JSON.stringify(preset.patch));
+      toast(t("settings.preset_applied", `Preset "${preset.name}" applied`), "success");
+    } catch (e) {
+      toast(`Failed to apply preset: ${errorMessage(e)}`, "error");
+    }
+  };
+
+  /** Copy a share string for one saved profile. */
+  const shareProfile = async (profile: SettingsProfile) => {
+    const toast = useAppStore.getState().toast;
+    try {
+      const url = encodePresetToUrl(profile.name, profile.config, profile.description);
+      if (!url) {
+        toast("Failed to encode preset", "error");
+        return;
+      }
+      await navigator.clipboard?.writeText(url);
+      toast(t("settings.preset_copied", `Preset "${profile.name}" copied — send it to anyone`), "success");
+    } catch (e) {
+      toast(`Failed to share: ${errorMessage(e)}`, "error");
+    }
+  };
+
+  /** Import a shared preset from the clipboard: saves it as a profile and applies it. */
+  const importPresetFromClipboard = async () => {
+    const toast = useAppStore.getState().toast;
+    try {
+      const text = await navigator.clipboard?.readText();
+      if (!text) {
+        toast("Clipboard is empty", "info");
+        return;
+      }
+      const shared = decodePresetFromUrl(text);
+      if (shared) {
+        const next = applyImportedConfig(JSON.stringify(shared.config));
+        const profile = createProfile(shared.name, next, shared.description);
+        persistProfiles([profile, ...profiles.filter((p) => p.name !== shared.name)]);
+        toast(t("settings.preset_imported", `Preset "${shared.name}" imported and applied`), "success");
+        return;
+      }
+      // Fall back to whole-config settings URLs so one button handles both.
+      const config = decodeConfigFromUrl(text);
+      if (!config) {
+        toast("No Luxor preset or settings URL found in clipboard", "error");
+        return;
+      }
+      applyImportedConfig(JSON.stringify(config));
+      toast("Settings imported from URL — applied automatically", "success");
+    } catch (e) {
+      toast(`Import failed: ${errorMessage(e)}`, "error");
+    }
   };
 
   // Phase 21: Share config via URL
@@ -1026,14 +1093,45 @@ export function SettingsModal() {
                   </span>
                 </Row>
 
-                {/* Phase 21: Settings profiles */}
-                <Row label={t("settings.profiles", "Profiles")} help={t("settings.profiles_help", "Named configuration presets you can switch between instantly.")}>
+                {/* Built-in quick presets: one-click partial patches. */}
+                <Row
+                  label={t("settings.quick_presets", "Quick presets")}
+                  help={t("settings.quick_presets_help", "One-click setups. Each changes only its own settings — hotkeys, shells and paths stay untouched.")}
+                >
+                  <span className="flex flex-wrap items-center gap-1.5">
+                    {BUILTIN_PRESETS.map((p) => (
+                      <button
+                        key={p.id}
+                        onClick={() => applyBuiltinPreset(p.id)}
+                        className="flex items-center gap-1 rounded border border-edge px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
+                        title={p.description}
+                        data-testid={`preset-${p.id}`}
+                      >
+                        <Rocket size={12} /> {p.name}
+                      </button>
+                    ))}
+                  </span>
+                </Row>
+
+                {/* Phase 21: Settings profiles (custom presets, shareable). */}
+                <Row
+                  label={t("settings.profiles", "My presets")}
+                  help={t("settings.profiles_help", "Named presets you can switch instantly, share as a link, or import from a link.")}
+                >
                   <span className="flex flex-wrap items-center gap-1.5">
                     <button
                       className="flex items-center gap-1 rounded border border-edge px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
                       onClick={() => void saveProfile()}
                     >
-                      <Plus size={12} /> {t("Save profile")}
+                      <Plus size={12} /> {t("Save preset")}
+                    </button>
+                    <button
+                      className="flex items-center gap-1 rounded border border-edge px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
+                      onClick={() => void importPresetFromClipboard()}
+                      title={t("settings.import_preset", "Paste a shared preset link from the clipboard")}
+                      data-testid="preset-import"
+                    >
+                      <Upload size={12} /> {t("Paste preset")}
                     </button>
                     {profiles.map((p) => (
                       <span key={p.id} className="flex items-center gap-1 rounded border border-edge px-2 py-1 text-xs">
@@ -1043,6 +1141,13 @@ export function SettingsModal() {
                           title={p.description ?? p.modifiedAt}
                         >
                           {p.name}
+                        </button>
+                        <button
+                          onClick={() => void shareProfile(p)}
+                          className="text-muted hover:text-accent"
+                          title={t("settings.share_preset", "Copy share link")}
+                        >
+                          <Copy size={10} />
                         </button>
                         <button
                           onClick={() => removeProfile(p.id)}
