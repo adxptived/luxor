@@ -1151,8 +1151,8 @@ export function SettingsModal() {
                             <PresetIcon size={14} />
                           </span>
                           <span className="min-w-0">
-                            <span className="block text-xs font-semibold">{p.name}</span>
-                            <span className="block text-[11px] leading-snug text-muted">{p.description}</span>
+                            <span className="block text-xs font-semibold">{t(`preset.${p.id}.name`, p.name)}</span>
+                            <span className="block text-[11px] leading-snug text-muted">{t(`preset.${p.id}.desc`, p.description)}</span>
                           </span>
                         </button>
                       );
