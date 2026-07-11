@@ -403,16 +403,26 @@ export default function App() {
     const repo = config?.ui.update_repo ?? "";
     if (!config || !config.ui.update_check || !repo) return;
     const KEY = "luxor.updateCheckDone";
-    if (sessionStorage.getItem(KEY)) return;
-    sessionStorage.setItem(KEY, "1");
-    void ipc
-      .updateCheck(repo)
-      .then((info) => {
-        if (info.update_available) {
-          useAppStore.getState().toast(`${t("update.available", "Luxor update available")}: ${info.latest}`, "info");
-        }
-      })
-      .catch(() => {});
+    // sessionStorage can throw (privacy mode / disabled WebView storage);
+    // an unavailable dedupe latch must not break the check itself.
+    try {
+      if (sessionStorage.getItem(KEY)) return;
+      sessionStorage.setItem(KEY, "1");
+    } catch {
+      /* best-effort once-per-session dedupe */
+    }
+    // Defer the network fetch off the critical startup path so it never
+    // competes with first paint / project load (cancelled on unmount).
+    return scheduleStartupIdle(() => {
+      void ipc
+        .updateCheck(repo)
+        .then((info) => {
+          if (info.update_available) {
+            useAppStore.getState().toast(`${t("update.available", "Luxor update available")}: ${info.latest}`, "info");
+          }
+        })
+        .catch(() => {});
+    });
   }, [configReady]);
 
   // One-time migration: existing installs created before the curated default

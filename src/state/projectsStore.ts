@@ -50,7 +50,15 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   load: async () => {
     try {
       const projects = await ipc.projectList();
-      const saved = localStorage.getItem(ACTIVE_KEY);
+      // Storage can be unavailable (privacy mode, disabled WebView storage).
+      // A failed preference read must not take the whole project list down
+      // with it — fall back to the first project.
+      let saved: string | null = null;
+      try {
+        saved = localStorage.getItem(ACTIVE_KEY);
+      } catch {
+        /* best-effort preference read */
+      }
       const activeId =
         projects.find((p) => p.id === saved)?.id ?? projects[0]?.id ?? null;
       // Set projects, the resolved active id and the loaded flag in a single
@@ -169,12 +177,17 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
   },
 
   reorder: async (ids) => {
-    const byId = new Map(get().projects.map((p) => [p.id, p]));
+    const previous = get().projects;
+    const byId = new Map(previous.map((p) => [p.id, p]));
     const projects = ids.map((id) => byId.get(id)).filter((p): p is Project => Boolean(p));
     set({ projects });
     try {
       await ipc.projectReorder(ids);
     } catch (e) {
+      // Roll back the optimistic reorder so the visible tab order matches
+      // what the backend actually persisted (next launch would otherwise
+      // "randomly" restore a different order than the user sees now).
+      set({ projects: previous });
       useAppStore.getState().toast(`Failed to reorder: ${errorMessage(e)}`, "error");
     }
   },

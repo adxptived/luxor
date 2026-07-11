@@ -5,6 +5,7 @@ import * as ipc from "@/lib/ipc";
 import { t } from "@/lib/i18n";
 import { fmtCpu } from "@/lib/cpu";
 import { logActivity } from "@/lib/activityLog";
+import { schedulePoll } from "@/lib/poll";
 import type { AgentProcess } from "@/lib/types";
 import { errorMessage } from "@/lib/types";
 import { useDockStore } from "@/layout/dockStore";
@@ -54,20 +55,24 @@ export function AgentsPanel() {
 
   useEffect(() => {
     let cancelled = false;
-    const poll = () => {
-      // Walking the OS process tree is expensive — skip it while the window is
-      // hidden (tray / minimized).
-      if (document.hidden) return;
-      void ipc
-        .agentsProcesses()
-        .then((rows) => !cancelled && setProcs(rows))
-        .catch(() => !cancelled && setProcs([]));
-    };
-    poll();
-    const interval = setInterval(poll, POLL_MS);
+    // Walking the OS process tree is expensive — the shared scheduler stops
+    // polling entirely while hidden (tray), avoids overlapping walks when one
+    // runs slowly, and refreshes immediately when the window is shown again.
+    const unsubscribe = schedulePoll(
+      () =>
+        ipc
+          .agentsProcesses()
+          .then((rows) => {
+            if (!cancelled) setProcs(rows);
+          })
+          .catch(() => {
+            if (!cancelled) setProcs([]);
+          }),
+      POLL_MS,
+    );
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      unsubscribe();
     };
   }, []);
 

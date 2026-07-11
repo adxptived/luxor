@@ -24,6 +24,7 @@ import { GitBranch, RefreshCw } from "lucide-react";
 import { useActiveProject } from "@/state/projectsStore";
 import { ConflictsView, ReflogView, SubmodulesView, TagsView } from "./GitExtras";
 import { computeBranchGraph, edgePath } from "@/lib/branchGraph";
+import { schedulePoll } from "@/lib/poll";
 
 /**
  * Fire-and-forget git telemetry. GitPanel is an eager (frequently-first) panel,
@@ -110,21 +111,17 @@ export function GitPanel() {
 
   useEffect(() => {
     if (!repo) return;
-    const first = setTimeout(() => {
-      if (!document.hidden) void refresh();
-    }, 250);
     if (autoRefreshSecs <= 0) {
+      // Auto-refresh disabled: still load once shortly after mount.
+      const first = setTimeout(() => {
+        if (!document.hidden) void refresh();
+      }, 250);
       return () => clearTimeout(first);
     }
-    // git status + log + branches + stash is heavy — don't auto-refresh while
-    // the window is hidden (tray / minimized).
-    const interval = setInterval(() => {
-      if (!document.hidden) void refresh();
-    }, autoRefreshSecs * 1000);
-    return () => {
-      clearTimeout(first);
-      clearInterval(interval);
-    };
+    // git status + log + branches + stash is heavy — the shared scheduler
+    // stops polling entirely while hidden (tray), prevents overlapping runs,
+    // and refreshes immediately when the window becomes visible again.
+    return schedulePoll(refresh, autoRefreshSecs * 1000);
   }, [repo, refresh, autoRefreshSecs]);
 
   const confirmThen = (question: string, action: () => void) => {

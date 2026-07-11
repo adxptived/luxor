@@ -40,6 +40,7 @@ import {
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
 import { t, getLocale } from "@/lib/i18n";
+import { schedulePoll } from "@/lib/poll";
 import {
   auditRun,
   DEFAULT_DISCORD_TEMPLATES,
@@ -113,15 +114,12 @@ export function AnalyticsPanel() {
   // The background sampling + Discord driver now runs app-wide (App.tsx); this
   // panel only polls the read-only dashboard so the numbers stay fresh while
   // it's open.
-  useEffect(() => {
-    void refresh();
-    // Skip refreshes while the window is hidden (tray-minimized) — matches the
-    // document.hidden guards used by the other polling panels.
-    const id = setInterval(() => {
-      if (!document.hidden) void refresh();
-    }, 30_000);
-    return () => clearInterval(id);
-  }, [refresh]);
+  useEffect(
+    // Shared scheduler: zero timers while hidden (tray), immediate catch-up
+    // refresh on return, and no overlapping runs on slow IPC.
+    () => schedulePoll(refresh, 30_000),
+    [refresh],
+  );
 
   const applySettings = useCallback(async (next: DiscordSettings) => {
     setSettings(next);

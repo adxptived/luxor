@@ -59,7 +59,7 @@ export function validateApiKey(key: string): ValidationResult {
   return { valid: true };
 }
 
-/** Validate a URL (http/https only). */
+/** Validate a URL (http/https only, no embedded credentials). */
 export function validateHttpUrl(url: string): ValidationResult {
   if (!url || url.trim().length === 0) return { valid: false, error: "URL is empty" };
   if (url.length > 2048) return { valid: false, error: "URL exceeds maximum length" };
@@ -67,6 +67,11 @@ export function validateHttpUrl(url: string): ValidationResult {
     const parsed = new URL(url);
     if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
       return { valid: false, error: "Only http and https URLs are allowed" };
+    }
+    // Match the backend policy (httpx.rs): credentials embedded in a URL leak
+    // into logs, history and share links — require an Authorization header.
+    if (parsed.username !== "" || parsed.password !== "") {
+      return { valid: false, error: "URL credentials are not supported; use an Authorization header" };
     }
     return { valid: true };
   } catch {

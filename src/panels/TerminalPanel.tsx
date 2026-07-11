@@ -18,6 +18,7 @@ import { CommandTracker, type TrackerNotice } from "@/lib/commandTracker";
 import { matchPathLinks, resolveMatchedPath } from "@/lib/terminalLinks";
 import { t } from "@/lib/i18n";
 import { notifyDone, osNotifyIfAway } from "@/lib/notify";
+import { schedulePoll } from "@/lib/poll";
 import { errorMessage } from "@/lib/types";
 import { useAppStore } from "@/state/appStore";
 import { openContextMenu } from "@/state/uiStore";
@@ -481,25 +482,29 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       return;
     }
     let cancelled = false;
-    const poll = () =>
-      void ipc
-        .ptyTreeStats(pid)
-        .then((st) => {
-          if (cancelled) return;
-          setTreeStats(st);
-          const notices = trackerRef.current?.treeSample(
-            st?.processes ?? 0,
-            st?.agents ?? [],
-            Date.now(),
-          );
-          notices?.forEach((n) => handleNoticeRef.current(n));
-        })
-        .catch(() => {});
-    poll();
-    const interval = setInterval(poll, 5000);
+    // Shared scheduler: process-tree walks stop entirely while the window is
+    // hidden (tray), never overlap on slow IPC, and refresh immediately when
+    // the window becomes visible again.
+    const unsubscribe = schedulePoll(
+      () =>
+        ipc
+          .ptyTreeStats(pid)
+          .then((st) => {
+            if (cancelled) return;
+            setTreeStats(st);
+            const notices = trackerRef.current?.treeSample(
+              st?.processes ?? 0,
+              st?.agents ?? [],
+              Date.now(),
+            );
+            notices?.forEach((n) => handleNoticeRef.current(n));
+          })
+          .catch(() => {}),
+      5000,
+    );
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      unsubscribe();
     };
   }, [pid, showStats, notifyEnabled]);
 
