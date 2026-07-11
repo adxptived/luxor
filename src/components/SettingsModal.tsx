@@ -2348,8 +2348,12 @@ function AboutLink(props: {
 
 function Row({ label, help, children }: { label: string; help?: string; children: React.ReactNode }) {
   return (
-    <div className="mb-2 grid grid-cols-1 gap-1.5 rounded-lg px-2 py-1.5 transition-colors md:grid-cols-[13rem_1fr] md:items-center md:gap-3">
-      <span className="text-muted" title={help}>
+    // Keep the label and control side by side at every width: stacking them
+    // (grid-cols-1) doubled each row's height in narrow windows and read as
+    // huge empty gaps between settings. The label column shrinks first and
+    // wraps to multiple lines when space is tight.
+    <div className="mb-1 grid grid-cols-[minmax(7rem,11rem)_1fr] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1 transition-colors md:grid-cols-[13rem_1fr]">
+      <span className="text-pretty leading-snug text-muted" title={help}>
         {label}
         {help && <span className="ml-1 cursor-help text-xs opacity-60">ⓘ</span>}
       </span>
