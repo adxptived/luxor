@@ -20,11 +20,11 @@
 
 :root,
 :root[data-theme="dark"] {
-  --lx-surface: #101014;
-  --lx-raised: #1a1a21;
+  --lx-surface: #1e1f27;
+  --lx-raised: #2b2c36;
   --lx-bar: #14141a;
-  --lx-edge: #26262e;
-  --lx-strong: #d6d6dd;
+  --lx-edge: #33343f;
+  --lx-strong: #e8e8ec;
   --lx-muted: #8b8b96;
   --lx-accent: #e8b059;
   --lx-success: #3fb950;
@@ -38,12 +38,12 @@
   --lx-danger-soft-strong: color-mix(in srgb, var(--lx-danger) 26%, transparent);
   --lx-accent-2: #f0c674;
   --lx-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.4);
-  --lx-shadow-lg: 0 12px 40px -10px rgba(0, 0, 0, 0.6);
+  --lx-shadow-lg: 0 8px 28px -8px rgba(0, 0, 0, 0.55);
 }
 
 :root[data-theme="light"] {
   --lx-surface: #fafafa;
-  --lx-raised: #ededf0;
+  --lx-raised: #ececef;
   --lx-bar: #f3f3f5;
   --lx-edge: #d9d9e0;
   --lx-strong: #1f2328;
@@ -60,7 +60,7 @@
   --lx-danger-soft-strong: color-mix(in srgb, var(--lx-danger) 22%, transparent);
   --lx-accent-2: #cf9b3c;
   --lx-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.1);
-  --lx-shadow-lg: 0 12px 40px -10px rgba(0, 0, 0, 0.22);
+  --lx-shadow-lg: 0 8px 28px -8px rgba(0, 0, 0, 0.2);
 }
 
 html,
@@ -83,136 +83,59 @@ body {
   box-sizing: border-box;
 }
 
-/* Tray popup entry animation — quick and crisp */
+/* Tray popup entry animation — quick fade, like a native context menu. */
 @keyframes lx-menu-pop {
   from {
     opacity: 0;
-    transform: scale(0.97) translateY(-6px);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
 }
 .lx-menu-pop {
-  animation: lx-menu-pop 0.16s cubic-bezier(0.22, 1, 0.36, 1);
-  /* Layered depth: a wide ambient shadow, a tighter contact shadow, and a
-   * 1px inner top highlight that reads as light hitting the card edge. */
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, var(--lx-strong) 7%, transparent),
-    0 2px 8px -2px rgba(0, 0, 0, 0.35),
-    var(--lx-shadow-lg);
-  transform-origin: top right;
+  animation: lx-menu-pop 0.1s ease-out;
+  box-shadow: var(--lx-shadow-lg);
 }
 
-/* Card surface: a barely-there vertical tint so the menu doesn't look like a
- * flat slab — the top edge is a touch lighter, like native macOS/Win11 menus. */
-.tray-popup {
-  background: linear-gradient(
-    to bottom,
-    color-mix(in srgb, var(--lx-strong) 3%, var(--lx-surface)),
-    var(--lx-surface) 42%
-  );
-}
-
-/* Keyboard navigation: menus are keyboard-first surfaces, so rows need a
- * visible focus ring that doesn't rely on hover. */
-.lx-menu-row:focus-visible {
-  outline: 1.5px solid var(--lx-accent);
-  outline-offset: -1.5px;
-}
-
-/* Exit animation — added by TrayPopup right before the window hides so
- * closing feels as deliberate as opening. Keep it shorter than the 110ms
- * JS wait so it always completes. */
+/* Exit animation — added by TrayPopup right before the window hides. Keep it
+ * shorter than the 110ms JS wait so it always completes. */
 @keyframes lx-menu-out {
   from {
     opacity: 1;
-    transform: scale(1) translateY(0);
   }
   to {
     opacity: 0;
-    transform: scale(0.97) translateY(-4px);
   }
 }
 .lx-menu-out {
-  animation: lx-menu-out 0.1s ease-in forwards;
+  animation: lx-menu-out 0.08s ease-in forwards;
 }
 
-/* Staggered entrance for menu rows: every visible row carries
- * `lx-menu-item-in` plus an inline `--lx-i` running index (TrayMenu), so the
- * list cascades in right after the card pop. The card is re-keyed on every
- * show (TrayPopup) so the cascade replays each time the popup opens. The
- * delay is capped at ~170ms so long project lists don't keep the tail
- * invisible. */
-@keyframes lx-item-in {
-  from {
-    opacity: 0;
-    transform: translateY(-3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-.lx-menu-item-in {
-  animation: lx-item-in 0.16s cubic-bezier(0.22, 1, 0.36, 1) backwards;
-  animation-delay: min(calc(var(--lx-i, 0) * 18ms + 25ms), 170ms);
-}
-
-/* Menu row hover: accent-tinted background plus a small icon nudge — closer
- * to a polished native menu than a flat gray hover. Danger rows keep their
- * own red tint via the Tailwind classes on the row. */
+/* Menu row hover: a quiet raised background, exactly like Telegram's tray
+ * menu — no accent tint, no icon nudges, no scale effects. */
 .lx-menu-row {
-  transition: background-color 0.1s ease, color 0.1s ease;
+  transition: background-color 0.08s ease;
 }
-/* :not(.lx-menu-danger) keeps this from out-cascading the Tailwind red hover
- * on danger rows (equal specificity, later in the sheet would win). */
-.lx-menu-row:not(.lx-menu-danger):hover {
-  background: var(--lx-accent-soft);
+.lx-menu-row:hover {
+  background: var(--lx-raised);
 }
-.lx-menu-row:active {
-  transform: scale(0.985);
-}
-.lx-menu-row .lx-menu-row-icon {
-  transition: transform 0.12s ease, color 0.12s ease;
-}
-.lx-menu-row:hover .lx-menu-row-icon {
-  transform: translateX(1px);
-  color: var(--lx-accent);
+
+/* Keyboard navigation: menus are keyboard-first surfaces, so rows need a
+ * visible focus state that doesn't rely on hover. */
+.lx-menu-row:focus-visible {
+  outline: none;
+  background: var(--lx-raised);
 }
 
 /* Respect reduced-motion preferences. */
 @media (prefers-reduced-motion: reduce) {
   .lx-menu-pop,
-  .lx-menu-out,
-  .lx-menu-item-in {
+  .lx-menu-out {
     animation: none;
   }
-  .lx-menu-row,
-  .lx-menu-row .lx-menu-row-icon {
+  .lx-menu-row {
     transition: none;
   }
-  .lx-menu-row:active,
-  .lx-menu-row:hover .lx-menu-row-icon,
-  .group:hover .lx-brand-mark {
-    transform: none;
-  }
-}
-
-/* Branded app mark in the popup header — subtle accent gradient with a soft
- * glow so the header reads as the anchor of the menu. */
-.lx-brand-mark {
-  background: linear-gradient(135deg, var(--lx-accent), var(--lx-accent-2));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 35%, transparent),
-    0 2px 8px -2px color-mix(in srgb, var(--lx-accent) 45%, transparent);
-  transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
-}
-.group:hover .lx-brand-mark {
-  filter: brightness(1.08);
-  transform: scale(1.04);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 50%, transparent),
-    0 3px 12px -2px color-mix(in srgb, var(--lx-accent) 60%, transparent);
 }
 
 /* Custom scrollbar for the popup content */
