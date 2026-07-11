@@ -158,8 +158,6 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       },
     });
 
-    term.open(el);
-
     if (cfg?.copy_on_select) {
       term.onSelectionChange(() => {
         const text = term.getSelection();
@@ -183,14 +181,14 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
     let sessionId: string | null = null;
     let disposed = false;
+    let opened = false;
     const unlisteners: Array<() => void> = [];
 
-    // xterm's renderer initializes asynchronously; calling fit() while the
-    // container has no size (dockview panel not laid out yet, hidden window)
-    // or after dispose makes Viewport.syncScrollArea crash with
-    // "Cannot read properties of undefined (reading 'dimensions')".
+    // xterm's renderer initializes asynchronously; calling fit() before
+    // open() or while the container has no size makes Viewport.syncScrollArea
+    // crash with "Cannot read properties of undefined (reading 'dimensions')".
     const safeFit = () => {
-      if (disposed || !el.isConnected || el.clientWidth === 0 || el.clientHeight === 0) return;
+      if (disposed || !opened || !el.isConnected || el.clientWidth === 0 || el.clientHeight === 0) return;
       try {
         fit.fit();
       } catch {
@@ -198,37 +196,51 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       }
     };
 
-    if (cfg?.webgl !== false) {
-      // WebGL renderer is much faster; fall back silently when unavailable.
-      import("@xterm/addon-webgl")
-        .then(({ WebglAddon }) => {
-          if (disposed) return;
-          try {
-            const webgl = new WebglAddon();
-            // Browsers cap the number of live WebGL contexts; with many
-            // terminals across projects a context can get evicted, which used
-            // to glitch the window when switching tabs quickly. Dropping the
-            // addon falls back to the DOM renderer for that terminal.
-            webgl.onContextLoss(() => {
-              try {
-                webgl.dispose();
-              } catch {
-                /* already disposed */
-              }
-              // The DOM renderer takes over with stale dimensions — re-measure
-              // on the next frame instead of crashing the scroll viewport.
-              requestAnimationFrame(safeFit);
-            });
-            term.loadAddon(webgl);
-          } catch {
-            /* canvas fallback */
-          }
-        })
-        .catch(() => {});
-    }
-    // Defer the initial fit one frame: at mount dockview may not have laid the
-    // panel out yet, and fitting a 0×0 container breaks xterm's viewport.
-    requestAnimationFrame(safeFit);
+    // Opening xterm inside a hidden or 0×0 dockview panel starts its internal
+    // viewport RAF loop before the renderer can initialize, which crashes in
+    // Viewport.syncScrollArea. Only open once the container actually has
+    // layout; the ResizeObserver below retries when the panel becomes visible.
+    const openTerminal = (): boolean => {
+      if (opened || disposed) return opened;
+      if (!el.isConnected || el.clientWidth === 0 || el.clientHeight === 0) return false;
+      opened = true;
+      term.open(el);
+
+      if (cfg?.webgl !== false) {
+        // WebGL renderer is much faster; fall back silently when unavailable.
+        import("@xterm/addon-webgl")
+          .then(({ WebglAddon }) => {
+            if (disposed) return;
+            try {
+              const webgl = new WebglAddon();
+              // Browsers cap the number of live WebGL contexts; with many
+              // terminals across projects a context can get evicted, which used
+              // to glitch the window when switching tabs quickly. Dropping the
+              // addon falls back to the DOM renderer for that terminal.
+              webgl.onContextLoss(() => {
+                try {
+                  webgl.dispose();
+                } catch {
+                  /* already disposed */
+                }
+                // The DOM renderer takes over with stale dimensions — re-measure
+                // on the next frame instead of crashing the scroll viewport.
+                requestAnimationFrame(safeFit);
+              });
+              term.loadAddon(webgl);
+            } catch {
+              /* canvas fallback */
+            }
+          })
+          .catch(() => {});
+      }
+      requestAnimationFrame(safeFit);
+      if (props.api.isActive) term.focus();
+      return true;
+    };
+    // Try on the next frame — dockview usually finishes layout by then. If the
+    // panel is created hidden, the ResizeObserver opens it when it gets size.
+    requestAnimationFrame(() => void openTerminal());
 
     const start = async () => {
       try {
@@ -371,7 +383,12 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     let fitRaf = 0;
     const observer = new ResizeObserver(() => {
       cancelAnimationFrame(fitRaf);
-      fitRaf = requestAnimationFrame(safeFit);
+      fitRaf = requestAnimationFrame(() => {
+        // A panel that mounted hidden gets its real open here, once it
+        // finally has non-zero dimensions.
+        if (!opened) void openTerminal();
+        else safeFit();
+      });
     });
     observer.observe(el);
 
@@ -382,6 +399,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       if (document.visibilityState !== "visible") return;
       requestAnimationFrame(() => {
         if (disposed) return;
+        if (!opened) {
+          void openTerminal();
+          return;
+        }
         safeFit();
         try {
           term.refresh(0, term.rows - 1);
@@ -392,11 +413,12 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     };
     document.addEventListener("visibilitychange", onVisible);
 
-    // Focus terminal when the panel becomes active.
+    // Focus terminal when the panel becomes active. Focusing before open()
+    // would touch a textarea that doesn't exist yet.
     const disposable = props.api.onDidActiveChange((e) => {
-      if (e.isActive) term.focus();
+      if (e.isActive && opened) term.focus();
     });
-    term.focus();
+    if (opened) term.focus();
 
     return () => {
       disposed = true;
