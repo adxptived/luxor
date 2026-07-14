@@ -9,7 +9,7 @@ default-members = ["crates/luxor-core"]
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/luxor-app/luxor"
+repository = "https://github.com/adxptived/luxor"
 authors = ["Luxor contributors"]
 
 [workspace.dependencies]
