@@ -22,8 +22,7 @@
         "label": "main",
         "visible": false,
         "backgroundColor": "#101014",
-        "dragDropEnabled": false,
-        "additionalBrowserArguments": "--disable-features=msWebOOUI,msPdfOOUI --enable-smooth-scrolling"
+        "dragDropEnabled": false
       }
     ],
     "security": {
@@ -48,7 +47,7 @@
     "category": "DeveloperTool",
     "shortDescription": "A desktop cockpit for AI-assisted coding",
     "longDescription": "Luxor is an open-source desktop cockpit for AI-assisted coding: real multi-terminals with savable layouts, project tabs, a full Git explorer and quick actions.",
-    "createUpdaterArtifacts": true
+    "createUpdaterArtifacts": false
   },
   "plugins": {
     "updater": {
