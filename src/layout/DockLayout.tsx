@@ -77,8 +77,6 @@ import { useAppStore } from "@/state/appStore";
 import { openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
 
-import { FilesPanel } from "@/panels/FilesPanel";
-import { LauncherPanel } from "@/panels/LauncherPanel";
 import { WelcomePanel } from "@/panels/WelcomePanel";
 import { EmptyDock } from "@/panels/EmptyDock";
 // Lightweight, frequently-first panels stay eager: their cost is just their own
@@ -91,6 +89,13 @@ import { EmptyDock } from "@/panels/EmptyDock";
 import { lazy, Suspense } from "react";
 import { t } from "@/lib/i18n";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
+
+const FilesPanel = lazy(() =>
+  import("@/panels/FilesPanel").then((m) => ({ default: m.FilesPanel })),
+);
+const LauncherPanel = lazy(() =>
+  import("@/panels/LauncherPanel").then((m) => ({ default: m.LauncherPanel })),
+);
 
 // Lazy editor and diff: these are the only panels that pull in the ~770 KB
 // CodeMirror runtime. CodeMirror's first paint dominates startup today — see
@@ -258,9 +263,9 @@ const components = {
   terminal: (props: IDockviewPanelProps) => <Lazy><TerminalPanel {...props} /></Lazy>,
   git: () => <Lazy><GitPanel /></Lazy>,
   diff: (props: IDockviewPanelProps) => <Lazy><DiffPanel {...props} /></Lazy>,
-  launcher: () => <Wrap><LauncherPanel /></Wrap>,
+  launcher: () => <Lazy><LauncherPanel /></Lazy>,
   welcome: (props: IDockviewPanelProps) => <Wrap><WelcomePanel {...props} /></Wrap>,
-  files: () => <Wrap><FilesPanel /></Wrap>,
+  files: () => <Lazy><FilesPanel /></Lazy>,
   editor: (props: IDockviewPanelProps) => <Lazy><EditorPanel {...props} /></Lazy>,
   image: (props: IDockviewPanelProps) => <Lazy><ImagePanel {...props} /></Lazy>,
   db: (props: IDockviewPanelProps) => <Lazy><DbPanel {...props} /></Lazy>,

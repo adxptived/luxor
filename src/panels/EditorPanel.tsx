@@ -16,7 +16,7 @@ import { HexView } from "@/components/HexView";
 import { errorMessage } from "@/lib/types";
 import { cursorLabel, langLabel, selectionLabel } from "@/lib/editorStatus";
 import { EDITOR_LANGUAGE_OPTIONS, detectLanguage, languageForPath, languageLabel } from "@/lib/editorLanguage";
-import { fileName } from "@/layout/dockStore";
+import { fileName, useDockStore } from "@/layout/dockStore";
 import { CODEMIRROR_THEMES } from "@/lib/codemirrorThemeMeta";
 import type { MountedEditor } from "@/lib/codemirror";
 import { isLightTheme } from "@/lib/themes";
@@ -899,9 +899,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
               // Try to resolve against the current file's directory
               const currentDir = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : path.includes("\\") ? path.substring(0, path.lastIndexOf("\\")) : "";
               const resolved = currentDir ? `${currentDir}/${rel}` : rel;
-              import("@/layout/dockStore").then(({ useDockStore }) => {
-                useDockStore.getState().openFile(resolved);
-              });
+              useDockStore.getState().openFile(resolved);
               return;
             }
             // Relative or local file links (no scheme or file://)
@@ -909,9 +907,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
               const rel = decodeURIComponent(href.replace(/^file:\/\//, ""));
               const currentDir = path.includes("/") ? path.substring(0, path.lastIndexOf("/")) : "";
               const resolved = currentDir ? `${currentDir}/${rel}` : rel;
-              import("@/layout/dockStore").then(({ useDockStore }) => {
-                useDockStore.getState().openFile(resolved);
-              });
+              useDockStore.getState().openFile(resolved);
               return;
             }
             // External https links → open in system browser
