@@ -2,6 +2,7 @@ import { AppWindow, FolderOpen, Play, Plus, RefreshCw, SquareTerminal, Star, Tra
 import { useEffect, useState } from "react";
 
 import { NoFolderCta } from "@/components/NoFolderCta";
+import { useDockStore } from "@/layout/dockStore";
 import * as ipc from "@/lib/ipc";
 import { t } from "@/lib/i18n";
 import { isFileManagerIde, isSystemDefaultIde, mergeIdeActions, resolveDefaultIde } from "@/lib/ideActions";
@@ -61,9 +62,7 @@ export function LauncherPanel() {
   };
 
   const runFavorite = (cmd: string) => {
-    void import("@/layout/dockStore").then(({ useDockStore }) =>
-      useDockStore.getState().addTerminal({ cwd: project.path, autorun: [cmd] }),
-    );
+    void useDockStore.getState().addTerminal({ cwd: project.path, autorun: [cmd] });
   };
 
   const ideActions = mergeIdeActions(config?.custom_ides, ides, false);

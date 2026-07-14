@@ -9,6 +9,7 @@ import { errorMessage } from "@/lib/types";
 import { pushClosedTab, type ReopenInfo } from "@/lib/closedTabs";
 import { revealInEditor } from "@/lib/editorBus";
 import { useAppStore } from "@/state/appStore";
+import { useUiStore } from "@/state/uiStore";
 
 export type PanelKind =
   | "terminal"
@@ -404,7 +405,7 @@ export async function closePanelGuarded(panel: ClosablePanel): Promise<boolean> 
   const { isPanelDirty } = await import("@/lib/dirtyGuard");
   if (isPanelDirty(panel.id)) {
     const name = (panel.title ?? panel.id).replace(/^● /, "");
-    const ok = await (await import("@/state/uiStore")).useUiStore.getState().confirm({
+    const ok = await useUiStore.getState().confirm({
       title: t("tab.unsaved.title", "Discard unsaved changes?"),
       message: `${name} — ${t("tab.unsaved.message", "unsaved changes will be lost.")}`,
       confirmLabel: t("tab.unsaved.discard", "Discard"),
