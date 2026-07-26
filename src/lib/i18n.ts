@@ -12,6 +12,8 @@
  * finishes loading (App also keys its subtree on `getLanguage()`).
  */
 
+import { useSyncExternalStore } from "react";
+
 export type Language = "en" | "ru";
 
 let lang: Language = "en";
@@ -89,6 +91,25 @@ export function t(key: string, english?: string): string {
   const src = english ?? key;
   if (lang === "en") return src;
   return dict[key] ?? dict[src] ?? src;
+}
+
+/**
+ * Reactive `t` for components that must re-render when the language changes.
+ *
+ * Plain `t()` reads module state, so a component only picks up a new language if
+ * something else re-renders it. That is true for the vast majority of the tree
+ * (App re-renders on a language switch and almost nothing is memoized), but a
+ * `memo`-wrapped component whose props did not change would keep showing the old
+ * language. Such components must call `useT()` instead of importing `t`.
+ *
+ * This replaces the previous blunt instrument — `<div key={getLanguage()}>` on
+ * the App root — which forced a full remount of the tree and therefore killed
+ * every running PTY (TerminalPanel's cleanup calls `ptyKill`), discarded the
+ * dockview layout, editor undo history and scroll positions.
+ */
+export function useT(): typeof t {
+  useSyncExternalStore(subscribeLanguage, getLanguageVersion, getLanguageVersion);
+  return t;
 }
 
 export const LANGUAGES: { id: Language; label: string }[] = [

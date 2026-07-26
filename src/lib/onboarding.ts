@@ -101,8 +101,20 @@ function loadState(): OnboardingState {
   if (typeof localStorage === "undefined") {
     return { completed: false, currentStep: 0, doneSteps: new Set(), active: false };
   }
+  // Read the completion flag on its own and OUTSIDE the progress-blob parse.
+  // The two keys are independent: `COMPLETED_KEY` is the durable "never show the
+  // tour again" latch, `STORAGE_KEY` is just step bookkeeping. Previously both
+  // the "no progress blob" and the "corrupted JSON" paths fell through to a
+  // hardcoded `completed: false`, throwing away a flag that had already been read
+  // — so anyone whose progress blob was missing or malformed got the first-run
+  // tour again on every launch, forever.
+  let completed = false;
   try {
-    const completed = localStorage.getItem(COMPLETED_KEY) === "true";
+    completed = localStorage.getItem(COMPLETED_KEY) === "true";
+  } catch {
+    // Storage unavailable (privacy mode) — treat as first run.
+  }
+  try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw) as { currentStep: number; doneSteps: string[]; active: boolean };
@@ -114,9 +126,9 @@ function loadState(): OnboardingState {
       };
     }
   } catch {
-    // Corrupted state — start fresh.
+    // Corrupted progress — restart the steps, but keep `completed` intact.
   }
-  return { completed: false, currentStep: 0, doneSteps: new Set(), active: false };
+  return { completed, currentStep: 0, doneSteps: new Set(), active: false };
 }
 
 function saveState(): void {

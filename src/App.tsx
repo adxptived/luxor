@@ -37,7 +37,6 @@ import { DEFAULT_NAV_HIDDEN } from "@/lib/navButtons";
 import { saveAllEditors } from "@/lib/editorBus";
 import { ZOOM_STEP } from "@/lib/zoom";
 import {
-  getLanguage,
   getLanguageVersion,
   setLanguage,
   subscribeLanguage,
@@ -387,15 +386,21 @@ export default function App() {
     };
   }, []);
 
-  // Apply the configured UI language; remount the tree below on change so
-  // plain t() calls re-evaluate everywhere.
+  // Apply the configured UI language.
   // Phase 14: fall back to the auto-detected locale when config doesn't
   // specify a language, instead of always defaulting to "en".
   const language = configLanguage ?? detectedLocaleRef.current;
-  // Re-render when the (lazily-loaded) RU dictionary chunk arrives so plain
-  // t() calls pick up translations without an explicit await here.
+  // Re-render when the language changes or the (lazily-loaded) RU dictionary
+  // chunk arrives, so plain t() calls pick up translations. App re-rendering is
+  // enough for the tree below: it is almost entirely un-memoized, so children
+  // re-evaluate their t() calls. Components that DO memoize must use `useT()`.
   useSyncExternalStore(subscribeLanguage, getLanguageVersion, getLanguageVersion);
-  void setLanguage(language);
+  // `setLanguage` mutates module state and can notify subscribers, so it is a
+  // side effect and must not run in the render body: under StrictMode the render
+  // is double-invoked, and concurrent renders may be thrown away entirely.
+  useEffect(() => {
+    void setLanguage(language);
+  }, [language]);
 
   // One update check on startup (when enabled and a repo is configured).
   useEffect(() => {
@@ -646,7 +651,14 @@ export default function App() {
 
   return (
     <AppErrorBoundary>
-    <div key={getLanguage()} className="flex h-screen w-screen flex-col overflow-hidden bg-surface text-strong">
+    {/* NO `key={getLanguage()}` here. Keying the root on the language remounted
+        the entire tree on every language switch, and TerminalPanel's unmount
+        cleanup calls `ipc.ptyKill(sessionId)` — so changing the UI language
+        killed every running shell (cargo watch, dev servers, …) along with the
+        dock layout and editor undo history. The `useSyncExternalStore`
+        subscription above already re-renders the tree; see `useT()` in i18n.ts
+        for the memoized-component case. */}
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-surface text-strong">
       {!zenMode && sideTabs && <WindowChrome />}
       <div className={`flex min-h-0 flex-1 ${sideTabs ? "flex-row" : "flex-col"}`}>
         {!zenMode && <TopBar vertical={sideTabs} />}

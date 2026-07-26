@@ -83,3 +83,7 @@ bun.lockb
 package-lock.json
 pnpm-lock.yaml
 yarn.lock
+
+# Playwright artifacts
+test-results/
+playwright-report/
