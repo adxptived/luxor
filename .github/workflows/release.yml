@@ -44,6 +44,38 @@ jobs:
             echo "Version mismatch: tag=$TAG_VERSION package=$PACKAGE_VERSION tauri=$TAURI_VERSION cargo=$CARGO_VERSION" >&2
             exit 1
           fi
+      # Apple signing is opt-in. GitHub renders an unset secret as an EMPTY
+      # STRING, and an empty `APPLE_CERTIFICATE` still counts as "set" to the
+      # Tauri bundler: it ran `security import` with nothing to import and
+      # failed the entire macOS job ("SecKeychainItemImport: One or more
+      # parameters passed to a function were not valid"), so macOS shipped no
+      # artifact at all. Export the variables only when a certificate really is
+      # configured; otherwise build an unsigned bundle, which is still usable.
+      - name: Configure Apple code signing
+        if: startsWith(matrix.platform, 'macos')
+        shell: bash
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -z "$APPLE_CERTIFICATE" ]; then
+            echo "No APPLE_CERTIFICATE secret - building an unsigned macOS bundle."
+            exit 0
+          fi
+          for name in APPLE_CERTIFICATE APPLE_CERTIFICATE_PASSWORD APPLE_SIGNING_IDENTITY APPLE_ID APPLE_PASSWORD APPLE_TEAM_ID; do
+            value="${!name}"
+            [ -n "$value" ] || continue
+            {
+              echo "$name<<__LUXOR_EOF__"
+              echo "$value"
+              echo "__LUXOR_EOF__"
+            } >> "$GITHUB_ENV"
+          done
+          echo "Apple code signing configured."
       - name: Build and release Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
@@ -55,13 +87,7 @@ jobs:
           # Windows code signing certificate (EV or OV).
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          # Apple code signing (macOS).
-          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
-          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Apple signing vars come from the gate step above, when configured.
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Luxor ${{ github.ref_name }}"
