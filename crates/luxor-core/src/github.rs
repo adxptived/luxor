@@ -33,10 +33,9 @@ impl RepoRef {
 pub fn parse_remote_url(url: &str) -> Option<RepoRef> {
     let rest = if let Some(r) = url.strip_prefix("git@github.com:") {
         r
-    } else if let Some(i) = url.find("github.com/") {
-        &url[i + "github.com/".len()..]
     } else {
-        return None;
+        let i = url.find("github.com/")?;
+        &url[i + "github.com/".len()..]
     };
     let mut parts = rest.trim_end_matches('/').splitn(3, '/');
     let owner = parts.next()?.trim();
