@@ -18,22 +18,28 @@ jobs:
       - run: bun install --frozen-lockfile
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps chromium
-      - name: Start Vite dev server
-        # Retry loop instead of a fixed `sleep 3` (audit 7.3): a slow Vite
-        # cold start no longer fails the job spuriously.
+      - name: Run visual regression snapshots
+        # Vite MUST start and be used inside a single step. Actions terminates a
+        # step's background children when the step's shell exits, so the old
+        # "start in step A, use in step B" split only ever worked by luck — and
+        # the retry loop's `exit 0` ended step A successfully while leaving
+        # nothing running for step B.
         run: |
           bunx vite --port 5173 --strictPort &
+          VITE_PID=$!
+          trap 'kill "$VITE_PID" 2>/dev/null || true' EXIT
           for i in $(seq 1 30); do
             if curl -sSf http://localhost:5173 > /dev/null 2>&1; then
               echo "Vite ready after ${i}s"
-              exit 0
+              break
+            fi
+            if [ "$i" -eq 30 ]; then
+              echo "Vite did not become ready within 30s" >&2
+              exit 1
             fi
             sleep 1
           done
-          echo "Vite did not become ready within 30s" >&2
-          exit 1
-      - name: Run visual regression snapshots
-        run: node shot.mjs
+          node shot.mjs
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
