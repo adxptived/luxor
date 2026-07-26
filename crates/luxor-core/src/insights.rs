@@ -170,7 +170,11 @@ pub fn generate_insights(
             title: "Динамика недели".into(),
             message: format!(
                 "Общее время {} на {:.0}% относительно прошлой недели.",
-                if pct >= 0.0 { "выросло" } else { "снизилось" },
+                if pct >= 0.0 {
+                    "выросло"
+                } else {
+                    "снизилось"
+                },
                 pct.abs()
             ),
         });
@@ -207,7 +211,12 @@ mod tests {
     use super::*;
 
     fn bucket(date: &str, c: i64, a: i64) -> DayBucket {
-        DayBucket { date: date.into(), coding_seconds: c, ai_seconds: a, audit_seconds: 0 }
+        DayBucket {
+            date: date.into(),
+            coding_seconds: c,
+            ai_seconds: a,
+            audit_seconds: 0,
+        }
     }
 
     #[test]
@@ -239,8 +248,15 @@ mod tests {
             bucket("2026-06-15", 3600, 7200),
             bucket("2026-06-16", 1800, 1800),
         ];
-        let agents = vec![AgentSlice { agent: "Claude Code".into(), seconds: 9000 }];
-        let projects = vec![ProjectTime { name: "luxor".into(), seconds: 9000, primary_lang: Some("Rust".into()) }];
+        let agents = vec![AgentSlice {
+            agent: "Claude Code".into(),
+            seconds: 9000,
+        }];
+        let projects = vec![ProjectTime {
+            name: "luxor".into(),
+            seconds: 9000,
+            primary_lang: Some("Rust".into()),
+        }];
         let mut hourly = [0i64; 24];
         hourly[15] = 9000;
         let digest = build_weekly_digest(&week, Some(7200), &agents, &projects, 12, &hourly);
@@ -258,7 +274,10 @@ mod tests {
 
     #[test]
     fn achievements_progress() {
-        let yir = YearInReview { ai_seconds: 50 * 3600, ..Default::default() };
+        let yir = YearInReview {
+            ai_seconds: 50 * 3600,
+            ..Default::default()
+        };
         let a = evaluate_achievements(&yir, 7, 25, 5 * 3600);
         let sym = a.iter().find(|(k, _, _)| k == "symbiote").unwrap();
         assert!((sym.1 - 0.5).abs() < 1e-9);

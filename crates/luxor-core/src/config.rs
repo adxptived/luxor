@@ -260,7 +260,12 @@ impl Default for UiConfig {
             // Keep in sync with `DEFAULT_VISIBLE_NAV` in the frontend.
             nav_hidden: default_nav_hidden(),
             nav_sidebar: Vec::new(),
-            nav_chrome: vec!["ide".into(), "filemanager".into(), "git".into(), "palette".into()],
+            nav_chrome: vec![
+                "ide".into(),
+                "filemanager".into(),
+                "git".into(),
+                "palette".into(),
+            ],
             zoom: 1.0,
             browser_enabled: false,
             close_to_tray: true,
@@ -662,7 +667,10 @@ mod tests {
         // Fresh installs hide all but the four essential nav buttons.
         assert_eq!(cfg.ui.nav_hidden, default_nav_hidden());
         assert!(cfg.ui.nav_sidebar.is_empty());
-        assert_eq!(cfg.ui.left_sidebar_icon_position, LeftSidebarIconPosition::Top);
+        assert_eq!(
+            cfg.ui.left_sidebar_icon_position,
+            LeftSidebarIconPosition::Top
+        );
         assert!(cfg.ui.nav_hidden.contains(&"agents".to_string()));
         assert!(!cfg.ui.nav_hidden.contains(&"terminal".to_string()));
         assert!(!cfg.ui.nav_hidden.contains(&"settings".to_string()));
@@ -723,10 +731,14 @@ mod tests {
     fn old_terminal_config_gets_shell_argument_defaults() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("config.toml");
-        std::fs::write(&path, "theme = \"dark\"
+        std::fs::write(
+            &path,
+            "theme = \"dark\"
 [terminal]
 shell = \"pwsh\"
-").unwrap();
+",
+        )
+        .unwrap();
         let cfg = load(&path).unwrap();
         assert_eq!(cfg.terminal.shell.as_deref(), Some("pwsh"));
         assert!(cfg.terminal.shell_args.is_empty());

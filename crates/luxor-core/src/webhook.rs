@@ -70,7 +70,9 @@ pub async fn send_slack(webhook_url: &str, text: &str) -> Result<()> {
 /// `_`, `*` or `[` (audit 11.2).
 pub async fn send_telegram(bot_token: &str, chat_id: &str, text: &str) -> Result<()> {
     if bot_token.is_empty() || chat_id.is_empty() {
-        return Err(Error::InvalidInput("telegram bot_token and chat_id required".into()));
+        return Err(Error::InvalidInput(
+            "telegram bot_token and chat_id required".into(),
+        ));
     }
     let url = format!("https://api.telegram.org/bot{bot_token}/sendMessage");
     let resp = reqwest::Client::new()
@@ -81,7 +83,9 @@ pub async fn send_telegram(bot_token: &str, chat_id: &str, text: &str) -> Result
         }))
         .send()
         .await
-        .map_err(|e| Error::Launcher(crate::redact::redact(&format!("telegram send failed: {e}"))))?;
+        .map_err(|e| {
+            Error::Launcher(crate::redact::redact(&format!("telegram send failed: {e}")))
+        })?;
     if !resp.status().is_success() {
         let status = resp.status();
         return Err(Error::Launcher(format!(

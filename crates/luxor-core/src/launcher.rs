@@ -524,7 +524,11 @@ fn collect_executables_recursive(
     seen: &mut std::collections::HashSet<PathBuf>,
     limit: usize,
 ) {
-    if found.len() >= limit || depth_left == 0 || !dir.is_dir() || should_skip_exe_dir(dir, depth_left) {
+    if found.len() >= limit
+        || depth_left == 0
+        || !dir.is_dir()
+        || should_skip_exe_dir(dir, depth_left)
+    {
         return;
     }
 
@@ -750,7 +754,12 @@ mod tests {
     #[test]
     fn find_executables_finds_nested_windows_exes_but_skips_noise() {
         let dir = tempfile::tempdir().unwrap();
-        let nested = dir.path().join("apps").join("desktop").join("target").join("release");
+        let nested = dir
+            .path()
+            .join("apps")
+            .join("desktop")
+            .join("target")
+            .join("release");
         std::fs::create_dir_all(&nested).unwrap();
         let exe = nested.join("Luxor.exe");
         std::fs::write(&exe, b"not a real exe for unit tests").unwrap();

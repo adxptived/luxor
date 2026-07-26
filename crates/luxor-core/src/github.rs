@@ -292,7 +292,9 @@ fn validate_slug(slug: &str) -> Result<String> {
 fn validate_state(state: &str) -> Result<&str> {
     match state {
         "open" | "closed" | "all" => Ok(state),
-        _ => Err(Error::InvalidInput("state must be open, closed, or all".into())),
+        _ => Err(Error::InvalidInput(
+            "state must be open, closed, or all".into(),
+        )),
     }
 }
 

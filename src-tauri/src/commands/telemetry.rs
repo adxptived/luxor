@@ -187,7 +187,10 @@ pub fn telemetry_year_in_review(state: State<'_, AppState>) -> Result<YearInRevi
 
 /// CSV export of the last `days` of daily totals (plan part 5.6 / 12.2).
 #[tauri::command(async)]
-pub fn telemetry_export_csv(state: State<'_, AppState>, days: Option<i64>) -> Result<String, Error> {
+pub fn telemetry_export_csv(
+    state: State<'_, AppState>,
+    days: Option<i64>,
+) -> Result<String, Error> {
     lock(&state).export_csv(days.unwrap_or(90).clamp(1, 365))
 }
 
@@ -208,7 +211,10 @@ pub fn telemetry_shareable_card(
 ) -> Result<String, Error> {
     let store = lock(&state);
     let (digest, _, _, _) = gather_digest(&store)?;
-    Ok(cards::weekly_card_svg(&digest, &title.unwrap_or_else(|| "Эта неделя".into())))
+    Ok(cards::weekly_card_svg(
+        &digest,
+        &title.unwrap_or_else(|| "Эта неделя".into()),
+    ))
 }
 
 /// Render a Year-in-Review card as SVG (plan part 12.3).
@@ -218,7 +224,10 @@ pub fn telemetry_year_card(
     title: Option<String>,
 ) -> Result<String, Error> {
     let yir = lock(&state).year_in_review()?;
-    Ok(cards::year_in_review_svg(&yir, &title.unwrap_or_else(|| "Год с Luxor".into())))
+    Ok(cards::year_in_review_svg(
+        &yir,
+        &title.unwrap_or_else(|| "Год с Luxor".into()),
+    ))
 }
 
 /// Evaluate achievement progress from aggregate stats, persist, and return the
@@ -253,9 +262,15 @@ pub async fn webhook_send_digest(
         let (digest, _, _, _) = gather_digest(&store)?;
         webhook::digest_message(&digest)
     };
-    let slack_url = slack_url.map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
-    let telegram_token = telegram_token.map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
-    let telegram_chat = telegram_chat.map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+    let slack_url = slack_url
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    let telegram_token = telegram_token
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    let telegram_chat = telegram_chat
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
     if slack_url.is_none() && !(telegram_token.is_some() && telegram_chat.is_some()) {
         return Err(Error::InvalidInput(
             "provide a Slack webhook URL or Telegram bot token + chat ID".into(),

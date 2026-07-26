@@ -70,10 +70,39 @@ fn is_source_ext(path: &Path) -> bool {
     matches!(
         path.extension().and_then(|e| e.to_str()),
         Some(
-            "rs" | "ts" | "tsx" | "js" | "jsx" | "mjs" | "cjs" | "py" | "go" | "java" | "kt"
-                | "c" | "h" | "cpp" | "cc" | "hpp" | "cs" | "rb" | "php" | "swift" | "sh"
-                | "bash" | "zsh" | "toml" | "yaml" | "yml" | "json" | "env" | "ini" | "cfg"
-                | "sql" | "html" | "css" | "scss"
+            "rs" | "ts"
+                | "tsx"
+                | "js"
+                | "jsx"
+                | "mjs"
+                | "cjs"
+                | "py"
+                | "go"
+                | "java"
+                | "kt"
+                | "c"
+                | "h"
+                | "cpp"
+                | "cc"
+                | "hpp"
+                | "cs"
+                | "rb"
+                | "php"
+                | "swift"
+                | "sh"
+                | "bash"
+                | "zsh"
+                | "toml"
+                | "yaml"
+                | "yml"
+                | "json"
+                | "env"
+                | "ini"
+                | "cfg"
+                | "sql"
+                | "html"
+                | "css"
+                | "scss"
         )
     )
 }
@@ -106,7 +135,10 @@ fn rules() -> &'static Rules {
 /// Run the audit over `root`. Walks the tree, applies per-line rules.
 pub fn run_audit(root: &Path) -> Result<AuditReport> {
     if !root.exists() {
-        return Err(Error::NotFound(format!("audit path not found: {}", root.display())));
+        return Err(Error::NotFound(format!(
+            "audit path not found: {}",
+            root.display()
+        )));
     }
     let rx = rules();
     let mut report = AuditReport::default();
@@ -130,7 +162,11 @@ pub fn run_audit(root: &Path) -> Result<AuditReport> {
         if !path.is_file() || !is_source_ext(path) {
             continue;
         }
-        if entry.metadata().map(|m| m.len() > MAX_FILE_BYTES).unwrap_or(false) {
+        if entry
+            .metadata()
+            .map(|m| m.len() > MAX_FILE_BYTES)
+            .unwrap_or(false)
+        {
             continue;
         }
         let Ok(content) = std::fs::read_to_string(path) else {
@@ -153,40 +189,98 @@ pub fn run_audit(root: &Path) -> Result<AuditReport> {
             if line.starts_with("//") || line.starts_with('#') || line.starts_with('*') {
                 // Skip comment-only lines for code rules (still scan for secrets).
                 if rx.secret_prefixed.is_match(raw) {
-                    push(&mut report, Severity::Critical, "hardcoded_secret", &rel, line_no,
-                        "Возможный захардкоженный токен");
+                    push(
+                        &mut report,
+                        Severity::Critical,
+                        "hardcoded_secret",
+                        &rel,
+                        line_no,
+                        "Возможный захардкоженный токен",
+                    );
                 }
                 continue;
             }
             if rx.private_key.is_match(raw) {
-                push(&mut report, Severity::Critical, "private_key", &rel, line_no,
-                    "Приватный ключ в репозитории");
+                push(
+                    &mut report,
+                    Severity::Critical,
+                    "private_key",
+                    &rel,
+                    line_no,
+                    "Приватный ключ в репозитории",
+                );
             } else if rx.secret_prefixed.is_match(raw) {
-                push(&mut report, Severity::Critical, "hardcoded_secret", &rel, line_no,
-                    "Возможный захардкоженный токен (provider-prefixed)");
+                push(
+                    &mut report,
+                    Severity::Critical,
+                    "hardcoded_secret",
+                    &rel,
+                    line_no,
+                    "Возможный захардкоженный токен (provider-prefixed)",
+                );
             } else if rx.secret_kv.is_match(raw) {
-                push(&mut report, Severity::High, "hardcoded_secret", &rel, line_no,
-                    "Похоже на захардкоженный секрет в коде");
+                push(
+                    &mut report,
+                    Severity::High,
+                    "hardcoded_secret",
+                    &rel,
+                    line_no,
+                    "Похоже на захардкоженный секрет в коде",
+                );
             }
             if is_rust && line.contains("unsafe ") && line.contains('{') {
-                push(&mut report, Severity::High, "unsafe_block", &rel, line_no,
-                    "Блок unsafe — проверьте инварианты памяти");
+                push(
+                    &mut report,
+                    Severity::High,
+                    "unsafe_block",
+                    &rel,
+                    line_no,
+                    "Блок unsafe — проверьте инварианты памяти",
+                );
             }
             if is_rust && (line.contains(".unwrap()") || line.contains(".expect(")) {
-                push(&mut report, Severity::Low, "panic_risk", &rel, line_no,
-                    "unwrap/expect может паниковать в проде");
+                push(
+                    &mut report,
+                    Severity::Low,
+                    "panic_risk",
+                    &rel,
+                    line_no,
+                    "unwrap/expect может паниковать в проде",
+                );
             }
             if is_js && line.contains("eval(") {
-                push(&mut report, Severity::High, "js_eval", &rel, line_no,
-                    "eval() — риск инъекции кода");
+                push(
+                    &mut report,
+                    Severity::High,
+                    "js_eval",
+                    &rel,
+                    line_no,
+                    "eval() — риск инъекции кода",
+                );
             }
             if is_js && line.contains("dangerouslySetInnerHTML") {
-                push(&mut report, Severity::Medium, "dangerous_html", &rel, line_no,
-                    "dangerouslySetInnerHTML — риск XSS");
+                push(
+                    &mut report,
+                    Severity::Medium,
+                    "dangerous_html",
+                    &rel,
+                    line_no,
+                    "dangerouslySetInnerHTML — риск XSS",
+                );
             }
-            if line.contains("TODO") || line.contains("FIXME") || line.contains("XXX") || line.contains("HACK") {
-                push(&mut report, Severity::Low, "tech_debt", &rel, line_no,
-                    "Маркер техдолга (TODO/FIXME)");
+            if line.contains("TODO")
+                || line.contains("FIXME")
+                || line.contains("XXX")
+                || line.contains("HACK")
+            {
+                push(
+                    &mut report,
+                    Severity::Low,
+                    "tech_debt",
+                    &rel,
+                    line_no,
+                    "Маркер техдолга (TODO/FIXME)",
+                );
             }
         }
     }
@@ -227,14 +321,21 @@ mod tests {
         let rs = dir.path().join("main.rs");
         let mut f = std::fs::File::create(&rs).unwrap();
         writeln!(f, "fn main() {{").unwrap();
-        writeln!(f, "    let token = \"ghp_abcdefghijklmnopqrstuvwxyz0123456789\";").unwrap();
+        writeln!(
+            f,
+            "    let token = \"ghp_abcdefghijklmnopqrstuvwxyz0123456789\";"
+        )
+        .unwrap();
         writeln!(f, "    unsafe {{ do_thing(); }}").unwrap();
         writeln!(f, "    let x = foo().unwrap(); // TODO: handle error").unwrap();
         writeln!(f, "}}").unwrap();
 
         let report = run_audit(dir.path()).unwrap();
         assert!(report.files_scanned >= 1);
-        assert!(report.critical >= 1, "expected a secret finding: {report:?}");
+        assert!(
+            report.critical >= 1,
+            "expected a secret finding: {report:?}"
+        );
         assert!(report.high >= 1, "expected unsafe finding");
         assert!(report.low >= 1, "expected unwrap/TODO finding");
         assert_eq!(report.total, report.findings.len() as i64);
@@ -244,9 +345,17 @@ mod tests {
     fn skips_env_placeholders() {
         let dir = tempfile::tempdir().unwrap();
         let f = dir.path().join("config.ts");
-        std::fs::write(&f, "const apiKey = process.env.API_KEY;\nconst secret = \"${SECRET}\";\n").unwrap();
+        std::fs::write(
+            &f,
+            "const apiKey = process.env.API_KEY;\nconst secret = \"${SECRET}\";\n",
+        )
+        .unwrap();
         let report = run_audit(dir.path()).unwrap();
         // Neither an env read nor a ${...} placeholder should be flagged.
-        assert_eq!(report.critical + report.high, 0, "false positive: {report:?}");
+        assert_eq!(
+            report.critical + report.high,
+            0,
+            "false positive: {report:?}"
+        );
     }
 }

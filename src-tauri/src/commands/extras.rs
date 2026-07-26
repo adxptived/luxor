@@ -223,7 +223,7 @@ pub async fn docker_containers(all: bool) -> Result<Vec<DockerContainer>, Error>
 
 #[tauri::command]
 pub async fn docker_images() -> Result<Vec<DockerImage>, Error> {
-    blocking(move || dockerx::images()).await
+    blocking(dockerx::images).await
 }
 
 #[tauri::command]
@@ -285,7 +285,7 @@ pub async fn frontend_log_read() -> Result<String, Error> {
 /// Clear the persisted frontend log (Developer "Clear logs").
 #[tauri::command]
 pub async fn frontend_log_clear() -> Result<(), Error> {
-    blocking(move || diag::frontend_log_clear()).await
+    blocking(diag::frontend_log_clear).await
 }
 
 /// Reveal the folder that holds frontend.log / config in the OS file manager.

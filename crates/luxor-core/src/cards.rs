@@ -8,7 +8,9 @@ use crate::insights::WeeklyDigest;
 use crate::telemetry::YearInReview;
 
 fn esc(s: &str) -> String {
-    s.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;")
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
 }
 
 /// A 1200×630 (OG-image ratio) weekly summary card (plan part 12.1).
@@ -18,7 +20,13 @@ pub fn weekly_card_svg(digest: &WeeklyDigest, title: &str) -> String {
     let top_agent = digest.top_agent.clone().unwrap_or_else(|| "—".into());
     let trend = digest
         .vs_last_week_pct
-        .map(|p| format!("{}{:.0}% к прошлой неделе", if p >= 0.0 { "+" } else { "" }, p))
+        .map(|p| {
+            format!(
+                "{}{:.0}% к прошлой неделе",
+                if p >= 0.0 { "+" } else { "" },
+                p
+            )
+        })
         .unwrap_or_default();
     format!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="Inter, system-ui, sans-serif">
@@ -57,8 +65,16 @@ pub fn weekly_card_svg(digest: &WeeklyDigest, title: &str) -> String {
 
 /// A Year-in-Review card (plan part 12.3).
 pub fn year_in_review_svg(yir: &YearInReview, title: &str) -> String {
-    let top_project = yir.top_projects.first().map(|p| p.name.clone()).unwrap_or_else(|| "—".into());
-    let top_agent = yir.top_agents.first().map(|a| a.agent.clone()).unwrap_or_else(|| "—".into());
+    let top_project = yir
+        .top_projects
+        .first()
+        .map(|p| p.name.clone())
+        .unwrap_or_else(|| "—".into());
+    let top_agent = yir
+        .top_agents
+        .first()
+        .map(|a| a.agent.clone())
+        .unwrap_or_else(|| "—".into());
     format!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="Inter, system-ui, sans-serif">
   <rect width="1200" height="630" fill="#0b0f1a"/>
@@ -109,7 +125,11 @@ mod tests {
 
     #[test]
     fn year_card_escapes() {
-        let yir = YearInReview { total_seconds: 3600, active_days: 200, ..Default::default() };
+        let yir = YearInReview {
+            total_seconds: 3600,
+            active_days: 200,
+            ..Default::default()
+        };
         let svg = year_in_review_svg(&yir, "A<B&C");
         assert!(svg.contains("A&lt;B&amp;C"));
         assert!(svg.contains("200"));

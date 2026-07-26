@@ -106,10 +106,7 @@ impl Presence {
             activity.insert("state".into(), v.clone().into());
         }
         if let Some(ts) = self.start_timestamp {
-            activity.insert(
-                "timestamps".into(),
-                serde_json::json!({ "start": ts }),
-            );
+            activity.insert("timestamps".into(), serde_json::json!({ "start": ts }));
         }
         if !assets.is_empty() {
             activity.insert("assets".into(), serde_json::Value::Object(assets));
@@ -333,7 +330,10 @@ impl PresenceContext {
     /// Placeholder values shared by all frame templates.
     fn template_vars(&self) -> Vec<(&'static str, String)> {
         vec![
-            ("project", self.project_name.clone().unwrap_or_else(|| "—".into())),
+            (
+                "project",
+                self.project_name.clone().unwrap_or_else(|| "—".into()),
+            ),
             ("branch", self.branch.clone().unwrap_or_else(|| "—".into())),
             ("agent", self.agent.clone().unwrap_or_else(|| "AI".into())),
             ("session", fmt_duration(self.session_seconds)),
@@ -344,8 +344,7 @@ impl PresenceContext {
 
     fn render(&self, template: &str) -> String {
         let vars = self.template_vars();
-        let borrowed: Vec<(&str, &str)> =
-            vars.iter().map(|(k, v)| (*k, v.as_str())).collect();
+        let borrowed: Vec<(&str, &str)> = vars.iter().map(|(k, v)| (*k, v.as_str())).collect();
         render_template(template, &borrowed)
     }
 }
@@ -418,7 +417,10 @@ pub fn build_carousel_frames(ctx: &PresenceContext) -> Vec<Presence> {
                 Presence {
                     details: Some(ctx.render(&ctx.templates.agent_details)),
                     state: Some(ctx.render(&ctx.templates.agent_state)),
-                    large_image: ctx.agent_asset.clone().or_else(|| Some("ai_generic".into())),
+                    large_image: ctx
+                        .agent_asset
+                        .clone()
+                        .or_else(|| Some("ai_generic".into())),
                     large_text: Some(format!("{agent} active")),
                     small_image: Some("luxor".into()),
                     small_text: Some("Luxor".into()),
@@ -433,7 +435,11 @@ pub fn build_carousel_frames(ctx: &PresenceContext) -> Vec<Presence> {
     // Frame 3 — audit.
     if ctx.show_audit {
         if let (Some(_scanned), Some(issues)) = (ctx.lines_scanned, ctx.open_issues) {
-            let asset = if issues == 0 { "audit_ok" } else { "audit_warn" };
+            let asset = if issues == 0 {
+                "audit_ok"
+            } else {
+                "audit_warn"
+            };
             frames.push(
                 Presence {
                     details: Some(ctx.render(&ctx.templates.audit_details)),
@@ -488,7 +494,9 @@ pub fn mask_file_label(path: &str, masked: bool) -> String {
 /// folder, in which case RPC must be disabled for it (part 5.4).
 pub fn blacklisted(value: &str, patterns: &[String]) -> bool {
     let v = value.to_ascii_lowercase();
-    patterns.iter().any(|p| glob_match(&p.to_ascii_lowercase(), &v))
+    patterns
+        .iter()
+        .any(|p| glob_match(&p.to_ascii_lowercase(), &v))
 }
 
 /// Glob-style match where `*` is a wildcard and everything else is literal
@@ -587,10 +595,7 @@ impl DiscordIpc {
     /// [`DiscordIpc::new`] with an explicit transport factory. Deliberately
     /// crate-private: `IpcStream` is a private type, so a `pub` signature here
     /// would leak it out of the module.
-    fn with_connector(
-        client_id: impl Into<String>,
-        connector: fn() -> Option<IpcStream>,
-    ) -> Self {
+    fn with_connector(client_id: impl Into<String>, connector: fn() -> Option<IpcStream>) -> Self {
         Self {
             client_id: client_id.into(),
             stream: None,
@@ -822,8 +827,8 @@ impl DiscordIpc {
         // Opcode 1 = frame.
         if let Err(e) = write_frame(stream, 1, &payload) {
             self.stream = None; // force reconnect next time
-            // The peer never received this frame — a reconnected session must
-            // not skip it via the anti-flicker hash.
+                                // The peer never received this frame — a reconnected session must
+                                // not skip it via the anti-flicker hash.
             self.last_hash = None;
             let delay = self.next_backoff();
             self.next_connect_at = Some(now + delay);
@@ -967,7 +972,9 @@ fn read_frame(stream: &mut IpcStream) -> Result<(u32, serde_json::Value)> {
     // allocation. Discord presence frames are well under this.
     const MAX_FRAME: usize = 64 * 1024;
     if len > MAX_FRAME {
-        return Err(Error::Process(format!("discord frame too large: {len} bytes")));
+        return Err(Error::Process(format!(
+            "discord frame too large: {len} bytes"
+        )));
     }
     let mut body = vec![0u8; len];
     stream.read_exact(&mut body).map_err(Error::Io)?;
@@ -1174,10 +1181,22 @@ mod tests {
         let p = Presence {
             details: Some("a".repeat(200)),
             buttons: vec![
-                PresenceButton { label: "ok".into(), url: "https://x.io".into() },
-                PresenceButton { label: "bad".into(), url: "http://x.io".into() },
-                PresenceButton { label: "ok2".into(), url: "https://y.io".into() },
-                PresenceButton { label: "ok3".into(), url: "https://z.io".into() },
+                PresenceButton {
+                    label: "ok".into(),
+                    url: "https://x.io".into(),
+                },
+                PresenceButton {
+                    label: "bad".into(),
+                    url: "http://x.io".into(),
+                },
+                PresenceButton {
+                    label: "ok2".into(),
+                    url: "https://y.io".into(),
+                },
+                PresenceButton {
+                    label: "ok3".into(),
+                    url: "https://z.io".into(),
+                },
             ],
             ..Default::default()
         }
@@ -1187,7 +1206,10 @@ mod tests {
         assert_eq!(p.buttons.len(), 2);
         assert!(p.buttons.iter().all(|b| b.url.starts_with("https://")));
         let long = Presence {
-            buttons: vec![PresenceButton { label: "x".repeat(80), url: "https://x.io".into() }],
+            buttons: vec![PresenceButton {
+                label: "x".repeat(80),
+                url: "https://x.io".into(),
+            }],
             ..Default::default()
         }
         .sanitized();
@@ -1203,7 +1225,10 @@ mod tests {
             state: Some("  ".into()),
             large_text: Some("ok".into()),
             small_text: Some(String::new()),
-            buttons: vec![PresenceButton { label: "  ".into(), url: "https://x.io".into() }],
+            buttons: vec![PresenceButton {
+                label: "  ".into(),
+                url: "https://x.io".into(),
+            }],
             ..Default::default()
         }
         .sanitized();
@@ -1222,7 +1247,10 @@ mod tests {
             start_timestamp: Some(1718900000),
             large_image: Some("lang_rust".into()),
             large_text: Some("Rust".into()),
-            buttons: vec![PresenceButton { label: "Скачать".into(), url: "https://luxor.dev".into() }],
+            buttons: vec![PresenceButton {
+                label: "Скачать".into(),
+                url: "https://luxor.dev".into(),
+            }],
             ..Default::default()
         };
         let j = p.to_activity_json();
@@ -1236,8 +1264,14 @@ mod tests {
     fn carousel_rotates_after_interval() {
         let mut c = Carousel::new(Duration::from_secs(10));
         c.set_frames(vec![
-            Presence { details: Some("A".into()), ..Default::default() },
-            Presence { details: Some("B".into()), ..Default::default() },
+            Presence {
+                details: Some("A".into()),
+                ..Default::default()
+            },
+            Presence {
+                details: Some("B".into()),
+                ..Default::default()
+            },
         ]);
         let t0 = Instant::now();
         assert_eq!(c.current(t0).unwrap().details.as_deref(), Some("A"));
@@ -1253,7 +1287,10 @@ mod tests {
         let now = Instant::now();
         q.push(
             QueuedPresence {
-                presence: Presence { details: Some("bg".into()), ..Default::default() },
+                presence: Presence {
+                    details: Some("bg".into()),
+                    ..Default::default()
+                },
                 priority: Priority::Background,
                 hold: Duration::from_secs(15),
             },
@@ -1261,7 +1298,10 @@ mod tests {
         );
         q.push(
             QueuedPresence {
-                presence: Presence { details: Some("crit".into()), ..Default::default() },
+                presence: Presence {
+                    details: Some("crit".into()),
+                    ..Default::default()
+                },
                 priority: Priority::Critical,
                 hold: Duration::from_secs(15),
             },
@@ -1276,7 +1316,10 @@ mod tests {
     fn masking_and_blacklist() {
         assert_eq!(mask_project_name("secret-app", true), "🔒 Private Project");
         assert_eq!(mask_project_name("public", false), "public");
-        assert_eq!(mask_file_label("src/auth_keys.rs", true), "Editing a *.rs file");
+        assert_eq!(
+            mask_file_label("src/auth_keys.rs", true),
+            "Editing a *.rs file"
+        );
         assert_eq!(mask_file_label("a.rs", false), "Editing a.rs");
         assert!(blacklisted("feature/work-nda", &["*nda*".into()]));
         assert!(!blacklisted("feature/public", &["*nda*".into()]));
@@ -1304,7 +1347,9 @@ mod tests {
         let mut ipc = DiscordIpc::new("not-a-real-client-id");
         let now = Instant::now();
         if ipc.connect(now).is_err() {
-            let msg = ipc.last_error().expect("failed connect must set last_error");
+            let msg = ipc
+                .last_error()
+                .expect("failed connect must set last_error");
             assert!(!msg.is_empty());
             assert!(!ipc.is_connected());
             // Retry within the backoff window is rejected without touching IO.
@@ -1317,7 +1362,10 @@ mod tests {
     fn set_activity_backoff_after_failed_connect() {
         let mut ipc = DiscordIpc::new("not-a-real-client-id");
         let now = Instant::now();
-        let p = Presence { details: Some("x".into()), ..Default::default() };
+        let p = Presence {
+            details: Some("x".into()),
+            ..Default::default()
+        };
         // On machines without Discord this fails fast (no socket); with a live
         // Discord the bogus client_id is rejected via the CLOSE frame. Either
         // way it must return promptly instead of hanging (the Windows stale
@@ -1359,8 +1407,14 @@ mod tests {
 
     #[test]
     fn state_hash_changes_with_content() {
-        let a = Presence { details: Some("x".into()), ..Default::default() };
-        let b = Presence { details: Some("y".into()), ..Default::default() };
+        let a = Presence {
+            details: Some("x".into()),
+            ..Default::default()
+        };
+        let b = Presence {
+            details: Some("y".into()),
+            ..Default::default()
+        };
         assert_ne!(state_hash(&a), state_hash(&b));
         assert_eq!(state_hash(&a), state_hash(&a.clone()));
     }
@@ -1575,8 +1629,14 @@ mod tests {
         let mut server = IpcStream::Unix(server);
 
         let t0 = Instant::now();
-        let a = Presence { details: Some("frame-a".into()), ..Default::default() };
-        assert!(ipc.set_activity(&a, t0, false).unwrap(), "first frame must send");
+        let a = Presence {
+            details: Some("frame-a".into()),
+            ..Default::default()
+        };
+        assert!(
+            ipc.set_activity(&a, t0, false).unwrap(),
+            "first frame must send"
+        );
         let (op, v) = read_frame(&mut server).unwrap();
         assert_eq!(op, 1);
         assert_eq!(v["cmd"], "SET_ACTIVITY");
@@ -1585,8 +1645,13 @@ mod tests {
         assert!(ipc.has_recent_activity(t0));
 
         // Rate limit: a different frame 5 s later is skipped (no bytes sent).
-        let b = Presence { details: Some("frame-b".into()), ..Default::default() };
-        assert!(!ipc.set_activity(&b, t0 + Duration::from_secs(5), false).unwrap());
+        let b = Presence {
+            details: Some("frame-b".into()),
+            ..Default::default()
+        };
+        assert!(!ipc
+            .set_activity(&b, t0 + Duration::from_secs(5), false)
+            .unwrap());
 
         // Jitter grace: a driver tick arriving at ~14.9 s must NOT be dropped —
         // this froze the carousel when the tick cadence equalled the limit.
@@ -1599,15 +1664,24 @@ mod tests {
         // Anti-flicker skips an identical frame while the live activity is
         // fresh, then periodically re-sends it as a liveness probe. This lets a
         // stale socket be discovered after Discord restarts.
-        assert!(!ipc.set_activity(&b, t0 + Duration::from_secs(30), false).unwrap());
-        assert!(ipc.set_activity(&b, t0 + Duration::from_secs(75), false).unwrap());
+        assert!(!ipc
+            .set_activity(&b, t0 + Duration::from_secs(30), false)
+            .unwrap());
+        assert!(ipc
+            .set_activity(&b, t0 + Duration::from_secs(75), false)
+            .unwrap());
         let (_, v) = read_frame(&mut server).unwrap();
         assert_eq!(v["args"]["activity"]["details"], "frame-b");
 
         // `force` bypasses the rate limit for critical events while the
         // anti-flicker guard still suppresses a fresh identical payload.
-        let c = Presence { details: Some("frame-c".into()), ..Default::default() };
-        assert!(ipc.set_activity(&c, t0 + Duration::from_secs(61), true).unwrap());
+        let c = Presence {
+            details: Some("frame-c".into()),
+            ..Default::default()
+        };
+        assert!(ipc
+            .set_activity(&c, t0 + Duration::from_secs(61), true)
+            .unwrap());
         let (_, v) = read_frame(&mut server).unwrap();
         assert_eq!(v["args"]["activity"]["details"], "frame-c");
     }
@@ -1647,5 +1721,4 @@ mod tests {
         assert_eq!(err.kind(), "process");
         assert_eq!(ipc.next_connect_at, next);
     }
-
 }

@@ -57,7 +57,16 @@ pub async fn github_pull_create(
     base: String,
     draft: bool,
 ) -> Result<GhPull, Error> {
-    github::pull_create(&slug, &title, &body, &head, &base, draft, token().as_deref()).await
+    github::pull_create(
+        &slug,
+        &title,
+        &body,
+        &head,
+        &base,
+        draft,
+        token().as_deref(),
+    )
+    .await
 }
 
 #[tauri::command]

@@ -135,11 +135,7 @@ pub fn tray_popup_fit(
         let w = width.clamp(200.0, 420.0);
         let h = height.clamp(80.0, 640.0);
         let _ = win.set_size(tauri::LogicalSize::new(w, h));
-        let cursor = state
-            .tray_cursor
-            .lock()
-            .map(|g| *g)
-            .unwrap_or(None);
+        let cursor = state.tray_cursor.lock().map(|g| *g).unwrap_or(None);
         if let Some(c) = cursor {
             crate::position_tray_popup(&win, c, w, h);
         }

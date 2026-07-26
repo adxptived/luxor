@@ -19,7 +19,11 @@ pub struct MetricSample {
 
 impl MetricSample {
     pub fn new(key: impl Into<String>, value: f64) -> Self {
-        Self { key: key.into(), value, unit: None }
+        Self {
+            key: key.into(),
+            value,
+            unit: None,
+        }
     }
     pub fn with_unit(mut self, unit: impl Into<String>) -> Self {
         self.unit = Some(unit.into());

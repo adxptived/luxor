@@ -197,8 +197,7 @@ pub struct TelemetryStore {
 impl TelemetryStore {
     /// Default DB path: `{config_dir}/luxor/local_stats.db`.
     pub fn default_path() -> Result<PathBuf> {
-        let base = dirs::config_dir()
-            .ok_or_else(|| Error::Config("no config directory".into()))?;
+        let base = dirs::config_dir().ok_or_else(|| Error::Config("no config directory".into()))?;
         Ok(base.join("luxor").join("local_stats.db"))
     }
 
@@ -211,7 +210,10 @@ impl TelemetryStore {
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "synchronous", "NORMAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
-        let mut store = Self { conn, mask_projects: false };
+        let mut store = Self {
+            conn,
+            mask_projects: false,
+        };
         store.migrate()?;
         Ok(store)
     }
@@ -221,7 +223,10 @@ impl TelemetryStore {
     /// writable; analytics must not make the desktop application crash.
     pub fn open_in_memory() -> Result<Self> {
         let conn = Connection::open_in_memory()?;
-        let mut store = Self { conn, mask_projects: false };
+        let mut store = Self {
+            conn,
+            mask_projects: false,
+        };
         store.migrate()?;
         Ok(store)
     }
@@ -343,7 +348,10 @@ impl TelemetryStore {
         if to < from {
             return Err(Error::InvalidInput("interval end before start".into()));
         }
-        let project_id = self.project_id(sample.project_path.as_deref(), sample.project_name.as_deref())?;
+        let project_id = self.project_id(
+            sample.project_path.as_deref(),
+            sample.project_name.as_deref(),
+        )?;
         self.conn.execute(
             "INSERT INTO activity_intervals
                 (start_utc, end_utc, category, project_id, agent, branch, is_focused)
@@ -439,7 +447,13 @@ impl TelemetryStore {
                 "SELECT coding_seconds, ai_seconds, audit_seconds
                  FROM daily_rollups WHERE date = ?1",
                 params![date],
-                |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?, r.get::<_, i64>(2)?)),
+                |r| {
+                    Ok((
+                        r.get::<_, i64>(0)?,
+                        r.get::<_, i64>(1)?,
+                        r.get::<_, i64>(2)?,
+                    ))
+                },
             )
             .optional()?
             .unwrap_or((0, 0, 0)))
@@ -448,13 +462,21 @@ impl TelemetryStore {
     /// Sum of rollup seconds `(coding, ai, audit)` over the inclusive local
     /// date range `[from_date, to_date]` (YYYY-MM-DD).
     fn rollup_between(&self, from_date: &str, to_date: &str) -> Result<(i64, i64, i64)> {
-        self.conn.query_row(
-            "SELECT COALESCE(SUM(coding_seconds),0), COALESCE(SUM(ai_seconds),0),
+        self.conn
+            .query_row(
+                "SELECT COALESCE(SUM(coding_seconds),0), COALESCE(SUM(ai_seconds),0),
                     COALESCE(SUM(audit_seconds),0)
              FROM daily_rollups WHERE date >= ?1 AND date <= ?2",
-            params![from_date, to_date],
-            |r| Ok((r.get::<_, i64>(0)?, r.get::<_, i64>(1)?, r.get::<_, i64>(2)?)),
-        ).map_err(Error::from)
+                params![from_date, to_date],
+                |r| {
+                    Ok((
+                        r.get::<_, i64>(0)?,
+                        r.get::<_, i64>(1)?,
+                        r.get::<_, i64>(2)?,
+                    ))
+                },
+            )
+            .map_err(Error::from)
     }
 
     fn local_midnight_utc(date: chrono::NaiveDate) -> DateTime<Utc> {
@@ -467,7 +489,9 @@ impl TelemetryStore {
             .earliest()
             .map(|d| d.with_timezone(&Utc))
             .unwrap_or_else(|| {
-                let noon = date.and_time(chrono::NaiveTime::from_hms_opt(12, 0, 0).unwrap_or(chrono::NaiveTime::MIN));
+                let noon = date.and_time(
+                    chrono::NaiveTime::from_hms_opt(12, 0, 0).unwrap_or(chrono::NaiveTime::MIN),
+                );
                 Local
                     .from_local_datetime(&noon)
                     .earliest()
@@ -483,7 +507,10 @@ impl TelemetryStore {
             (start.timestamp_millis(), end.timestamp_millis())
         } else {
             // Extremely defensive fallback for broken OS timezone data.
-            (start.timestamp_millis(), (start + chrono::Duration::days(1)).timestamp_millis())
+            (
+                start.timestamp_millis(),
+                (start + chrono::Duration::days(1)).timestamp_millis(),
+            )
         }
     }
 
@@ -615,7 +642,9 @@ impl TelemetryStore {
         )?;
         let rows = stmt.query_map(params![from, limit], |r| {
             Ok(ProjectTime {
-                name: r.get::<_, Option<String>>(0)?.unwrap_or_else(|| "Project".into()),
+                name: r
+                    .get::<_, Option<String>>(0)?
+                    .unwrap_or_else(|| "Project".into()),
                 primary_lang: r.get(1)?,
                 seconds: r.get::<_, i64>(2).unwrap_or(0).max(0) / 1000,
             })
@@ -662,7 +691,9 @@ impl TelemetryStore {
         Ok(())
     }
 
-    fn achievement_progress(&self) -> Result<std::collections::HashMap<String, (f64, Option<i64>)>> {
+    fn achievement_progress(
+        &self,
+    ) -> Result<std::collections::HashMap<String, (f64, Option<i64>)>> {
         let mut stmt = self
             .conn
             .prepare("SELECT key, progress, unlocked_at FROM achievements")?;
@@ -681,8 +712,7 @@ impl TelemetryStore {
         Ok(ACHIEVEMENT_CATALOG
             .iter()
             .map(|(key, title, desc)| {
-                let (progress, unlocked_at) =
-                    stored.get(*key).copied().unwrap_or((0.0, None));
+                let (progress, unlocked_at) = stored.get(*key).copied().unwrap_or((0.0, None));
                 Achievement {
                     key: (*key).into(),
                     title: (*title).into(),
@@ -777,7 +807,9 @@ impl TelemetryStore {
         // Fold in pre-retention rollups so the "year" really spans a year and
         // not just the retention window (raw intervals are pruned after 90d).
         let today = Local::now().date_naive();
-        let from_date = (today - chrono::Duration::days(364)).format("%Y-%m-%d").to_string();
+        let from_date = (today - chrono::Duration::days(364))
+            .format("%Y-%m-%d")
+            .to_string();
         let to_date = today.format("%Y-%m-%d").to_string();
         let (rc, ra, rau) = self.rollup_between(&from_date, &to_date)?;
         let (coding, ai, audit) = (coding + rc, ai + ra, audit + rau);
@@ -829,9 +861,11 @@ impl TelemetryStore {
     pub fn issues_fixed_total(&self) -> Result<i64> {
         Ok(self
             .conn
-            .query_row("SELECT COALESCE(SUM(issues_fixed),0) FROM daily_rollups", [], |r| {
-                r.get(0)
-            })
+            .query_row(
+                "SELECT COALESCE(SUM(issues_fixed),0) FROM daily_rollups",
+                [],
+                |r| r.get(0),
+            )
             .unwrap_or(0))
     }
 
@@ -1138,7 +1172,11 @@ mod tests {
         let now = Utc::now();
         // 600s coding + 300s ai today
         store
-            .record_interval(now - chrono::Duration::seconds(600), now, &s(Category::Coding, None))
+            .record_interval(
+                now - chrono::Duration::seconds(600),
+                now,
+                &s(Category::Coding, None),
+            )
             .unwrap();
         store
             .record_interval(
@@ -1148,9 +1186,20 @@ mod tests {
             )
             .unwrap();
         let t = store.today_summary().unwrap();
-        assert!(t.coding_seconds >= 590 && t.coding_seconds <= 610, "{}", t.coding_seconds);
-        assert!(t.ai_seconds >= 290 && t.ai_seconds <= 310, "{}", t.ai_seconds);
-        assert_eq!(t.total_seconds, t.coding_seconds + t.ai_seconds + t.audit_seconds);
+        assert!(
+            t.coding_seconds >= 590 && t.coding_seconds <= 610,
+            "{}",
+            t.coding_seconds
+        );
+        assert!(
+            t.ai_seconds >= 290 && t.ai_seconds <= 310,
+            "{}",
+            t.ai_seconds
+        );
+        assert_eq!(
+            t.total_seconds,
+            t.coding_seconds + t.ai_seconds + t.audit_seconds
+        );
     }
 
     #[test]
@@ -1158,10 +1207,18 @@ mod tests {
         let store = TelemetryStore::open_in_memory().unwrap();
         let now = Utc::now();
         store
-            .record_interval(now - chrono::Duration::seconds(120), now, &s(Category::Ai, Some("Claude Code")))
+            .record_interval(
+                now - chrono::Duration::seconds(120),
+                now,
+                &s(Category::Ai, Some("Claude Code")),
+            )
             .unwrap();
         store
-            .record_interval(now - chrono::Duration::seconds(60), now, &s(Category::Ai, Some("Cursor")))
+            .record_interval(
+                now - chrono::Duration::seconds(60),
+                now,
+                &s(Category::Ai, Some("Cursor")),
+            )
             .unwrap();
         let agents = store.agent_breakdown(7).unwrap();
         assert_eq!(agents.len(), 2);
@@ -1174,7 +1231,11 @@ mod tests {
         store.mask_projects = true;
         let now = Utc::now();
         store
-            .record_interval(now - chrono::Duration::seconds(60), now, &s(Category::Coding, None))
+            .record_interval(
+                now - chrono::Duration::seconds(60),
+                now,
+                &s(Category::Coding, None),
+            )
             .unwrap();
         let projects = store.project_log(7, 10).unwrap();
         assert_eq!(projects[0].name, "Private Project");
@@ -1229,7 +1290,11 @@ mod tests {
         let store = TelemetryStore::open_in_memory().unwrap();
         let old = Utc::now() - chrono::Duration::days(120);
         store
-            .record_interval(old - chrono::Duration::seconds(3600), old, &s(Category::Coding, None))
+            .record_interval(
+                old - chrono::Duration::seconds(3600),
+                old,
+                &s(Category::Coding, None),
+            )
             .unwrap();
         // Before retention the raw interval is visible.
         let heat_before: i64 = store.heatmap(365).unwrap().iter().map(|c| c.seconds).sum();
@@ -1244,7 +1309,11 @@ mod tests {
         let heat_after: i64 = store.heatmap(365).unwrap().iter().map(|c| c.seconds).sum();
         assert!(heat_after >= 3590, "post-retention heat {heat_after}");
         let yir = store.year_in_review().unwrap();
-        assert!(yir.total_seconds >= 3590, "year total {}", yir.total_seconds);
+        assert!(
+            yir.total_seconds >= 3590,
+            "year total {}",
+            yir.total_seconds
+        );
         assert!(yir.active_days >= 1);
     }
 
@@ -1253,16 +1322,33 @@ mod tests {
         let store = TelemetryStore::open_in_memory().unwrap();
         let date = (Local::now() - chrono::Duration::days(120)).date_naive();
         let (day_start_ms, _) = TelemetryStore::local_day_bounds(date);
-        let start = Utc.timestamp_millis_opt(day_start_ms).single().unwrap() + chrono::Duration::hours(23);
+        let start =
+            Utc.timestamp_millis_opt(day_start_ms).single().unwrap() + chrono::Duration::hours(23);
         let end = start + chrono::Duration::hours(2);
-        store.record_interval(start, end, &s(Category::Coding, None)).unwrap();
-        assert_eq!(store.run_retention().unwrap(), 1);
-        let first = store.rollup_day(&date.format("%Y-%m-%d").to_string()).unwrap();
-        let second = store
-            .rollup_day(&(date + chrono::Duration::days(1)).format("%Y-%m-%d").to_string())
+        store
+            .record_interval(start, end, &s(Category::Coding, None))
             .unwrap();
-        assert!(first.0 >= 3500 && first.0 <= 3700, "first day seconds {}", first.0);
-        assert!(second.0 >= 3500 && second.0 <= 3700, "second day seconds {}", second.0);
+        assert_eq!(store.run_retention().unwrap(), 1);
+        let first = store
+            .rollup_day(&date.format("%Y-%m-%d").to_string())
+            .unwrap();
+        let second = store
+            .rollup_day(
+                &(date + chrono::Duration::days(1))
+                    .format("%Y-%m-%d")
+                    .to_string(),
+            )
+            .unwrap();
+        assert!(
+            first.0 >= 3500 && first.0 <= 3700,
+            "first day seconds {}",
+            first.0
+        );
+        assert!(
+            second.0 >= 3500 && second.0 <= 3700,
+            "second day seconds {}",
+            second.0
+        );
     }
 
     #[test]
@@ -1270,7 +1356,11 @@ mod tests {
         let store = TelemetryStore::open_in_memory().unwrap();
         let now = Utc::now();
         store
-            .record_interval(now - chrono::Duration::seconds(60), now, &s(Category::Coding, None))
+            .record_interval(
+                now - chrono::Duration::seconds(60),
+                now,
+                &s(Category::Coding, None),
+            )
             .unwrap();
         let v = store.export_json().unwrap();
         assert!(v["activity_intervals"].as_array().unwrap().len() == 1);
@@ -1282,7 +1372,11 @@ mod tests {
         let store = TelemetryStore::open_in_memory().unwrap();
         let now = Utc::now();
         store
-            .record_interval(now - chrono::Duration::seconds(60), now, &s(Category::Coding, None))
+            .record_interval(
+                now - chrono::Duration::seconds(60),
+                now,
+                &s(Category::Coding, None),
+            )
             .unwrap();
         store.wipe().unwrap();
         assert_eq!(store.today_summary().unwrap().total_seconds, 0);

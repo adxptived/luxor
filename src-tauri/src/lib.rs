@@ -61,14 +61,15 @@ fn open_telemetry_store() -> luxor_core::telemetry::TelemetryStore {
     match TelemetryStore::open(&path) {
         Ok(store) => store,
         Err(e) => {
-            tracing::warn!("telemetry store unavailable at {}: {e}; using temp", path.display());
+            tracing::warn!(
+                "telemetry store unavailable at {}: {e}; using temp",
+                path.display()
+            );
             // Use a per-process file so a stale/corrupt fallback from another
             // instance cannot prevent startup. If temp storage is unavailable
             // too, keep analytics ephemeral rather than crashing the whole app.
-            let tmp = std::env::temp_dir().join(format!(
-                "luxor-local_stats-{}.db",
-                std::process::id()
-            ));
+            let tmp =
+                std::env::temp_dir().join(format!("luxor-local_stats-{}.db", std::process::id()));
             TelemetryStore::open(&tmp).unwrap_or_else(|temp_error| {
                 tracing::error!(
                     "telemetry temp store unavailable at {}: {temp_error}; using memory",
@@ -558,7 +559,7 @@ pub fn run() {
                 tray_projects: Mutex::new(Vec::new()),
                 tray_cursor: Mutex::new(None),
                 tray_popup_gen: AtomicU64::new(0),
-            tray_popup_shown_at: Mutex::new(None),
+                tray_popup_shown_at: Mutex::new(None),
                 tray_hint_shown: std::sync::atomic::AtomicBool::new(false),
             });
             // Background telemetry retention (plan part 7.2). Off the UI thread.
@@ -780,20 +781,18 @@ pub fn run() {
                     }
                 }
             }
-            tauri::WindowEvent::Destroyed => {
-                if is_app_window(window.label()) {
-                    // Kill all shells only when the last app window is truly
-                    // gone (a second window may still own live terminals).
-                    let app = window.app_handle();
-                    let label = window.label().to_string();
-                    let others_alive = app
-                        .webview_windows()
-                        .keys()
-                        .any(|l| is_app_window(l) && *l != label);
-                    if !others_alive {
-                        cleanup_before_exit(app);
-                        app.exit(0);
-                    }
+            tauri::WindowEvent::Destroyed if is_app_window(window.label()) => {
+                // Kill all shells only when the last app window is truly
+                // gone (a second window may still own live terminals).
+                let app = window.app_handle();
+                let label = window.label().to_string();
+                let others_alive = app
+                    .webview_windows()
+                    .keys()
+                    .any(|l| is_app_window(l) && *l != label);
+                if !others_alive {
+                    cleanup_before_exit(app);
+                    app.exit(0);
                 }
             }
             _ => {}
@@ -1025,7 +1024,9 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building Luxor")
         .run(|app, event| match event {
-            tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => cleanup_before_exit(app),
+            tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit => {
+                cleanup_before_exit(app)
+            }
             _ => {}
         });
 }

@@ -67,7 +67,8 @@ mod imp {
     }
 
     pub fn idle_seconds() -> Option<u64> {
-        let secs = unsafe { CGEventSourceSecondsSinceLastEventType(HID_SYSTEM_STATE, ANY_INPUT_EVENT) };
+        let secs =
+            unsafe { CGEventSourceSecondsSinceLastEventType(HID_SYSTEM_STATE, ANY_INPUT_EVENT) };
         if secs.is_finite() && secs >= 0.0 {
             Some(secs as u64)
         } else {
@@ -111,6 +112,9 @@ mod tests {
             assert!(s < 60 * 60 * 24 * 365);
         }
         // is_afk mirrors idle availability.
-        assert_eq!(is_afk(AFK_THRESHOLD_SECONDS).is_some(), idle_seconds().is_some());
+        assert_eq!(
+            is_afk(AFK_THRESHOLD_SECONDS).is_some(),
+            idle_seconds().is_some()
+        );
     }
 }

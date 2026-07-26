@@ -148,7 +148,11 @@ fn default_fast_powershell_startup() -> bool {
     true
 }
 
-fn default_shell_args(shell: &str, configured_args: &[String], fast_powershell_startup: bool) -> Vec<String> {
+fn default_shell_args(
+    shell: &str,
+    configured_args: &[String],
+    fast_powershell_startup: bool,
+) -> Vec<String> {
     // Explicit user arguments always win — never second-guess them.
     if !configured_args.is_empty() {
         return configured_args.to_vec();
@@ -312,8 +316,7 @@ impl PtyManager {
                         Ok(chunk) => {
                             pending.extend_from_slice(&chunk);
                             first_byte_at.get_or_insert_with(Instant::now);
-                            let due = first_byte_at
-                                .is_some_and(|t| t.elapsed() >= FLUSH_INTERVAL);
+                            let due = first_byte_at.is_some_and(|t| t.elapsed() >= FLUSH_INTERVAL);
                             if pending.len() >= FLUSH_THRESHOLD || due {
                                 flush(&mut pending);
                                 first_byte_at = None;

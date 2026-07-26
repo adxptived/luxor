@@ -36,13 +36,17 @@ pub fn pty_write(
 ) -> Result<(), Error> {
     const MAX_INPUT_BYTES: usize = 1024 * 1024;
     if data_b64.len() > MAX_INPUT_BYTES * 2 {
-        return Err(Error::InvalidInput("terminal input frame is too large".into()));
+        return Err(Error::InvalidInput(
+            "terminal input frame is too large".into(),
+        ));
     }
     let bytes = base64::engine::general_purpose::STANDARD
         .decode(data_b64.as_bytes())
         .map_err(|e| Error::InvalidInput(format!("invalid base64 input: {e}")))?;
     if bytes.len() > MAX_INPUT_BYTES {
-        return Err(Error::InvalidInput("terminal input frame is too large".into()));
+        return Err(Error::InvalidInput(
+            "terminal input frame is too large".into(),
+        ));
     }
     state.pty.write(&session_id, &bytes)
 }

@@ -144,9 +144,12 @@ fn validate_repo_relative_path(file_path: &str) -> Result<&Path> {
     let path = Path::new(file_path);
     if path.as_os_str().is_empty()
         || path.is_absolute()
-        || path
-            .components()
-            .any(|c| matches!(c, Component::ParentDir | Component::RootDir | Component::Prefix(_)))
+        || path.components().any(|c| {
+            matches!(
+                c,
+                Component::ParentDir | Component::RootDir | Component::Prefix(_)
+            )
+        })
     {
         return Err(Error::InvalidInput(format!(
             "invalid repo-relative path: {file_path}"

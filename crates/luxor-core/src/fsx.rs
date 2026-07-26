@@ -1360,7 +1360,9 @@ mod tests {
             .unwrap()
             .expect("mtime after second write");
         assert_eq!(
-            read_text_encoded(path, "windows-1251", 1_000_000).unwrap().content,
+            read_text_encoded(path, "windows-1251", 1_000_000)
+                .unwrap()
+                .content,
             "v2"
         );
 

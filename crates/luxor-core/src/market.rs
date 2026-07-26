@@ -529,7 +529,9 @@ mod tests {
         let got = futures_block(search_combined(&path, "react")).unwrap();
         assert!(got.iter().any(|s| s.skill_id == "react-pdf"));
         // Empty query short-circuits to an empty list (browse mode), no network.
-        assert!(futures_block(search_combined(&path, "  ")).unwrap().is_empty());
+        assert!(futures_block(search_combined(&path, "  "))
+            .unwrap()
+            .is_empty());
     }
 
     #[test]

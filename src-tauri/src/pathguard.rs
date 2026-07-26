@@ -73,8 +73,14 @@ mod tests {
     #[test]
     fn app_temp_root_is_scoped_below_os_temp() {
         let root = app_temp_root();
-        assert_eq!(root.parent().map(Path::to_path_buf), Some(std::env::temp_dir()));
-        assert_eq!(root.file_name().and_then(|name| name.to_str()), Some("luxor"));
+        assert_eq!(
+            root.parent().map(Path::to_path_buf),
+            Some(std::env::temp_dir())
+        );
+        assert_eq!(
+            root.file_name().and_then(|name| name.to_str()),
+            Some("luxor")
+        );
     }
 
     #[test]

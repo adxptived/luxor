@@ -4,6 +4,9 @@
 //! This module mirrors that intent to the native user-level startup location on
 //! each platform. It intentionally avoids a long-running helper process.
 
+// Only the macOS/Linux arms below build paths; on Windows the registry
+// helpers work with strings, so the import would be dead there.
+#[cfg(not(target_os = "windows"))]
 use std::path::PathBuf;
 
 use luxor_core::{Error, Result};
@@ -160,7 +163,8 @@ fn linux_desktop_path() -> Result<PathBuf> {
     let base = if let Some(xdg) = std::env::var_os("XDG_CONFIG_HOME") {
         PathBuf::from(xdg)
     } else {
-        let home = std::env::var_os("HOME").ok_or_else(|| Error::Config("HOME is not set".into()))?;
+        let home =
+            std::env::var_os("HOME").ok_or_else(|| Error::Config("HOME is not set".into()))?;
         PathBuf::from(home).join(".config")
     };
     Ok(base.join("autostart/luxor.desktop"))
@@ -177,7 +181,9 @@ fn escape_xml(s: &str) -> String {
 
 #[cfg(all(unix, not(target_os = "macos")))]
 fn escape_desktop_exec(s: &str) -> String {
-    if s.chars().any(|c| c.is_whitespace() || matches!(c, '"' | '\\')) {
+    if s.chars()
+        .any(|c| c.is_whitespace() || matches!(c, '"' | '\\'))
+    {
         format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\""))
     } else {
         s.to_string()

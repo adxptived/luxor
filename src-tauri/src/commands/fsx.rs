@@ -33,7 +33,9 @@ pub async fn fs_list_dir(path: String) -> Result<Vec<FsEntry>, Error> {
 
 fn should_skip_search_dir(path: &Path) -> bool {
     matches!(
-        path.file_name().and_then(|n| n.to_str()).unwrap_or_default(),
+        path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or_default(),
         ".git" | "node_modules" | "target" | "dist" | "build" | ".next" | ".turbo" | ".cache"
     )
 }
@@ -61,25 +63,35 @@ fn search_files_sync(root: String, query: String, limit: usize) -> Result<Vec<Fs
         if depth > 12 || should_skip_search_dir(&dir) {
             continue;
         }
-        let Ok(read_dir) = std::fs::read_dir(&dir) else { continue };
+        let Ok(read_dir) = std::fs::read_dir(&dir) else {
+            continue;
+        };
         for entry in read_dir.flatten() {
             let path = entry.path();
             let Ok(meta) = entry.metadata() else { continue };
-            let rel = path.strip_prefix(&root_path).unwrap_or(&path).to_string_lossy();
+            let rel = path
+                .strip_prefix(&root_path)
+                .unwrap_or(&path)
+                .to_string_lossy();
             let hay = normalize_query(&rel);
             let name = entry.file_name().to_string_lossy().into_owned();
             let name_hay = normalize_query(&name);
-            let matched = terms.iter().all(|term| hay.contains(term) || name_hay.contains(term));
+            let matched = terms
+                .iter()
+                .all(|term| hay.contains(term) || name_hay.contains(term));
             if matched {
                 out.push(FsEntry {
                     name,
                     path: path.to_string_lossy().into_owned(),
                     is_dir: meta.is_dir(),
                     size: if meta.is_dir() { 0 } else { meta.len() },
-                    modified: meta.modified().ok().map(chrono::DateTime::<chrono::Utc>::from),
+                    modified: meta
+                        .modified()
+                        .ok()
+                        .map(chrono::DateTime::<chrono::Utc>::from),
                 });
                 if out.len() >= max_results {
-                    out.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
+                    out.sort_by_key(|e| e.path.to_lowercase());
                     return Ok(out);
                 }
             }
@@ -88,12 +100,16 @@ fn search_files_sync(root: String, query: String, limit: usize) -> Result<Vec<Fs
             }
         }
     }
-    out.sort_by(|a, b| a.path.to_lowercase().cmp(&b.path.to_lowercase()));
+    out.sort_by_key(|e| e.path.to_lowercase());
     Ok(out)
 }
 
 #[tauri::command]
-pub async fn fs_search(root: String, query: String, limit: Option<usize>) -> Result<Vec<FsEntry>, Error> {
+pub async fn fs_search(
+    root: String,
+    query: String,
+    limit: Option<usize>,
+) -> Result<Vec<FsEntry>, Error> {
     blocking(move || search_files_sync(root, query, limit.unwrap_or(120))).await
 }
 
