@@ -11,24 +11,26 @@ test.describe("command palette fuzzy search", () => {
   test("subsequence query finds and ranks the intuitive command first", async ({ page }) => {
     await openApp(page);
     await openPalette(page);
-    await page.getByPlaceholder("Type a command…").fill("gexp");
+    await page.getByTestId("palette-input").fill("gexp");
     const palette = page.getByTestId("command-palette");
-    await expect(palette.getByRole("button").first()).toContainText("Git: Open explorer");
+    const first = palette.getByRole("option").first();
+    await expect(first).toContainText("Open explorer");
+    await expect(first).toContainText("Git");
   });
 
   test("multi-word query matches words in any order", async ({ page }) => {
     await openApp(page);
     await openPalette(page);
-    await page.getByPlaceholder("Type a command…").fill("split layout");
+    await page.getByTestId("palette-input").fill("split layout");
     const palette = page.getByTestId("command-palette");
-    await expect(palette.getByText("Layout: Split right with new terminal")).toBeVisible();
+    await expect(palette.getByRole("option").filter({ hasText: "Split right with new terminal" })).toHaveCount(1);
   });
 
   test("non-matching query shows the empty state", async ({ page }) => {
     await openApp(page);
     await openPalette(page);
-    await page.getByPlaceholder("Type a command…").fill("zzzzqqq");
-    await expect(page.getByText("No matching commands.")).toBeVisible();
+    await page.getByTestId("palette-input").fill("zzzzqqq");
+    await expect(page.getByText("No matching commands")).toBeVisible();
   });
 });
 
@@ -38,7 +40,7 @@ test.describe("command palette recents", () => {
 
     // Run a command via the palette.
     await openPalette(page);
-    await page.getByPlaceholder("Type a command…").fill("kanban");
+    await page.getByTestId("palette-input").fill("kanban");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("tasks-panel")).toBeVisible();
 
@@ -46,14 +48,16 @@ test.describe("command palette recents", () => {
     await openPalette(page);
     const palette = page.getByTestId("command-palette");
     await expect(palette.getByText("Recently used")).toBeVisible();
-    await expect(palette.getByText("All commands")).toBeVisible();
-    await expect(palette.getByRole("button").first()).toContainText("Tasks: Open kanban board");
+    // The rest of the list is grouped by category now (Terminal, Git, Files, …)
+    // rather than under a single "All commands" heading.
+    await expect(palette.getByText("Terminal", { exact: true }).first()).toBeVisible();
+    await expect(palette.getByRole("option").first()).toContainText("Open kanban board");
   });
 
   test("recents survive a reload (persisted)", async ({ page }) => {
     await openApp(page);
     await openPalette(page);
-    await page.getByPlaceholder("Type a command…").fill("kanban");
+    await page.getByTestId("palette-input").fill("kanban");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("tasks-panel")).toBeVisible();
 
@@ -65,17 +69,20 @@ test.describe("command palette recents", () => {
     await expect(page.getByTestId("statusbar")).toBeVisible();
     await openPalette(page);
     const palette = page.getByTestId("command-palette");
-    await expect(palette.getByRole("button").first()).toContainText("Tasks: Open kanban board");
+    await expect(palette.getByRole("option").first()).toContainText("Open kanban board");
   });
 
   test("typing a query hides the recents grouping", async ({ page }) => {
     await openApp(page);
     await openPalette(page);
-    await page.getByPlaceholder("Type a command…").fill("kanban");
+    await page.getByTestId("palette-input").fill("kanban");
     await page.keyboard.press("Enter");
+    // Wait for the command to actually run before reopening: the recents entry
+    // is written as part of running it, so reopening immediately raced it.
+    await expect(page.getByTestId("tasks-panel")).toBeVisible();
     await openPalette(page);
     await expect(page.getByText("Recently used")).toBeVisible();
-    await page.getByPlaceholder("Type a command…").fill("git");
+    await page.getByTestId("palette-input").fill("git");
     await expect(page.getByText("Recently used")).toHaveCount(0);
   });
 });

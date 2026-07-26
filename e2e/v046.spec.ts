@@ -35,7 +35,7 @@ test.describe("activity log", () => {
   test("opens from the command palette", async ({ page }) => {
     await openApp(page);
     await page.keyboard.press("Control+Shift+KeyP");
-    await page.getByPlaceholder("Type a command…").fill("activity");
+    await page.getByTestId("palette-input").fill("activity");
     await page.getByText("Activity: Open activity log").click();
     await expect(page.getByTestId("activity-panel")).toBeVisible();
   });

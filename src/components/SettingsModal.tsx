@@ -1630,6 +1630,7 @@ export function SettingsModal() {
                   return (
                     <div
                       key={id}
+                      data-testid={`nav-row-${id}`}
                       className={`mb-1 flex items-center gap-2 rounded border border-edge px-2 py-1 ${
                         hidden ? "opacity-50" : ""
                       }`}

@@ -547,6 +547,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                   setMode("symbols");
                 }
               }}
+              data-testid="palette-input"
               placeholder={t("Type a command, panel, theme, project…")}
               className="min-w-0 flex-1 bg-transparent py-3 text-strong outline-none placeholder:text-muted/70"
             />
