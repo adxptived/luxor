@@ -11,6 +11,9 @@ use std::path::PathBuf;
 
 use luxor_core::{Error, Result};
 
+// Only the Windows registry helpers name the app; elsewhere it is dead
+// weight that `-D warnings` rejects.
+#[cfg(target_os = "windows")]
 const APP_NAME: &str = "Luxor";
 
 /// Make the OS login startup entry match `enabled`.
@@ -170,7 +173,7 @@ fn linux_desktop_path() -> Result<PathBuf> {
     Ok(base.join("autostart/luxor.desktop"))
 }
 
-#[cfg(any(target_os = "macos", all(unix, not(target_os = "macos"))))]
+#[cfg(target_os = "macos")]
 fn escape_xml(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
