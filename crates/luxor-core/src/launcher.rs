@@ -233,10 +233,19 @@ pub fn open_with_default_app(path: &str) -> Result<()> {
     if !p.exists() {
         return Err(Error::NotFound(format!("path {}", p.display())));
     }
+    // Windows: `explorer.exe <path>` rather than `cmd /C start "" <path>`.
+    //
+    // `cmd.exe` re-parses its own command line by rules that do NOT match the
+    // C-runtime quoting `std::process::Command` applies, so shell metacharacters
+    // in a FILENAME (`&`, `|`, `^`, `%`) can break out of the quoting and be
+    // interpreted as commands — the same class of problem as CVE-2024-24576.
+    // Paths here come from the file explorer, i.e. potentially from a cloned
+    // repository containing a file called `a&calc.txt`. `explorer.exe` performs
+    // the same default-app association without a shell in the middle.
     #[cfg(target_os = "windows")]
     let plan = SpawnPlan {
-        program: "cmd".into(),
-        args: vec!["/C".into(), "start".into(), String::new(), path.into()],
+        program: "explorer.exe".into(),
+        args: vec![path.into()],
         cwd: None,
     };
     #[cfg(target_os = "macos")]

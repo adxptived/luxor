@@ -39,3 +39,17 @@ export async function clickNav(page: Page, id: string): Promise<void> {
 export function dockTab(page: Page, title: string) {
   return page.locator(".dv-tab", { hasText: title }).first();
 }
+
+/**
+ * Open the command palette and wait until it can accept input.
+ *
+ * `CommandPalette` is `lazy()`-loaded, so on first open the chunk may still be
+ * in flight when the chord fires. Several specs pressed Ctrl+Shift+P and typed
+ * immediately, which dropped the keystrokes onto nothing and produced failures
+ * that looked like broken commands.
+ */
+export async function openCommandPalette(page: Page): Promise<void> {
+  await page.keyboard.press("Control+Shift+P");
+  await expect(page.getByTestId("command-palette")).toBeVisible();
+  await expect(page.getByTestId("palette-input")).toBeVisible();
+}

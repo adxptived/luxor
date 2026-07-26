@@ -461,9 +461,16 @@ export default function App() {
       if (e.defaultPrevented) return;
       // F1 opens the command palette (in addition to Ctrl+Shift+P).
       if (e.code === "F1") return fire(() => app.setPaletteOpen(!app.paletteOpen));
+      // Ctrl+Tab cycles PROJECT tabs, browser-style. It was wired to `cycleTab`,
+      // which cycles panels inside the active dock group — so the behaviour the
+      // UI advertises in every project tab's tooltip ("Ctrl+Tab / Ctrl+Shift+Tab
+      // to switch") simply did not exist, and neither did the behaviour TopBar's
+      // scroll-into-view effect was written for ("when Ctrl+Tab changes the
+      // active project…"). `projectsStore.cycleActive` was already implemented
+      // and pinned-aware; it was just never called.
       if ((e.ctrlKey || e.metaKey) && e.code === "Tab") {
         e.preventDefault();
-        if (!e.repeat) cycleTab(e.shiftKey ? -1 : 1);
+        if (!e.repeat) useProjectsStore.getState().cycleActive(e.shiftKey ? -1 : 1);
         return;
       }
       // One chord derivation + one map lookup, instead of ~15 sequential

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickNav, dockTab, openApp } from "./helpers";
+import { clickNav, dockTab, openApp, openCommandPalette } from "./helpers";
 
 test.describe("activity log", () => {
   test("opens from the sidebar and records toasts", async ({ page }) => {
@@ -25,18 +25,21 @@ test.describe("activity log", () => {
     await expect(panel.getByTestId("activity-item").first()).toBeVisible();
 
     await panel.getByPlaceholder("Filter activity…").fill("no-such-event-zzz");
-    await expect(panel.getByText("No events match the current filter.")).toBeVisible();
+    await expect(panel.getByText("No events match the current filter")).toBeVisible();
     await panel.getByPlaceholder("Filter activity…").fill("");
 
+    // Clearing is confirmed now, so the panel button only opens the dialog.
     await panel.getByText("Clear", { exact: true }).click();
+    await page.getByRole("dialog", { name: "Clear activity log" }).getByRole("button", { name: "Clear" }).click();
     await expect(panel.getByText("Nothing logged yet", { exact: false })).toBeVisible();
   });
 
   test("opens from the command palette", async ({ page }) => {
     await openApp(page);
-    await page.keyboard.press("Control+Shift+KeyP");
+    await openCommandPalette(page);
     await page.getByTestId("palette-input").fill("activity");
-    await page.getByText("Activity: Open activity log").click();
+    // Palette labels no longer carry a "Category: " prefix (it is a badge now).
+    await page.getByRole("option", { name: /Open activity log/ }).click();
     await expect(page.getByTestId("activity-panel")).toBeVisible();
   });
 });
@@ -89,7 +92,7 @@ test.describe("settings additions", () => {
     await openApp(page);
     await clickNav(page, "settings");
     const modal = page.getByTestId("settings-modal");
-    const search = modal.getByPlaceholder("Search…");
+    const search = modal.getByPlaceholder("Search settings…");
 
     await search.fill("minimap");
     await expect(modal.getByText("Editor minimap").first()).toBeVisible();

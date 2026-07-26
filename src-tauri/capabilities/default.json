@@ -22,6 +22,7 @@
     "core:window:allow-is-visible",
     "opener:default",
     {
+      "//": "Unrestricted BY DECISION, not by omission. Tauri capability scopes are static, evaluated at build time, so they cannot be narrowed to 'the currently open project roots' — that set only exists at runtime. Narrowing to a fixed list would break the core use case: opening any file the user picked from the explorer, which is a developer tool's job. The threat this leaves is an XSS/malicious-plugin in the webview asking the OS to open an arbitrary path. It is mitigated where it matters: the path is handed to the platform association API (ShellExecuteW via tauri-plugin-opener), never to a shell, so a filename containing cmd metacharacters (`a&calc.txt`, plausible from a cloned repo) cannot smuggle a command. See crates/luxor-core/src/launcher.rs::open_with_default_app. Mutating FS operations remain confined by PathGuard.",
       "identifier": "opener:allow-open-path",
       "allow": [{ "path": "**" }, { "path": "**/" }]
     },

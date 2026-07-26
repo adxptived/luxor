@@ -11,14 +11,17 @@ test.describe("project tab switching", () => {
 
     // Mock mode starts without projects; openApp waited for the Welcome panel.
     const tabs = page.getByTestId("project-tab");
-    const docks = page.locator('[data-testid^="dock-"]');
+    // Exclude the container: `dock-layout` also matches the `dock-` prefix and
+    // carries no pointer-events/opacity gating, so it counted as a second
+    // "active" dock and broke the one-interactive-dock assertion.
+    const docks = page.locator('[data-testid^="dock-"]:not([data-testid="dock-layout"])');
     const initial = await tabs.count();
     const initialDocks = await docks.count();
 
     // Two extra blank workspaces via the "+" menu (no folder picker in mock mode).
     for (let i = 0; i < 2; i++) {
       await page.getByTestId("tab-add").click();
-      await page.getByText("Blank workspace", { exact: true }).click();
+      await page.getByTestId("tab-add-menu").getByText("Blank workspace", { exact: true }).click();
     }
     await expect(tabs).toHaveCount(initial + 2);
 
@@ -46,6 +49,6 @@ test.describe("project tab switching", () => {
 
     // And the active dock actually receives clicks (welcome action works).
     await tabs.nth(1).click();
-    await expect(page.getByText("Your cockpit for AI-assisted coding").first()).toBeVisible();
+    await expect(page.getByText("A desktop cockpit for code", { exact: false }).first()).toBeVisible();
   });
 });

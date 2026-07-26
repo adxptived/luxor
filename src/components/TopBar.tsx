@@ -983,6 +983,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           </button>
           {addMenu && (
             <div
+              data-testid="tab-add-menu"
               style={{ position: "fixed", top: addMenuPos.top, left: addMenuPos.left, zIndex: "var(--lx-z-sticky)" }}
               className="lx-pop-in w-56 rounded-lg border border-edge bg-bar p-1 shadow-xl"
             >

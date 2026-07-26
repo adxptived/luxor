@@ -71,7 +71,7 @@ pub fn launcher_open_ide(
     // too, so any future `launcherOpenIde(dir)` caller respects the selected
     // default instead of trying to spawn a fake executable named "__default__".
     if ide == "__default__" {
-        return launcher::open_with_default_app(&dir);
+        return open_default_app(&dir);
     }
     if ide == "__explorer__" {
         return launcher::open_file_manager(&dir);
@@ -103,10 +103,24 @@ pub fn launcher_detect_ides() -> Result<Vec<DetectedIde>, Error> {
     Ok(detect_ides())
 }
 
+/// Open a path with the OS default application, via the `opener` plugin.
+///
+/// The plugin calls the platform's real association API (ShellExecuteW on
+/// Windows), so no shell ever re-parses the path. That matters because paths
+/// reach here from the file explorer and may come from a cloned repository —
+/// a file named `a&calc.txt` must not be able to smuggle a command through.
+fn open_default_app(path: &str) -> Result<(), Error> {
+    if !std::path::Path::new(path).exists() {
+        return Err(Error::NotFound(format!("path {path}")));
+    }
+    tauri_plugin_opener::open_path(path, None::<&str>)
+        .map_err(|e| Error::Launcher(format!("could not open {path}: {e}")))
+}
+
 /// Open a path with the OS default application ("Open with" default).
 #[tauri::command(async)]
 pub fn launcher_open_default_app(path: String) -> Result<(), Error> {
-    launcher::open_with_default_app(&path)
+    open_default_app(&path)
 }
 
 #[tauri::command]

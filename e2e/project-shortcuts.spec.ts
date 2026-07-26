@@ -11,17 +11,19 @@ test.describe("browser-style project tab shortcuts", () => {
 
     for (let i = 0; i < 2; i++) {
       await page.getByTestId("tab-add").click();
-      await page.getByText("Blank workspace", { exact: true }).click();
+      // Scope to the menu: every workspace tab created by a previous iteration is
+      // ALSO called "Blank workspace", so an unscoped match hit 5 elements.
+      await page.getByTestId("tab-add-menu").getByText("Blank workspace", { exact: true }).click();
     }
 
     await expect(tabs).toHaveCount(initial + 2);
-    await expect(tabs.nth(initial + 1)).toHaveClass(/bg-surface/);
+    await expect(tabs.nth(initial + 1)).toHaveAttribute("aria-selected", "true");
 
     await page.keyboard.press("Control+Tab");
-    await expect(tabs.nth(0)).toHaveClass(/bg-surface/);
+    await expect(tabs.nth(0)).toHaveAttribute("aria-selected", "true");
 
     await page.keyboard.press("Control+Shift+Tab");
-    await expect(tabs.nth(initial + 1)).toHaveClass(/bg-surface/);
+    await expect(tabs.nth(initial + 1)).toHaveAttribute("aria-selected", "true");
   });
 
   test("Ctrl+Shift+T reopens the most recently closed project tab", async ({ page }) => {
@@ -30,7 +32,7 @@ test.describe("browser-style project tab shortcuts", () => {
     const tabs = page.getByTestId("project-tab");
     const initial = await tabs.count();
     await page.getByTestId("tab-add").click();
-    await page.getByText("Blank workspace", { exact: true }).click();
+    await page.getByTestId("tab-add-menu").getByText("Blank workspace", { exact: true }).click();
     await expect(tabs).toHaveCount(initial + 1);
 
     await tabs.nth(initial).click({ modifiers: ["Shift"] });
@@ -38,6 +40,6 @@ test.describe("browser-style project tab shortcuts", () => {
 
     await page.keyboard.press("Control+Shift+T");
     await expect(tabs).toHaveCount(initial + 1);
-    await expect(tabs.nth(initial)).toHaveClass(/bg-surface/);
+    await expect(tabs.nth(initial)).toHaveAttribute("aria-selected", "true");
   });
 });

@@ -25,7 +25,7 @@ test.describe("nav buttons", () => {
     // (navActions.ts: `presets: () => openPanel("launcher")`), so no dropdown
     // appeared. The tab-strip "+" menu exercises the same swallowed-click path.
     await page.getByTitle("Add tab").click();
-    await expect(page.getByText("Blank workspace").first()).toBeVisible();
+    await expect(page.getByTestId("tab-add-menu")).toBeVisible();
     await clickNav(page, "git");
     await expect(dockTab(page, "Git")).toBeVisible();
   });

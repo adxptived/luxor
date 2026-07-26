@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickNav, dockTab, openApp } from "./helpers";
+import { clickNav, dockTab, openApp, openCommandPalette } from "./helpers";
 
 test.describe("kanban task board", () => {
   test("opens from the sidebar and shows the seeded board", async ({ page }) => {
@@ -37,7 +37,7 @@ test.describe("kanban task board", () => {
 
   test("opens from the command palette", async ({ page }) => {
     await openApp(page);
-    await page.keyboard.press("Control+Shift+KeyP");
+    await openCommandPalette(page);
     await page.keyboard.type("kanban");
     await page.keyboard.press("Enter");
     await expect(page.getByTestId("tasks-panel")).toBeVisible();
@@ -75,7 +75,7 @@ test.describe("skills panel", () => {
     // No project in mock mode -> manager shows a hint.
     await expect(panel.getByText("Open a project folder", { exact: false })).toBeVisible();
     // Market tab lists the catalog from the mock IPC.
-    await panel.getByText("Market").click();
+    await panel.getByRole("button", { name: "Market" }).click();
     await expect(panel.getByTestId("skills-market")).toBeVisible();
     await expect(panel.getByText("find-skills")).toBeVisible();
     await expect(panel.getByText("frontend-design")).toBeVisible();
@@ -86,8 +86,8 @@ test.describe("skills panel", () => {
     await openApp(page);
     await clickNav(page, "skills");
     const panel = page.getByTestId("skills-panel");
-    await panel.getByText("Market").click();
-    await panel.getByPlaceholder("Filter skills…").fill("frontend");
+    await panel.getByRole("button", { name: "Market" }).click();
+    await panel.getByPlaceholder("Search all of skills.sh…").fill("frontend");
     await expect(panel.getByText("frontend-design")).toBeVisible();
     await expect(panel.getByText("find-skills")).toHaveCount(0);
   });
