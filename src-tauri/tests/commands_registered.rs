@@ -10,7 +10,9 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 fn collect_rs_files(dir: &Path, out: &mut Vec<PathBuf>) {
-    let Ok(entries) = fs::read_dir(dir) else { return };
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
     for entry in entries.flatten() {
         let path = entry.path();
         if path.is_dir() {
@@ -73,7 +75,8 @@ fn every_command_is_registered() {
         let source = fs::read_to_string(file).unwrap_or_default();
         for name in command_fn_names(&source) {
             // Look for the bare identifier as a token in the handler list.
-            let registered = handler.split(|c: char| !(c.is_alphanumeric() || c == '_'))
+            let registered = handler
+                .split(|c: char| !(c.is_alphanumeric() || c == '_'))
                 .any(|tok| tok == name);
             if !registered {
                 missing.push(format!("{name}  ({})", file.display()));
