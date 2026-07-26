@@ -22,17 +22,24 @@ function fakeStorage(): Storage {
   } as Storage;
 }
 
+// Installed with `defineProperty`, not by assignment: Bun exposes a real
+// `localStorage` on Linux/macOS as an accessor with no setter, so `globalThis
+// .localStorage = …` threw there and took every test in this file down with it
+// (green on Windows, where the global simply does not exist).
 const g = globalThis as { localStorage?: Storage };
-let original: Storage | undefined;
+const original = Object.getOwnPropertyDescriptor(globalThis, "localStorage");
 
 beforeEach(() => {
-  original = g.localStorage;
-  g.localStorage = fakeStorage();
+  Object.defineProperty(globalThis, "localStorage", {
+    value: fakeStorage(),
+    configurable: true,
+    writable: true,
+  });
 });
 
 afterEach(() => {
-  if (original === undefined) delete g.localStorage;
-  else g.localStorage = original;
+  if (original) Object.defineProperty(globalThis, "localStorage", original);
+  else delete g.localStorage;
 });
 
 describe("discord settings persistence", () => {
