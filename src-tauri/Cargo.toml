@@ -16,7 +16,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 luxor-core = { path = "../crates/luxor-core" }
-tauri = { version = "2", features = ["protocol-asset", "tray-icon", "unstable"] }
+tauri = { version = "2", features = ["protocol-asset", "tray-icon", "unstable", "macos-private-api"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 tauri-plugin-notification = "2"
