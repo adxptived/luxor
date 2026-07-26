@@ -18,7 +18,7 @@ import {
 import { memo, useEffect, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import { schedulePoll } from "@/lib/poll";
 import { fmtCpu } from "@/lib/cpu";
 import { setDragGhost } from "@/lib/dragGhost";
@@ -60,6 +60,10 @@ function fmtRate(bps: number | null): string {
 }
 
 function StatusBarImpl() {
+  // Subscribe to language changes. This component is `memo`-wrapped and its
+  // props do not change on a language switch, so without this it would keep
+  // rendering the previous language's strings.
+  useT();
   const project = useActiveProject();
   const config = useAppStore((s) => s.config);
   const saveConfig = useAppStore((s) => s.saveConfig);

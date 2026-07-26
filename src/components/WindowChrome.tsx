@@ -15,11 +15,11 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useEffect, useState, type MouseEvent } from "react";
+import { memo, type MouseEvent, useEffect, useState } from "react";
 
 import { useDockStore, type PanelKind } from "@/layout/dockStore";
 import { isTauri } from "@/lib/ipc";
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import { setDragGhost } from "@/lib/dragGhost";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
 import type { AppConfig } from "@/lib/types";
@@ -294,7 +294,10 @@ export function WindowControls() {
 /** Replacement for the native OS titlebar when the project tabs live in the left rail. */
 import { ChromeNavButtons } from "./ChromeNavButtons";
 
-export function WindowChrome() {
+function WindowChromeImpl() {
+  // Subscribe to language changes: `memo` would otherwise keep this subtree
+  // frozen on the old language, since none of its props change on a switch.
+  useT();
   const config = useAppStore((s) => s.config);
   // Shared window-size source (audit S2) — replaces the local resize tracker.
   const { compact } = useWindowSize();
@@ -319,3 +322,9 @@ export function WindowChrome() {
     </div>
   );
 }
+
+// Memoized: App re-renders on unrelated store changes (config saves, language
+// version bumps), and this component takes no props that change with them.
+// It reads translations through `useT()` so the memo cannot freeze it on a
+// stale language.
+export const WindowChrome = memo(WindowChromeImpl);

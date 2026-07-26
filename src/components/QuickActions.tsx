@@ -13,11 +13,11 @@ import {
   Trash2,
   Zap,
 } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 import * as ipc from "@/lib/ipc";
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import type { DetectedIde } from "@/lib/types";
 import { errorMessage } from "@/lib/types";
 import { effectiveHotkeys } from "@/lib/hotkeys";
@@ -64,7 +64,10 @@ function ideShort(label: string): string {
   return ((words[0]?.[0] ?? "?") + (words[1]?.[0] ?? words[0]?.[1] ?? "")).toUpperCase();
 }
 
-export function QuickActions({ vertical, expanded = false }: { vertical: boolean; expanded?: boolean }) {
+function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; expanded?: boolean }) {
+  // Subscribe to language changes: `memo` would otherwise keep this subtree
+  // frozen on the old language, since none of its props change on a switch.
+  useT();
   const project = useActiveProject();
   const config = useAppStore((s) => s.config);
   const saveConfig = useAppStore((s) => s.saveConfig);
@@ -397,3 +400,9 @@ function Dropdown(props: {
     document.body,
   );
 }
+
+// Memoized: App re-renders on unrelated store changes (config saves, language
+// version bumps), and this component takes no props that change with them.
+// It reads translations through `useT()` so the memo cannot freeze it on a
+// stale language.
+export const QuickActions = memo(QuickActionsImpl);

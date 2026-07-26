@@ -17,7 +17,7 @@ import * as ipc from "@/lib/ipc";
 import type { RecentProject, RepoStatus, Task } from "@/lib/types";
 import { useDockStore } from "@/layout/dockStore";
 import { useAppStore } from "@/state/appStore";
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import { schedulePoll } from "@/lib/poll";
 import { useActiveProject, useProjectsStore } from "@/state/projectsStore";
 
@@ -61,6 +61,10 @@ function Widget({ title, icon: Icon, children }: { title: string; icon: React.Co
 }
 
 function SidePanelImpl() {
+  // Subscribe to language changes. This component is `memo`-wrapped and its
+  // props do not change on a language switch, so without this it would keep
+  // rendering the previous language's strings.
+  useT();
   const config = useAppStore((s) => s.config);
   const saveConfig = useAppStore((s) => s.saveConfig);
   const project = useActiveProject();

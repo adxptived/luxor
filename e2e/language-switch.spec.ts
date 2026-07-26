@@ -55,4 +55,34 @@ test.describe("UI language switch", () => {
     // And the layout must be intact.
     await expect(page.locator(".dv-tab", { hasText: /Terminal|Терминал/ })).toHaveCount(2);
   });
+
+  test("retranslates memoized shell components", async ({ page }) => {
+    // The shell (TopBar, StatusBar, NavRail, SidePanel, RightPanel, DockLayout,
+    // QuickActions, WindowChrome) is `memo`-wrapped and takes no props that
+    // change on a language switch. Removing the remount-everything `key` means
+    // each of those must subscribe via `useT()` or it silently freezes on the
+    // old language — this asserts they actually do.
+    await openApp(page);
+
+    const statusbar = page.getByTestId("statusbar");
+    await expect(statusbar).toBeVisible();
+
+    await clickNav(page, "settings");
+    const modal = page.getByTestId("settings-modal");
+    await expect(modal).toBeVisible();
+    await modal.getByRole("button", { name: /Interface/i }).click();
+    await modal.locator("select").first().selectOption("ru");
+    await expect(modal.getByRole("button", { name: /Интерфейс/ })).toBeVisible();
+    await page.keyboard.press("Escape");
+
+    // TopBar (memo, prop `vertical` unchanged) must be in Russian.
+    await expect(page.getByTestId("topbar").getByTitle(/Настройки|Терминал|Проект/)).not.toHaveCount(
+      0,
+    );
+    // NavRail is memoized too and carries localized button titles.
+    await expect(page.locator("[data-nav-id]").first()).toHaveAttribute(
+      "title",
+      /[А-Яа-я]/,
+    );
+  });
 });

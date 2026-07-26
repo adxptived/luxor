@@ -112,6 +112,27 @@ export function useT(): typeof t {
   return t;
 }
 
+/**
+ * The current translation version, for use as a `useMemo`/`useCallback`
+ * dependency.
+ *
+ * `t` is a stable module-level function, so memoized values built from it do NOT
+ * invalidate on a language switch — a `useMemo` that maps translated labels will
+ * happily serve English strings forever. This was previously masked by the
+ * `key={getLanguage()}` remount on the App root, which threw every memo cache
+ * away; once that was removed (it killed running terminals), such caches had to
+ * become explicitly language-aware.
+ *
+ * Include this in the dependency array of any memo that produces translated
+ * output:
+ *
+ *     const langVersion = useLanguageVersion();
+ *     const labels = useMemo(() => items.map(localize), [items, langVersion]);
+ */
+export function useLanguageVersion(): number {
+  return useSyncExternalStore(subscribeLanguage, getLanguageVersion, getLanguageVersion);
+}
+
 export const LANGUAGES: { id: Language; label: string }[] = [
   { id: "en", label: "English" },
   { id: "ru", label: "Русский" },

@@ -48,7 +48,7 @@ import {
 import React, { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import { schedulePoll } from "@/lib/poll";
 import {
   ACCENT_PRESETS,
@@ -761,6 +761,10 @@ function PanelEditor({
 // ─── Panel ──────────────────────────────────────────────────────────────────
 
 function RightPanelImpl() {
+  // Subscribe to language changes. This component is `memo`-wrapped and its
+  // props do not change on a language switch, so without this it would keep
+  // rendering the previous language's strings.
+  useT();
   const config = useAppStore((s) => s.config);
   const project = useActiveProject();
   const addProjectPath = useProjectsStore((s) => s.addProjectPath);

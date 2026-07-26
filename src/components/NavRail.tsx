@@ -1,5 +1,5 @@
 import { AlignCenter, AlignLeft, AlignRight, ArrowRightToLine, Eye, EyeOff, RotateCcw, SlidersHorizontal } from "lucide-react";
-import { type MouseEvent } from "react";
+import { memo, type MouseEvent } from "react";
 
 import { useDockStore, type PanelKind } from "@/layout/dockStore";
 import {
@@ -9,7 +9,7 @@ import {
   visibleNavButtons,
   type NavButtonDef,
 } from "@/lib/navButtons";
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import { effectiveHotkeys } from "@/lib/hotkeys";
 import { handleNavDrop, moveNavToZone, useNavDragStore } from "@/lib/navDrag";
 import { getNavAction, getNavActionNew } from "@/lib/navActions";
@@ -35,7 +35,10 @@ const PANEL_BY_NAV_ID: Partial<Record<string, Exclude<PanelKind, "terminal" | "d
 };
 
 /** Dedicated left action rail for nav buttons moved out of the horizontal top bar. */
-export function NavRail() {
+function NavRailImpl() {
+  // Subscribe to language changes: `memo` would otherwise keep this subtree
+  // frozen on the old language, since none of its props change on a switch.
+  useT();
   const config = useAppStore((s) => s.config);
   const saveConfig = useAppStore((s) => s.saveConfig);
   const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
@@ -184,3 +187,9 @@ export function NavRail() {
     </div>
   );
 }
+
+// Memoized: App re-renders on unrelated store changes (config saves, language
+// version bumps), and this component takes no props that change with them.
+// It reads translations through `useT()` so the memo cannot freeze it on a
+// stale language.
+export const NavRail = memo(NavRailImpl);

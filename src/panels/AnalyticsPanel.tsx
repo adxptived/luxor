@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import { schedulePoll } from "@/lib/poll";
 import {
   auditRun,
@@ -208,6 +208,10 @@ const AnalyticsDashboard = memo(function AnalyticsDashboard({
   data: DashboardSnapshot;
   insights: InsightsReport | null;
 }) {
+  // Subscribe to language changes. This component is `memo`-wrapped and its
+  // props do not change on a language switch, so without this it would keep
+  // rendering the previous language's strings.
+  useT();
   const m = useMemo(() => {
     const digest = insights?.digest ?? null;
     const week = data.week;

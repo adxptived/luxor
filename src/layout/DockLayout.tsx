@@ -87,7 +87,7 @@ import { EmptyDock } from "@/panels/EmptyDock";
 // tabs in some Tauri webviews; the Suspense + PanelBoundary wrapping used here
 // is the same pattern the editor/diff panels have shipped on reliably.)
 import { lazy, Suspense } from "react";
-import { t } from "@/lib/i18n";
+import { t, useT } from "@/lib/i18n";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
 
 const FilesPanel = lazy(() =>
@@ -645,6 +645,10 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
 }
 
 function DockLayoutImpl() {
+  // Subscribe to language changes. This component is `memo`-wrapped and its
+  // props do not change on a language switch, so without this it would keep
+  // rendering the previous language's strings.
+  useT();
   const activeId = useProjectsStore((s) => s.activeId);
   const projectsLoaded = useProjectsStore((s) => s.loaded);
   const projectIdsKey = useProjectsStore((s) => s.projects.map((p) => p.id).join("\u0000"));

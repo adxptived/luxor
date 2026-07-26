@@ -49,7 +49,7 @@ import {
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
-import { t } from "@/lib/i18n";
+import { t, useLanguageVersion, useT } from "@/lib/i18n";
 import { handleNavDrop, moveNavToZone, useNavDragStore, type NavZone } from "@/lib/navDrag";
 import { getNavAction, getNavActionNew } from "@/lib/navActions";
 import { setDragGhost } from "@/lib/dragGhost";
@@ -122,6 +122,13 @@ function TabIcon({ stored }: { stored: string | null }) {
 const EMPTY_NAV_LIST: string[] = [];
 
 function TopBarImpl({ vertical }: { vertical: boolean }) {
+  // Subscribe to language changes. This component is `memo`-wrapped and its
+  // props do not change on a language switch, so without this it would keep
+  // rendering the previous language's strings. `langVersion` additionally feeds
+  // the memos below that bake translated labels into arrays — `t` is a stable
+  // module function, so those caches are not invalidated by a switch on their own.
+  useT();
+  const langVersion = useLanguageVersion();
   // Per-field selectors instead of bare store subscriptions: TopBar is always
   // mounted and 1200+ lines — a bare useDockStore()/useProjectsStore() call
   // re-rendered it on EVERY dock state change (panel focus switches, panel API
@@ -246,13 +253,14 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
   const browserEnabled = Boolean(config?.ui.browser_enabled);
   // Avoid rebuilding nav button arrays and lookup sets on every tab/menu render.
   // These values only depend on nav config, browser visibility and orientation.
-  const allVisibleNavButtons = useMemo(
-    () =>
-      visibleNavButtons(navOrder, navHidden)
-        .filter((b) => b.id !== "web" || browserEnabled)
-        .map(localizedNavButton),
-    [browserEnabled, navHidden, navOrder],
-  );
+  const allVisibleNavButtons = useMemo(() => {
+    // `localizedNavButton` reads the active language from i18n module state, so
+    // this memo must be invalidated by hand when the language changes.
+    void langVersion;
+    return visibleNavButtons(navOrder, navHidden)
+      .filter((b) => b.id !== "web" || browserEnabled)
+      .map(localizedNavButton);
+  }, [browserEnabled, navHidden, navOrder, langVersion]);
   const navButtons = useMemo(() => {
     if (vertical) return allVisibleNavButtons;
     const navSidebarSet = new Set(navSidebar);
@@ -275,14 +283,13 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       right: navButtons.filter((b) => !leftSet.has(b.id) && !centerSet.has(b.id)),
     };
   }, [navButtons, navTopbarLeft, navTopbarCenter, vertical]);
-  const hiddenButtons = useMemo(
-    () =>
-      navHidden
-        .map((id) => navButtonDef(id))
-        .filter((d): d is NavButtonDef => d !== undefined)
-        .map(localizedNavButton),
-    [navHidden],
-  );
+  const hiddenButtons = useMemo(() => {
+    void langVersion; // see `allVisibleNavButtons`
+    return navHidden
+      .map((id) => navButtonDef(id))
+      .filter((d): d is NavButtonDef => d !== undefined)
+      .map(localizedNavButton);
+  }, [navHidden, langVersion]);
 
   // ---- nav button actions ------------------------------------------------
 
