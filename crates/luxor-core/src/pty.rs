@@ -467,7 +467,6 @@ impl PtyManager {
 mod tests {
     use super::*;
     use std::sync::mpsc;
-    use std::time::Duration;
 
     #[test]
     fn detect_shells_always_includes_default() {

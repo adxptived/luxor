@@ -1,5 +1,6 @@
 /** Extra Git views: tags, reflog (with cherry-pick), submodules and conflict resolution. */
 
+import { formatUnixDateTime } from "@/lib/format";
 import { GitMerge, RefreshCw, Tag, Trash2, UploadCloud } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -98,7 +99,7 @@ export function ReflogView({ repo, run }: { repo: string; run: RunFn }) {
         <div key={`${e.id}-${i}`} className="group flex items-center gap-2 rounded px-2 py-0.5 text-xs hover:bg-raised">
           <span className="font-mono text-accent">{e.short_id}</span>
           <span className="flex-1 truncate text-strong">{e.message}</span>
-          <span className="shrink-0 text-muted">{new Date(e.time * 1000).toLocaleString()}</span>
+          <span className="shrink-0 text-muted">{formatUnixDateTime(e.time)}</span>
           <button
             title={tr("Cherry-pick this commit onto HEAD")}
             className="shrink-0 text-muted opacity-0 hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"

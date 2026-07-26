@@ -58,7 +58,11 @@ impl Category {
             Category::Idle => "idle",
         }
     }
-    pub fn from_str(s: &str) -> Category {
+    /// Lenient parse: an unknown category degrades to `Coding` rather than
+    /// failing, so a stale/renamed category in persisted telemetry can never
+    /// break a session. Deliberately NOT `std::str::FromStr` — that trait's
+    /// `Result` would imply a fallible parse this is not.
+    pub fn parse(s: &str) -> Category {
         match s {
             "ai" => Category::Ai,
             "audit" => Category::Audit,
@@ -410,7 +414,7 @@ impl TelemetryStore {
         for row in rows {
             let (cat, ms) = row?;
             let secs = (ms.max(0)) / 1000;
-            match Category::from_str(&cat) {
+            match Category::parse(&cat) {
                 Category::Ai => ai += secs,
                 Category::Audit => audit += secs,
                 _ => coding += secs,

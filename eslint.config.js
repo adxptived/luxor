@@ -68,4 +68,32 @@ export default [
       ],
     },
   },
+  // ── Locale guard (audit 2026-07-26 §2.3) ─────────────────────────────────
+  // `toLocaleString` / `toLocaleDateString` / `toLocaleTimeString` without an
+  // explicit locale fall back to the HOST OS locale, not the app's language
+  // setting. That made an English UI on a Russian Windows print "1 024" and
+  // "26.07.2026", and made unit tests fail on any non-en-US machine.
+  // `src/lib/format.ts` wraps them all with `getLocale()`; everything else must
+  // go through it.
+  //
+  // Uses `no-restricted-properties` rather than `no-restricted-syntax` on
+  // purpose: the design-system block above already owns `no-restricted-syntax`,
+  // and in flat config a second block setting the same rule REPLACES it instead
+  // of merging.
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: ["src/lib/format.ts"],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        ...["toLocaleString", "toLocaleDateString", "toLocaleTimeString"].map((property) => ({
+          property,
+          message:
+            `${property}() follows the OS locale, not the app language. Use the helpers in ` +
+            "@/lib/format (formatNumber / formatDate / formatTime / formatDateTime / " +
+            "formatClock / formatUnixDate / formatUnixDateTime / formatBytes).",
+        })),
+      ],
+    },
+  },
 ];

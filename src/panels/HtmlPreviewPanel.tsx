@@ -11,6 +11,7 @@
  *   • Responsive toolbar that collapses labels on narrow panels
  */
 
+import { formatTime } from "@/lib/format";
 import {
   Code2,
   Eye,
@@ -331,7 +332,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
             )}
           </span>
           {lastRefreshed && (
-            <span className="font-mono">{lastRefreshed.toLocaleTimeString()}</span>
+            <span className="font-mono">{formatTime(lastRefreshed)}</span>
           )}
         </div>
       )}

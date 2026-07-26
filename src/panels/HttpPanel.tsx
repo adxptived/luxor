@@ -1,5 +1,6 @@
 /** REST scratch pad: fire HTTP requests without leaving the cockpit. */
 
+import { formatNumber } from "@/lib/format";
 import { ChevronDown, ChevronRight, Copy, History, Loader2, Plus, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
 
@@ -316,7 +317,7 @@ export function HttpPanel() {
               </span>
               <span className="rounded-lg bg-raised px-2 py-1 text-muted">{response.elapsed_ms} ms</span>
               <span className="rounded-lg bg-raised px-2 py-1 text-muted">
-                {response.body.length.toLocaleString()} bytes{response.truncated && " (truncated)"}
+                {formatNumber(response.body.length)} bytes{response.truncated && " (truncated)"}
               </span>
               <button
                 className="ml-auto flex items-center gap-1 rounded-lg px-2 py-1 text-muted hover:bg-raised hover:text-strong"

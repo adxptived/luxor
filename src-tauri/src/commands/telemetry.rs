@@ -55,7 +55,7 @@ pub fn telemetry_record(state: State<'_, AppState>, sample: SampleInput) -> Resu
     let from = to - ChronoDuration::seconds(dur);
     let s = Sample {
         at: to,
-        category: Category::from_str(&sample.category),
+        category: Category::parse(&sample.category),
         project_path: sample.project_path,
         project_name: sample.project_name,
         agent: sample.agent,

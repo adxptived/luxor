@@ -4,6 +4,8 @@
  * a backend or a DOM.
  */
 
+import { formatNumber } from "@/lib/format";
+
 export interface SortState {
   column: string;
   desc: boolean;
@@ -30,7 +32,7 @@ export function formatRange(page: number, pageSize: number, total: number): stri
   if (total <= 0) return "0 of 0";
   const start = page * pageSize + 1;
   const end = Math.min(total, (page + 1) * pageSize);
-  return `${start.toLocaleString()}\u2013${end.toLocaleString()} of ${total.toLocaleString()}`;
+  return `${formatNumber(start)}\u2013${formatNumber(end)} of ${formatNumber(total)}`;
 }
 
 /** Quote a single CSV field, escaping per RFC 4180 only when needed. */

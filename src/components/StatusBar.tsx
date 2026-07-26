@@ -1,3 +1,4 @@
+import { formatClock, formatDateTime } from "@/lib/format";
 import {
   Activity,
   ArrowDownUp,
@@ -416,9 +417,9 @@ Click: Git explorer · right-click: fetch / pull / push`}
       }
       case "clock":
         return (
-          <span className="flex items-center gap-1" title={clock.toLocaleString()}>
+          <span className="flex items-center gap-1" title={formatDateTime(clock)}>
             <Clock size={11} />
-            {clock.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {formatClock(clock)}
           </span>
         );
       case "zoom": {

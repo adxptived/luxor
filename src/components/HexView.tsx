@@ -3,6 +3,7 @@
  * (64 KiB at a time) so arbitrarily large binaries never block the UI.
  */
 
+import { formatNumber } from "@/lib/format";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
@@ -84,7 +85,7 @@ export function HexView({ path }: { path: string }) {
   return (
     <div className="flex h-full flex-col bg-surface">
       <div className="border-b border-edge px-3 py-1 text-xs text-muted">
-        {t("Hex view (read-only)")} · {bytes.length.toLocaleString()} B{done ? "" : ` ${t("(partial)")}`}
+        {t("Hex view (read-only)")} · {formatNumber(bytes.length)} B{done ? "" : ` ${t("(partial)")}`}
       </div>
       <div className="min-h-0 flex-1 overflow-auto p-2 font-mono text-xs leading-5">
         {rows.map((r) => (

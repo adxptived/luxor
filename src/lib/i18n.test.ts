@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
+import { formatDate } from "./format";
 import { getLanguage, getLocale, setLanguage, t } from "./i18n";
 
 describe("i18n", () => {
@@ -32,14 +33,16 @@ describe("i18n", () => {
   test("getLocale tracks the active language, not the OS", async () => {
     await setLanguage("en");
     expect(getLocale()).toBe("en-US");
-    // A BCP-47 en-US locale must format dates/months in English regardless of
-    // the host OS locale (the clock/heatmap Russian-labels bug).
+    // Dates/months must render in the UI language regardless of the host OS
+    // locale (the clock/heatmap Russian-labels bug). Asserted through
+    // `formatDate` rather than a raw `toLocaleDateString(getLocale())` so this
+    // covers the exact path the app renders with.
     const july = new Date("2026-07-03T00:00:00");
-    expect(july.toLocaleDateString(getLocale(), { month: "long" })).toBe("July");
+    expect(formatDate(july, { month: "long" })).toBe("July");
 
     await setLanguage("ru");
     expect(getLocale()).toBe("ru-RU");
-    expect(july.toLocaleDateString(getLocale(), { month: "long" })).toBe("июль");
+    expect(formatDate(july, { month: "long" })).toBe("июль");
     await setLanguage("en");
   });
 });

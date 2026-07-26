@@ -3,6 +3,7 @@
  * (update + vulnerability check), process viewer, HTML preview and crash reports.
  */
 
+import { formatTime, formatUnixDateTime } from "@/lib/format";
 import {
   AlertCircle,
   AlertTriangle,
@@ -903,7 +904,7 @@ function LogsTab({ root: _root }: { root: string }) {
         ) : (
           filteredLogs.map((l) => (
             <div key={l.id} className="flex gap-2 items-start hover:bg-raised px-1 py-0.5 rounded transition">
-              <span className="text-muted shrink-0 text-[10px] select-none">{new Date(l.ts).toLocaleTimeString()}</span>
+              <span className="text-muted shrink-0 text-[10px] select-none">{formatTime(l.ts)}</span>
               <span className={`shrink-0 w-12 text-[10px] select-none ${getLevelColor(l.level)}`}>[{l.level}]</span>
               {getCategoryBadge(l.category)}
               <span className="text-strong whitespace-pre-wrap break-all flex-1">{l.text}</span>
@@ -1277,7 +1278,7 @@ function CrashesTab() {
           >
             <AlertTriangle size={14} className="text-danger shrink-0" />
             <span className="flex-1 truncate font-mono text-xs text-strong">{r.name}</span>
-            <span className="text-xs text-muted font-mono">{new Date(r.modified * 1000).toLocaleString()}</span>
+            <span className="text-xs text-muted font-mono">{formatUnixDateTime(r.modified)}</span>
           </button>
         ))}
       </div>

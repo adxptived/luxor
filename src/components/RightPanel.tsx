@@ -12,6 +12,7 @@
  *  panel-wide accent and density. Persisted via `ui.right_panel_config`
  *  (see `src/lib/rightPanelConfig.ts`). */
 
+import { formatDate, formatTime } from "@/lib/format";
 import {
   Activity as ActivityIcon,
   AppWindow,
@@ -47,7 +48,7 @@ import {
 import React, { lazy, memo, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
-import { t, getLocale } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { schedulePoll } from "@/lib/poll";
 import {
   ACCENT_PRESETS,
@@ -194,13 +195,13 @@ function ClockWidget({ o, compact }: { o: RightWidgetOptions; compact: boolean }
     // (and stops re-rendering) in the tray without a per-tick visibility check.
     return schedulePoll(() => setNow(new Date()), showSeconds ? 1000 : 15000);
   }, [showSeconds]);
-  const time = now.toLocaleTimeString(getLocale(), {
+  const time = formatTime(now, {
     hour: "2-digit",
     minute: "2-digit",
     ...(showSeconds ? { second: "2-digit" as const } : {}),
     ...(o.hour12 !== undefined ? { hour12: o.hour12 } : {}),
   });
-  const date = now.toLocaleDateString(getLocale(), { weekday: "long", day: "numeric", month: "long" });
+  const date = formatDate(now, { weekday: "long", day: "numeric", month: "long" });
   return (
     <Widget title={t("Clock")} icon={Clock} compact={compact}>
       <div className="font-mono text-xl tabular-nums text-strong">{time}</div>

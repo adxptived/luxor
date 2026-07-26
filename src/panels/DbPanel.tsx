@@ -4,6 +4,7 @@
  * regular (rowid) tables; `WITHOUT ROWID` tables stay read-only.
  */
 
+import { formatNumber } from "@/lib/format";
 import type { IDockviewPanelProps } from "dockview";
 import {
   ArrowDown,
@@ -133,7 +134,7 @@ export function DbPanel(props: IDockviewPanelProps) {
             >
               <Table2 size={13} className="shrink-0" />
               <span className="min-w-0 flex-1 truncate">{tb.name}</span>
-              <span className="shrink-0 text-[10px] opacity-70">{tb.rows >= 0 ? tb.rows.toLocaleString() : "?"}</span>
+              <span className="shrink-0 text-[10px] opacity-70">{tb.rows >= 0 ? formatNumber(tb.rows) : "?"}</span>
             </button>
           ))}
           {tables.length === 0 && <div className="px-2 py-1 text-xs text-muted">{t("No tables.")}</div>}
@@ -590,7 +591,7 @@ function StructureView({ path, table }: { path: string; table: string }) {
   return (
     <div className="min-h-0 flex-1 overflow-auto p-3 text-xs">
       <div className="mb-3 text-muted">
-        {info.row_count.toLocaleString()} {t("rows")} · {info.columns.length} {t("columns")}
+        {formatNumber(info.row_count)} {t("rows")} · {info.columns.length} {t("columns")}
         {!info.has_rowid && <span className="ml-2 rounded bg-raised px-1.5 py-0.5">WITHOUT ROWID</span>}
       </div>
 

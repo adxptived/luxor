@@ -3,9 +3,10 @@
  * this session (commits, terminal events, saves, errors, …).
  */
 
+import { formatDate, formatTime } from "@/lib/format";
 import { Activity, Eraser, ScrollText, Search, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
-import { t, getLocale } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { confirmDestructive } from "@/state/uiStore";
 
 import {
@@ -50,8 +51,8 @@ function fmtTime(ms: number): string {
   const d = new Date(ms);
   const today = new Date();
   const sameDay = d.toDateString() === today.toDateString();
-  const hm = d.toLocaleTimeString(getLocale(), { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-  return sameDay ? hm : `${d.toLocaleDateString(getLocale(), { month: "short", day: "numeric" })} ${hm}`;
+  const hm = formatTime(d, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return sameDay ? hm : `${formatDate(d, { month: "short", day: "numeric" })} ${hm}`;
 }
 
 export function ActivityPanel() {

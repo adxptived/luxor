@@ -17,6 +17,7 @@
  * app root (see App.tsx), so this panel is now purely a viewer.
  */
 
+import { formatDate } from "@/lib/format";
 import {
   Activity as ActivityIcon,
   Bot,
@@ -39,7 +40,7 @@ import {
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
-import { t, getLocale } from "@/lib/i18n";
+import { t } from "@/lib/i18n";
 import { schedulePoll } from "@/lib/poll";
 import {
   auditRun,
@@ -360,11 +361,11 @@ function busiestWeekday(week: DashboardSnapshot["week"]): { label: string; secon
 }
 
 function weekdayLabel(date: string): string {
-  return new Date(date + "T00:00:00").toLocaleDateString(getLocale(), { weekday: "short" });
+  return formatDate(new Date(date + "T00:00:00"), { weekday: "short" });
 }
 
 function fmtDay(date: string): string {
-  return new Date(date + "T00:00:00").toLocaleDateString(getLocale(), { day: "numeric", month: "short" });
+  return formatDate(new Date(date + "T00:00:00"), { day: "numeric", month: "short" });
 }
 
 function fmtHour(hour: number): string {
@@ -816,7 +817,7 @@ function Heatmap({ data }: { data: DashboardSnapshot }) {
     positions.push({ x, y, c });
     const d = new Date(c.date + "T00:00:00");
     if (wd === 0 && d.getMonth() !== lastMonth) {
-      monthLabels.push({ x, label: d.toLocaleDateString(getLocale(), { month: "short" }) });
+      monthLabels.push({ x, label: formatDate(d, { month: "short" }) });
       lastMonth = d.getMonth();
     }
   });

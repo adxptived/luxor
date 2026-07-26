@@ -421,7 +421,6 @@ pub fn build_carousel_frames(ctx: &PresenceContext) -> Vec<Presence> {
                     small_text: Some("Luxor".into()),
                     buttons: ctx.buttons.clone(),
                     start_timestamp: ctx.session_start_unix,
-                    ..Default::default()
                 }
                 .sanitized(),
             );
@@ -569,10 +568,26 @@ pub struct DiscordIpc {
     /// Human-readable reason for the most recent transport failure, surfaced
     /// in the UI so "RPC silently does nothing" becomes diagnosable.
     last_error: Option<String>,
+    /// How to obtain a transport. Injectable so tests can exercise the
+    /// connect/backoff state machine without depending on whether the developer
+    /// happens to have Discord running — probing the real socket made
+    /// `reconnect_backoff_throttles_missing_discord` pass or fail based on host
+    /// state rather than on the code under test.
+    connector: fn() -> Option<IpcStream>,
 }
 
 impl DiscordIpc {
     pub fn new(client_id: impl Into<String>) -> Self {
+        Self::with_connector(client_id, IpcStream::connect)
+    }
+
+    /// [`DiscordIpc::new`] with an explicit transport factory. Deliberately
+    /// crate-private: `IpcStream` is a private type, so a `pub` signature here
+    /// would leak it out of the module.
+    fn with_connector(
+        client_id: impl Into<String>,
+        connector: fn() -> Option<IpcStream>,
+    ) -> Self {
         Self {
             client_id: client_id.into(),
             stream: None,
@@ -582,6 +597,7 @@ impl DiscordIpc {
             backoff: Duration::from_secs(1),
             next_connect_at: None,
             last_error: None,
+            connector,
         }
     }
 
@@ -626,7 +642,7 @@ impl DiscordIpc {
             }
         }
         tracing::debug!(target: "luxor_core::discord", client_id = %self.client_id, "connecting to Discord IPC");
-        let mut stream = match IpcStream::connect() {
+        let mut stream = match (self.connector)() {
             Some(stream) => stream,
             None => {
                 let delay = self.next_backoff();
@@ -1576,7 +1592,10 @@ mod tests {
 
     #[test]
     fn reconnect_backoff_throttles_missing_discord() {
-        let mut ipc = DiscordIpc::new("client");
+        // Stub the transport as permanently absent. Using the real connector
+        // made this test assert "Discord is not installed on the build machine"
+        // — it failed outright on any dev box with Discord running.
+        let mut ipc = DiscordIpc::with_connector("client", || None);
         let now = Instant::now();
         let _ = ipc.connect(now);
         let next = ipc.next_connect_at;

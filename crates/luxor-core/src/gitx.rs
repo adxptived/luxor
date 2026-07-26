@@ -1348,6 +1348,11 @@ mod tests {
         let mut config = repo.config().unwrap();
         config.set_str("user.name", "Test User").unwrap();
         config.set_str("user.email", "test@example.com").unwrap();
+        // Hermetic line endings. Without this the repo inherits the *global*
+        // `core.autocrlf`, which Git for Windows sets to `true` by default —
+        // checkout then rewrites LF to CRLF and every test that compares file
+        // contents against a "…\n" literal fails on a stock Windows dev box.
+        config.set_bool("core.autocrlf", false).unwrap();
         let path = dir.path().to_str().unwrap().to_string();
         (dir, path)
     }

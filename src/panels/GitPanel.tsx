@@ -1,3 +1,4 @@
+import { formatUnixDate, formatUnixDateTime } from "@/lib/format";
 import { t as tr } from "@/lib/i18n";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { VList } from "virtua";
@@ -444,7 +445,7 @@ function BlameView({ repo }: { repo: string }) {
               key={i}
               data-testid="blame-line"
               className="flex gap-0 whitespace-pre hover:bg-raised"
-              title={h ? `${h.short_id} — ${h.author}\n${new Date(h.time * 1000).toLocaleString()}\n${h.summary}` : undefined}
+              title={h ? `${h.short_id} — ${h.author}\n${formatUnixDateTime(h.time)}\n${h.summary}` : undefined}
             >
               <span className={`w-44 shrink-0 truncate border-r border-edge px-2 ${first ? "text-accent" : "text-transparent"}`}>
                 {h ? `${h.short_id} ${h.author}` : ""}
@@ -541,7 +542,7 @@ function relativeTime(unixSecs: number): string {
   if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
   if (diff < 86400 * 30) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(unixSecs * 1000).toLocaleDateString();
+  return formatUnixDate(unixSecs);
 }
 
 /** Phase 20: Branch graph visualization — renders a lane-based commit DAG. */
@@ -670,7 +671,7 @@ function HistoryList({ log, repo }: { log: CommitInfo[]; repo: string }) {
             onClick={() => void toggle(c)}
             className="flex w-full items-baseline gap-2 rounded px-2 py-1 text-left hover:bg-raised"
             title={`${c.author} <${c.email}>
-${new Date(c.time * 1000).toLocaleString()}
+${formatUnixDateTime(c.time)}
 
 ${c.message}`}
           >

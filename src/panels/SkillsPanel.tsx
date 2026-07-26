@@ -3,6 +3,7 @@
  *  market tab that browses the skills.sh catalog and installs skills
  *  straight into the project. */
 
+import { formatNumber } from "@/lib/format";
 import {
   BadgeCheck,
   ChevronDown,
@@ -837,7 +838,7 @@ function MarketTab(props: { root: string | null; globalRoot: string | null }) {
                     )}
                   </div>
                   <div className="truncate text-xs text-muted">
-                    {s.source} · {s.installs.toLocaleString("en-US")} installs
+                    {s.source} · {formatNumber(s.installs)} installs
                   </div>
                 </div>
                 <button

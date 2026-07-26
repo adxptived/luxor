@@ -3,6 +3,7 @@
  *  shortcuts, dirty guard, status bar — all preserved across the migration from
  *  Monaco to CodeMirror. */
 
+import { formatTime } from "@/lib/format";
 import type { IDockviewPanelProps } from "dockview";
 import { AlignLeft, CheckSquare, ChevronRight, ClipboardPaste, Code2, Copy, CornerDownLeft, Eye, Keyboard, MoreHorizontal, Palette, Pilcrow, Redo2, Replace, Save, Scissors, Search, Type, Undo2, WrapText, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -991,7 +992,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
           {!preview && <span title={t("Language")}>{langLabel(lang)}</span>}
           {!preview && (
             <span className="opacity-70">
-              {dirtyRef.current ? t("Ctrl+S to save") : lastSaved ? `${t("editor.saved_at", "Saved")} ${new Date(lastSaved).toLocaleTimeString()}` : t("Ctrl+S to save")}
+              {dirtyRef.current ? t("Ctrl+S to save") : lastSaved ? `${t("editor.saved_at", "Saved")} ${formatTime(lastSaved)}` : t("Ctrl+S to save")}
             </span>
           )}
         </span>
