@@ -241,13 +241,13 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
         </span>
         {ideMenu && (
           <Dropdown anchor={ideRef} side={menuSide} onClose={() => setIdeMenu(false)}>
-            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-3xs font-semibold uppercase tracking-wide text-muted">
               Open project in…
             </div>
             {ides.map((ide) => (
               <div key={ide.command} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-raised">
                 <span
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-[9px] font-bold text-black/80"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-3xs font-bold text-black/80"
                   style={{ backgroundColor: ideColor(ide.command) }}
                 >
                   {ideShort(ide.label)}
@@ -289,7 +289,7 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
         </button>
         {favMenu && project && (
           <Dropdown anchor={favRef} side={menuSide} onClose={() => setFavMenu(false)}>
-            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-3xs font-semibold uppercase tracking-wide text-muted">
               Favorite commands
             </div>
             {project.favorite_commands.map((cmd, i) => (

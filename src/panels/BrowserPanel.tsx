@@ -485,7 +485,7 @@ function NativeBrowser() {
           disabled={!currentUrl}
           onClick={goHome}
           data-testid="browser-home"
-        >
+         aria-label={t("Home")}>
           <House size={14} />
         </button>
         <SiteIcon url={currentUrl} loading={loading} />
@@ -723,7 +723,7 @@ function IframeBrowser() {
           disabled={!url}
           onClick={goHome}
           data-testid="browser-home"
-        >
+         aria-label={t("Home")}>
           <House size={14} />
         </button>
         <SiteIcon url={url} loading={loading} />
@@ -824,7 +824,7 @@ function IframeBrowser() {
         ) : null}
         {url && !windowed && (
           <button
-            className="absolute bottom-2 right-2 rounded border border-edge bg-bar/90 px-2 py-1 text-[11px] text-muted shadow hover:border-accent hover:text-accent"
+            className="absolute bottom-2 right-2 rounded border border-edge bg-bar/90 px-2 py-1 text-2xs text-muted shadow hover:border-accent hover:text-accent"
             title={t("Some sites refuse to render inside the embedded browser")}
             onClick={() => openWindow(url)}
           >

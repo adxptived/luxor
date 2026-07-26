@@ -802,13 +802,13 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         </div>
         {/* Autosave indicator */}
         {!preview && !truncated && autosaveStatus !== "idle" && (
-          <span className="shrink-0 text-[10px] text-muted/70" data-testid="autosave-indicator">
+          <span className="shrink-0 text-3xs text-muted/70" data-testid="autosave-indicator">
             {autosaveStatus === "saving" && <span className="animate-pulse">{t("editor.autosaving", "Saving…")}</span>}
             {autosaveStatus === "saved" && <span className="text-success/80">{t("editor.autosaved", "Saved")}</span>}
           </span>
         )}
         {!preview && !truncated && (
-          <span className="hidden shrink-0 items-center gap-1 font-mono text-[10px] text-muted/70 @sm:flex" title={t("Syntax highlighting language")}>
+          <span className="hidden shrink-0 items-center gap-1 font-mono text-3xs text-muted/70 @sm:flex" title={t("Syntax highlighting language")}>
             <Type size={11} className="text-muted/60" />
             {languageLabel(lang)}
           </span>
@@ -835,7 +835,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         </button>
       </div>
       {shortcutsOpen && (
-        <div className="grid grid-cols-2 gap-1 border-b border-edge bg-raised/45 px-3 py-2 text-[11px] text-muted @md:grid-cols-4">
+        <div className="grid grid-cols-2 gap-1 border-b border-edge bg-raised/45 px-3 py-2 text-2xs text-muted @md:grid-cols-4">
           <span><b className="text-strong">Ctrl+S</b> save</span>
           <span><b className="text-strong">Ctrl+F / Ctrl+H</b> find/replace</span>
           <span><b className="text-strong">Ctrl+/</b> comment</span>
@@ -923,7 +923,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
           dangerouslySetInnerHTML={{ __html: previewHtml }}
         />
       )}
-      <div className="lx-editor-statusbar flex items-center justify-between gap-2 border-t border-edge px-3 py-[3px] text-[11px] text-muted">
+      <div className="lx-editor-statusbar flex items-center justify-between gap-2 border-t border-edge px-3 py-[3px] text-2xs text-muted">
         <span className="min-w-0 truncate" title={path}>
           {path}
         </span>
@@ -947,21 +947,21 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
                 className="flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-raised hover:text-strong"
                 title={t("Undo (Ctrl+Z)")}
                 onClick={doUndo}
-              >
+               aria-label={t("Undo (Ctrl+Z)")}>
                 <Undo2 size={12} />
               </button>
               <button
                 className="flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-raised hover:text-strong"
                 title={t("Redo (Ctrl+Y)")}
                 onClick={doRedo}
-              >
+               aria-label={t("Redo (Ctrl+Y)")}>
                 <Redo2 size={12} />
               </button>
               <button
                 className="flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-raised hover:text-strong"
                 title={t("Format document (Shift+Alt+F)")}
                 onClick={doFormat}
-              >
+               aria-label={t("Format document (Shift+Alt+F)")}>
                 <AlignLeft size={12} />
                 {t("Format")}
               </button>
@@ -974,7 +974,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
               }`}
               title={t("Toggle word wrap (Alt+Z)")}
               onClick={toggleWrap}
-            >
+             aria-label={t("Toggle word wrap (Alt+Z)")}>
               <WrapText size={12} />
               {t("Wrap")}
             </button>
@@ -984,7 +984,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
               className="rounded px-1.5 py-0.5 tabular-nums hover:bg-raised hover:text-strong"
               title={t("Go to line (Ctrl+G)")}
               onClick={goToLine}
-            >
+             aria-label={t("Go to line (Ctrl+G)")}>
               {cursorLabel(cursor.line, cursor.col)}
               {selectionLabel(sel.chars, sel.ranges)}
             </button>

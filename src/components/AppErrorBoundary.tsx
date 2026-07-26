@@ -115,7 +115,7 @@ export class AppErrorBoundary extends Component<Props, State> {
               className="rounded-lg border border-edge bg-raised px-4 py-2 text-sm text-muted transition-colors hover:text-strong"
               onClick={this.handleCopyError}
               title={t("app.crashed.copy", "Copy error for bug report")}
-            >
+             aria-label={t("app.crashed.copy", "Copy error for bug report")}>
               {t("app.crashed.copy", "Copy error")}
             </button>
           </div>

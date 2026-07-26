@@ -66,7 +66,7 @@ export function NoFolderCta({ hint }: { hint: string }) {
           >
             <FolderOpen size={13} /> {t("Choose folder…")}
           </button>
-          <span className="flex items-center gap-1 rounded-full border border-edge bg-raised px-2 py-1 text-[10px] uppercase tracking-wide text-muted">
+          <span className="flex items-center gap-1 rounded-full border border-edge bg-raised px-2 py-1 text-3xs uppercase tracking-wide text-muted">
             <Sparkles size={11} className="text-accent" /> {t("Enables Files, Git, Search and Launcher")}
           </span>
         </div>

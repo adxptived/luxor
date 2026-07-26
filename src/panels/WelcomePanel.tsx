@@ -110,7 +110,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
                       {blank ? t("Blank workspace") : "Luxor"}
                     </h1>
                     {!blank && (
-                      <span className="rounded-full border border-edge bg-bar px-2 py-0.5 font-mono text-[11px] text-muted">
+                      <span className="rounded-full border border-edge bg-bar px-2 py-0.5 font-mono text-2xs text-muted">
                         v{APP_VERSION}
                       </span>
                     )}
@@ -172,7 +172,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
             {/* Onboarding checklist */}
             {!blank && !onboardingComplete && (
               <section className="rounded-lg border border-edge bg-surface/40 p-3">
-                <div className="mb-2 flex items-center gap-1.5 px-1 text-[11px] font-semibold uppercase tracking-wide text-accent">
+                <div className="mb-2 flex items-center gap-1.5 px-1 text-2xs font-semibold uppercase tracking-wide text-accent">
                   <Rocket size={12} /> {t("welcome.get_started", "Get started")}
                 </div>
                 <div className="space-y-1">
@@ -206,10 +206,10 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
 
             <section className="rounded-lg border border-edge bg-bar/80 p-3">
               <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+                <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
                   <History size={12} /> {t("Recent projects")}
                 </div>
-                {recents.length > 0 && <span className="text-[10px] text-muted">{recents.length}</span>}
+                {recents.length > 0 && <span className="text-3xs text-muted">{recents.length}</span>}
               </div>
               <div className="space-y-1">
                 {recents.map((r) => (
@@ -269,7 +269,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
 export const WelcomePanel = React.memo(WelcomePanelImpl);
 
 function Kbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="rounded border border-edge bg-raised px-1 font-mono text-[11px]">{children}</kbd>;
+  return <kbd className="rounded border border-edge bg-raised px-1 font-mono text-2xs">{children}</kbd>;
 }
 
 function FeaturePill(props: { icon: React.ComponentType<{ size?: number; className?: string }>; label: string; value: string }) {
@@ -277,7 +277,7 @@ function FeaturePill(props: { icon: React.ComponentType<{ size?: number; classNa
     <div className="flex min-w-0 items-center gap-2 rounded-lg border border-edge bg-bar/70 px-3 py-2">
       <props.icon size={14} className="shrink-0 text-accent" />
       <span className="min-w-0">
-        <span className="block truncate text-[10px] uppercase tracking-wide text-muted">{props.label}</span>
+        <span className="block truncate text-3xs uppercase tracking-wide text-muted">{props.label}</span>
         <span className="block truncate text-xs font-medium text-strong">{props.value}</span>
       </span>
     </div>

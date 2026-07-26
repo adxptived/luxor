@@ -183,7 +183,7 @@ export function GithubPanel() {
 
   const stateBadge = (s: string, draft = false) => (
     <span
-      className={`rounded px-1.5 py-0.5 text-[10px] ${
+      className={`rounded px-1.5 py-0.5 text-3xs ${
         draft
           ? "bg-raised text-muted"
           : s === "open"
@@ -471,15 +471,15 @@ export function GithubPanel() {
                   <span className="text-muted">#{i.number}</span> {i.title}
                 </span>
                 {i.labels.slice(0, 3).map((l) => (
-                  <span key={l} className="rounded bg-edge px-1 py-0.5 text-[10px] text-muted">{l}</span>
+                  <span key={l} className="rounded bg-edge px-1 py-0.5 text-3xs text-muted">{l}</span>
                 ))}
                 {i.comments > 0 && (
-                  <span className="flex items-center gap-0.5 text-[10px] text-muted">
+                  <span className="flex items-center gap-0.5 text-3xs text-muted">
                     <MessageSquare size={11} />
                     {i.comments}
                   </span>
                 )}
-                <span className="text-[10px] text-muted">@{i.user} · {timeAgo(i.updated_at)}</span>
+                <span className="text-3xs text-muted">@{i.user} · {timeAgo(i.updated_at)}</span>
               </button>
             ))
           ))}
@@ -499,8 +499,8 @@ export function GithubPanel() {
                   <span className="text-muted">#{p.number}</span> {p.title}
                 </span>
                 {stateBadge(p.state, p.draft)}
-                <span className="text-[10px] text-muted">{p.head} → {p.base}</span>
-                <span className="text-[10px] text-muted">@{p.user} · {timeAgo(p.updated_at)}</span>
+                <span className="text-3xs text-muted">{p.head} → {p.base}</span>
+                <span className="text-3xs text-muted">@{p.user} · {timeAgo(p.updated_at)}</span>
               </button>
             ))
           ))}
@@ -519,13 +519,13 @@ export function GithubPanel() {
                 <span className="min-w-40 flex-1 truncate text-strong">
                   {r.name} <span className="text-muted">#{r.run_number}</span>
                 </span>
-                <span className="rounded bg-edge px-1 py-0.5 text-[10px] text-muted">{r.branch}</span>
-                <span className="text-[10px] text-muted">{r.event} · {timeAgo(r.created_at)}</span>
+                <span className="rounded bg-edge px-1 py-0.5 text-3xs text-muted">{r.branch}</span>
+                <span className="text-3xs text-muted">{r.event} · {timeAgo(r.created_at)}</span>
               </button>
             ))
           ))}
       </div>
-      <div className="border-t border-edge p-1.5 text-[10px] text-muted">
+      <div className="border-t border-edge p-1.5 text-3xs text-muted">
         {t("github.tokenHint", "Without a GitHub token only public repos work (60 req/h). Add a token for github.com in Git settings.")}
       </div>
     </div>

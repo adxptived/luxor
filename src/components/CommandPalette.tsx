@@ -502,7 +502,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                 <button
                   key={m.id}
                   onClick={() => { setMode(m.id); setSelected(0); }}
-                  className={`flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-medium transition-colors ${
+                  className={`flex items-center gap-1 rounded-lg px-2 py-1 text-3xs font-medium transition-colors ${
                     mode === m.id ? "bg-raised text-strong" : "text-muted hover:bg-raised/70 hover:text-strong"
                   }`}
                 >
@@ -550,7 +550,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
               placeholder={t("Type a command, panel, theme, project…")}
               className="min-w-0 flex-1 bg-transparent py-3 text-strong outline-none placeholder:text-muted/70"
             />
-            <span className="rounded-full border border-edge px-2 py-0.5 text-[10px] text-muted">
+            <span className="rounded-full border border-edge px-2 py-0.5 text-3xs text-muted">
               {filtered.length}/{totalCount}
             </span>
           </div>
@@ -565,7 +565,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
           )}
           {!navLoading && mode === "commands" && groupedCommands && groupedCommands.map((group) => (
             <div key={group.category.id}>
-              <div className="px-3 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted">
+              <div className="px-3 pb-0.5 pt-2 text-3xs font-semibold uppercase tracking-wide text-muted">
                 {t(group.category.label)}
               </div>
               {group.items.map((c) => {
@@ -589,7 +589,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium text-strong">{parts.title || c.label}</span>
-                      <span className="block truncate text-[11px] uppercase tracking-wide text-muted">{parts.section}</span>
+                      <span className="block truncate text-2xs uppercase tracking-wide text-muted">{parts.section}</span>
                     </span>
                     {c.hint && <Kbd>{c.hint}</Kbd>}
                     {idx === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
@@ -605,12 +605,12 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
             return (
               <div key={c.id}>
                 {recentCount > 0 && i === 0 && (
-                  <div className="px-3 pb-0.5 pt-1 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  <div className="px-3 pb-0.5 pt-1 text-3xs font-semibold uppercase tracking-wide text-muted">
                     {t("Recently used")}
                   </div>
                 )}
                 {recentCount > 0 && i === recentCount && (
-                  <div className="px-3 pb-0.5 pt-2 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  <div className="px-3 pb-0.5 pt-2 text-3xs font-semibold uppercase tracking-wide text-muted">
                     {t("All commands")}
                   </div>
                 )}
@@ -630,7 +630,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                     <span className="block truncate font-medium text-strong">
                       <FuzzyText text={parts.title || c.label} query={query} />
                     </span>
-                    <span className="block truncate text-[11px] uppercase tracking-wide text-muted">{parts.section}</span>
+                    <span className="block truncate text-2xs uppercase tracking-wide text-muted">{parts.section}</span>
                   </span>
                   {c.hint && <Kbd>{c.hint}</Kbd>}
                   {i === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
@@ -658,7 +658,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                   <span className="block truncate font-medium text-strong">
                     <FuzzyText text={f.name} query={query} />
                   </span>
-                  <span className="block truncate text-[11px] text-muted">{f.dir}</span>
+                  <span className="block truncate text-2xs text-muted">{f.dir}</span>
                 </span>
                 {i === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
               </button>
@@ -684,7 +684,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                   <span className="block truncate font-medium text-strong">
                     <FuzzyText text={s.name} query={query} />
                   </span>
-                  <span className="block truncate text-[11px] text-muted">{s.kind} · {s.file}:{s.line}</span>
+                  <span className="block truncate text-2xs text-muted">{s.kind} · {s.file}:{s.line}</span>
                 </span>
                 {i === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
               </button>
@@ -746,7 +746,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
 }
 
 function Kbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="shrink-0 rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-[10px] text-muted">{children}</kbd>;
+  return <kbd className="shrink-0 rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-3xs text-muted">{children}</kbd>;
 }
 
 /**

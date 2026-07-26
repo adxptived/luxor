@@ -126,17 +126,20 @@ export function HttpPanel() {
               "SSRF guard: blocks requests to localhost/private networks. Turn off only to hit local dev servers.",
             )}
             aria-pressed={blockPrivate}
-            className={`rounded-full border px-2 py-1 text-[10px] transition-colors ${
+            className={`rounded-full border px-2 py-1 text-3xs transition-colors ${
               blockPrivate
                 ? "border-edge bg-surface text-muted"
                 : "border-warning/60 bg-warning/10 text-warning"
             }`}
-          >
+           aria-label={t(
+              "http.guard_hint",
+              "SSRF guard: blocks requests to localhost/private networks. Turn off only to hit local dev servers.",
+            )}>
             {blockPrivate
               ? t("http.guard_on", "Guard: private hosts blocked")
               : t("http.guard_off", "Guard OFF — local/private requests allowed")}
           </button>
-          <span className="rounded-full border border-edge bg-surface px-2 py-1 text-[10px] text-muted">
+          <span className="rounded-full border border-edge bg-surface px-2 py-1 text-3xs text-muted">
             {nonEmptyHeaders} headers{canHaveBody && body.trim() ? " · body" : ""}
           </span>
         </div>

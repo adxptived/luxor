@@ -167,7 +167,7 @@ export function TasksPanel() {
         </span>
         <span className="min-w-0 truncate text-muted">{project ? project.name : "global board"}</span>
         {tasks.length > 0 && (
-          <span className="shrink-0 rounded bg-raised px-1.5 py-0.5 text-[10px] text-muted">
+          <span className="shrink-0 rounded bg-raised px-1.5 py-0.5 text-3xs text-muted">
             {tasks.filter((t) => t.status === "done").length}/{tasks.length} done
           </span>
         )}
@@ -247,7 +247,7 @@ export function TasksPanel() {
             >
               <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
                 {t(col.label)}
-                <span className="rounded bg-raised px-1.5 text-[10px]">{colTasks.length}</span>
+                <span className="rounded bg-raised px-1.5 text-3xs">{colTasks.length}</span>
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto px-1.5 pb-1.5">
                 {colTasks.map((task, i) => (
@@ -365,7 +365,7 @@ function TaskCard(props: {
             className="ml-auto rounded p-1 text-muted hover:text-danger"
             title={t("Delete task")}
             onClick={props.onDelete}
-          >
+           aria-label={t("Delete task")}>
             <Trash2 size={13} />
           </button>
         </div>

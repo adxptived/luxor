@@ -624,7 +624,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       {sessionRestored && exited === null && (
         <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-edge bg-bar/90 px-3 py-1 shadow-sm backdrop-blur animate-session-fade">
           <History size={12} className="text-accent" />
-          <span className="text-[11px] font-medium text-strong">{t("term.session_restored", "Session restored")}</span>
+          <span className="text-2xs font-medium text-strong">{t("term.session_restored", "Session restored")}</span>
         </div>
       )}
 
@@ -658,7 +658,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       {treeStats && exited === null && (showStats || treeStats.agents.length > 0) && (
         <div
           data-testid="terminal-stats"
-          className="pointer-events-none absolute bottom-1 right-3 z-10 flex items-center gap-1.5 rounded bg-bar/80 px-1.5 py-0.5 font-mono text-[10px] text-muted"
+          className="pointer-events-none absolute bottom-1 right-3 z-10 flex items-center gap-1.5 rounded bg-bar/80 px-1.5 py-0.5 font-mono text-3xs text-muted"
           title={`${t("Shell process tree — processes:")} ${treeStats.processes}`}
         >
           {treeStats.agents.length > 0 && (

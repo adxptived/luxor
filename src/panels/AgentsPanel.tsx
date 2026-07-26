@@ -189,7 +189,7 @@ export function AgentsPanel() {
         <div key={label} className="mb-3">
           <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
             {label}
-            <span className="rounded bg-raised px-1.5 text-[10px]">{rows.length}</span>
+            <span className="rounded bg-raised px-1.5 text-3xs">{rows.length}</span>
           </div>
           <div className="overflow-hidden rounded-lg border border-edge">
             {rows.map((p) => (
@@ -250,7 +250,7 @@ export function AgentsPanel() {
                     )}
                   </button>
                 </div>
-                <div className="flex items-center gap-2 pl-5 font-mono text-[11px] text-muted">
+                <div className="flex items-center gap-2 pl-5 font-mono text-2xs text-muted">
                   <FolderOpen size={11} className="shrink-0 opacity-60" />
                   {p.cwd ? (
                     <>

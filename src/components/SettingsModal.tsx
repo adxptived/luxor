@@ -216,7 +216,7 @@ function FontPicker({
         value={value}
         placeholder="font-family"
         onChange={(e) => onChange(e.target.value)}
-        className="w-40 rounded border border-edge bg-raised px-2 py-1 font-mono text-[11px] text-strong outline-none focus:border-muted"
+        className="w-40 rounded border border-edge bg-raised px-2 py-1 font-mono text-2xs text-strong outline-none focus:border-muted"
       />
     </div>
   );
@@ -759,7 +759,7 @@ export function SettingsModal() {
         {/* Section nav */}
         <nav className="flex w-48 shrink-0 flex-col border-r border-edge bg-surface/35 p-2">
           <div className="px-2 pb-1 pt-1 text-lg font-semibold text-strong">Settings</div>
-          <div className="px-2 pb-2 text-[11px] leading-4 text-muted">Search, tune and export your Luxor workspace.</div>
+          <div className="px-2 pb-2 text-2xs leading-4 text-muted">Search, tune and export your Luxor workspace.</div>
           <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-edge bg-raised px-2 py-1.5 transition-colors focus-within:border-transparent">
             <Search size={12} className="shrink-0 text-muted" />
             <input
@@ -803,7 +803,7 @@ export function SettingsModal() {
             return (
               <>
                 {q && (
-                  <div className="mb-1 px-2 text-[10px] uppercase tracking-wider text-muted">
+                  <div className="mb-1 px-2 text-3xs uppercase tracking-wider text-muted">
                     {visible.length} section{visible.length > 1 ? "s" : ""} match
                   </div>
                 )}
@@ -822,7 +822,7 @@ export function SettingsModal() {
                       {t(`settings.section.${s.id}`, s.label)}
                     </span>
                     {q && (found.matches[s.id]?.length ?? 0) > 0 && (
-                      <span className="mt-0.5 truncate pl-6 text-[11px] text-muted" data-testid={`settings-hit-${s.id}`}>
+                      <span className="mt-0.5 truncate pl-6 text-2xs text-muted" data-testid={`settings-hit-${s.id}`}>
                         {found.matches[s.id]!.join(" · ")}
                       </span>
                     )}
@@ -835,7 +835,7 @@ export function SettingsModal() {
               Full-bleed (-mx-2 -mb-2) and h-8 to exactly match the content
               pane's footer bar, so both border-t lines form one straight line. */}
           <div
-            className="-mx-2 -mb-2 mt-auto flex h-8 shrink-0 items-center justify-between border-t border-edge bg-surface/35 px-3 text-[11px] text-muted"
+            className="-mx-2 -mb-2 mt-auto flex h-8 shrink-0 items-center justify-between border-t border-edge bg-surface/35 px-3 text-2xs text-muted"
             title={`${t("settings.scale_hint", "Resize this window")}: Ctrl+= / Ctrl+- · Ctrl+0`}
           >
             <span>{t("settings.scale", "Window scale")}</span>
@@ -1032,7 +1032,7 @@ export function SettingsModal() {
                 )}
                 {/* Live preview — updates instantly as the accent changes. */}
                 <div className="mb-3 rounded-lg border border-edge bg-surface/40 p-3">
-                  <div className="mb-2 text-[10px] uppercase tracking-wider text-muted">Preview</div>
+                  <div className="mb-2 text-3xs uppercase tracking-wider text-muted">Preview</div>
                   <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       className="rounded-md px-3 py-1.5 text-xs font-semibold text-on-accent shadow-sm"
@@ -1152,7 +1152,7 @@ export function SettingsModal() {
                           </span>
                           <span className="min-w-0">
                             <span className="block text-xs font-semibold">{t(`preset.${p.id}.name`, p.name)}</span>
-                            <span className="block text-[11px] leading-snug text-muted">{t(`preset.${p.id}.desc`, p.description)}</span>
+                            <span className="block text-2xs leading-snug text-muted">{t(`preset.${p.id}.desc`, p.description)}</span>
                           </span>
                         </button>
                       );
@@ -1182,7 +1182,7 @@ export function SettingsModal() {
                       <Upload size={12} /> {t("Paste preset")}
                     </button>
                     {profiles.length === 0 && (
-                      <span className="w-full rounded-md border border-dashed border-edge px-3 py-2 text-[11px] text-muted">
+                      <span className="w-full rounded-md border border-dashed border-edge px-3 py-2 text-2xs text-muted">
                         {t("settings.no_presets", "No saved presets yet. Save the current settings, or paste a preset link a friend shared with you.")}
                       </span>
                     )}
@@ -1389,7 +1389,7 @@ export function SettingsModal() {
                 <div className="mt-2 rounded-lg border border-edge bg-bar/30 p-3">
                   <div className="mb-2 flex items-center justify-between">
                     <div className="text-xs font-semibold text-strong">{t("Tray menu", "Tray menu")}</div>
-                    <div className="text-[11px] text-muted">{t("Right-click the tray icon", "Right-click the tray icon")}</div>
+                    <div className="text-2xs text-muted">{t("Right-click the tray icon", "Right-click the tray icon")}</div>
                   </div>
                   <div className="flex flex-col gap-4 md:flex-row">
                     <div className="flex-1 space-y-1">
@@ -1435,7 +1435,7 @@ export function SettingsModal() {
                       </Row>
                     </div>
                     <div className="shrink-0 md:w-[256px]">
-                      <div className="mb-1.5 text-[10px] uppercase tracking-wider text-muted">{t("Preview", "Preview")}</div>
+                      <div className="mb-1.5 text-3xs uppercase tracking-wider text-muted">{t("Preview", "Preview")}</div>
                       <div className="pointer-events-none select-none rounded-lg" style={{ width: 256, boxShadow: "var(--lx-shadow-lg)" }}>
                         <TrayMenu
                           config={draft.ui.tray ?? DEFAULT_TRAY}
@@ -1639,7 +1639,7 @@ export function SettingsModal() {
                       <select
                         value={placement}
                         onChange={(e) => setPlacement(e.target.value)}
-                        className="rounded border border-edge bg-raised px-1.5 py-0.5 text-[11px] text-strong outline-none focus:border-muted"
+                        className="rounded border border-edge bg-raised px-1.5 py-0.5 text-2xs text-strong outline-none focus:border-muted"
                       >
                         <option value="topbar-left">Top bar — left</option>
                         <option value="topbar-center">Top bar — center</option>
@@ -2269,14 +2269,14 @@ export function SettingsModal() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="text-2xl font-bold tracking-tight text-strong">Luxor</span>
-                        <span className="rounded-full border border-edge bg-bar px-2 py-0.5 font-mono text-[11px] text-muted">
+                        <span className="rounded-full border border-edge bg-bar px-2 py-0.5 font-mono text-2xs text-muted">
                           v{APP_VERSION}
                         </span>
                       </div>
                       <div className="mt-0.5 text-xs text-muted">
                         {t("settings.about.tagline", "Cockpit for AI-assisted coding")}
                       </div>
-                      <div className="mt-1 text-[11px] text-muted">
+                      <div className="mt-1 text-2xs text-muted">
                         {t("settings.about.by", "by")}{" "}
                         <button
                           className="text-accent hover:underline"
@@ -2357,7 +2357,7 @@ function AboutLink(props: {
       </span>
       <span className="flex min-w-0 flex-col">
         <span className="truncate text-sm font-medium text-strong">{props.label}</span>
-        <span className="truncate text-[11px] text-muted">{props.sub}</span>
+        <span className="truncate text-2xs text-muted">{props.sub}</span>
       </span>
     </button>
   );
@@ -2384,7 +2384,7 @@ function Row({
       <div className="group flex flex-col gap-2 border-b border-edge/50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-raised/40">
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="text-pretty leading-snug text-strong">{label}</span>
-          {help && <span className="text-pretty text-[11px] leading-4 text-muted">{help}</span>}
+          {help && <span className="text-pretty text-2xs leading-4 text-muted">{help}</span>}
         </span>
         <div className="min-w-0">{children}</div>
       </div>
@@ -2394,7 +2394,7 @@ function Row({
     <div className="group grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-center gap-x-4 border-b border-edge/50 px-2 py-2 transition-colors last:border-b-0 hover:bg-raised/40">
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="text-pretty leading-snug text-strong">{label}</span>
-        {help && <span className="text-pretty text-[11px] leading-4 text-muted">{help}</span>}
+        {help && <span className="text-pretty text-2xs leading-4 text-muted">{help}</span>}
       </span>
       <div className="flex min-w-0 items-center justify-end">{children}</div>
     </div>
@@ -2677,7 +2677,7 @@ function DeveloperSection() {
         <DevToolButton icon={Trash2} label={t("settings.dev.clear", "Clear")} onClick={clear} />
       </div>
 
-      <pre className="h-72 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-edge bg-surface/60 p-3 font-mono text-[11px] leading-5 text-strong">
+      <pre className="h-72 overflow-auto whitespace-pre-wrap break-all rounded-lg border border-edge bg-surface/60 p-3 font-mono text-2xs leading-5 text-strong">
         {shown.trim() ? shown : t("settings.dev.empty", "No log entries yet. Errors, UI freezes and startup timing will appear here.")}
       </pre>
       <p className="mt-2 text-xs leading-5 text-muted">

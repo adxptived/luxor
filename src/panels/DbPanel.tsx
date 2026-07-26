@@ -134,7 +134,7 @@ export function DbPanel(props: IDockviewPanelProps) {
             >
               <Table2 size={13} className="shrink-0" />
               <span className="min-w-0 flex-1 truncate">{tb.name}</span>
-              <span className="shrink-0 text-[10px] opacity-70">{tb.rows >= 0 ? formatNumber(tb.rows) : "?"}</span>
+              <span className="shrink-0 text-3xs opacity-70">{tb.rows >= 0 ? formatNumber(tb.rows) : "?"}</span>
             </button>
           ))}
           {tables.length === 0 && <div className="px-2 py-1 text-xs text-muted">{t("No tables.")}</div>}
@@ -434,7 +434,7 @@ function DataView({ path, table, onChanged }: { path: string; table: string; onC
             <tbody className={loading ? "opacity-50" : ""}>
               {rows.rows.map((row, i) => (
                 <tr key={i} className="group odd:bg-raised/30 hover:bg-raised/60">
-                  <td className="border-b border-edge/40 px-2 py-1 text-right font-mono text-[10px] text-muted">
+                  <td className="border-b border-edge/40 px-2 py-1 text-right font-mono text-3xs text-muted">
                     {page * pageSize + i + 1}
                   </td>
                   {row.map((v, j) => {
@@ -636,7 +636,7 @@ function StructureView({ path, table }: { path: string; table: string }) {
       )}
 
       <div className="mb-1 font-semibold text-strong">{t("Definition")}</div>
-      <pre className="overflow-auto rounded border border-edge bg-raised p-2 font-mono text-[11px] text-muted">{info.create_sql || "—"}</pre>
+      <pre className="overflow-auto rounded border border-edge bg-raised p-2 font-mono text-2xs text-muted">{info.create_sql || "—"}</pre>
     </div>
   );
 }
@@ -925,7 +925,7 @@ function SqlConsole({ path }: { path: string }) {
                   setSql(q);
                   setShowHistory(false);
                 }}
-                className="block w-full truncate px-2 py-1 text-left font-mono text-[11px] text-muted hover:bg-raised hover:text-strong"
+                className="block w-full truncate px-2 py-1 text-left font-mono text-2xs text-muted hover:bg-raised hover:text-strong"
                 title={q}
               >
                 {q}

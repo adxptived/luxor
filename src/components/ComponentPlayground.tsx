@@ -210,11 +210,11 @@ export function ComponentPlayground() {
           </div>
           <h3 className="text-sm font-semibold text-strong">Keyboard shortcuts</h3>
           <div className="flex flex-wrap items-center gap-2">
-            <kbd className="rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-[10px] text-muted">Ctrl</kbd>
+            <kbd className="rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-3xs text-muted">Ctrl</kbd>
             <span className="text-xs text-muted">+</span>
-            <kbd className="rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-[10px] text-muted">Shift</kbd>
+            <kbd className="rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-3xs text-muted">Shift</kbd>
             <span className="text-xs text-muted">+</span>
-            <kbd className="rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-[10px] text-muted">P</kbd>
+            <kbd className="rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-3xs text-muted">P</kbd>
             <span className="text-xs text-muted">Command palette</span>
           </div>
         </div>

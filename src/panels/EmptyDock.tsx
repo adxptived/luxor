@@ -69,10 +69,10 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
             className="flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-sm text-muted hover:border-muted hover:bg-raised hover:text-strong"
             onClick={allPanels}
             title={t("Open any panel")}
-          >
+           aria-label={t("Open any panel")}>
             <Plus size={14} /> {t("More panels…")}
           </button>
-          <span className="max-w-full truncate rounded-full border border-edge px-2 py-1 text-[10px] uppercase tracking-wide text-muted">
+          <span className="max-w-full truncate rounded-full border border-edge px-2 py-1 text-3xs uppercase tracking-wide text-muted">
             {t("Tip: right-click tabs, sidebar and status bar for customization.")}
           </span>
         </div>
@@ -103,7 +103,7 @@ function EmptyAction(props: {
       </span>
       <span className="min-w-0">
         <span className="block truncate text-sm font-medium">{props.label}</span>
-        <span className="block truncate text-[11px] text-muted">{props.hint}</span>
+        <span className="block truncate text-2xs text-muted">{props.hint}</span>
       </span>
     </button>
   );

@@ -910,7 +910,7 @@ export function FilesPanel() {
             <Icon size={14} className={`shrink-0 ${entry.is_dir ? "text-strong" : "text-muted"}`} />
             <span className={`min-w-0 flex-1 truncate ${entry.is_dir ? "font-medium text-strong" : "text-strong/90 group-hover:text-strong"}`}>{entry.name}</span>
             {!entry.is_dir && !embeddedPath && entry.size > 0 && (
-              <span className="shrink-0 pl-2 text-[10px] tabular-nums text-transparent transition-colors group-hover:text-muted/70">
+              <span className="shrink-0 pl-2 text-3xs tabular-nums text-transparent transition-colors group-hover:text-muted/70">
                 {formatSize(entry.size)}
               </span>
             )}
@@ -941,7 +941,7 @@ export function FilesPanel() {
             <div className="truncate font-semibold leading-tight text-strong">
               {project?.name ?? t("Project files")}
             </div>
-            <div className="flex items-center gap-1.5 text-[11px] leading-tight text-muted">
+            <div className="flex items-center gap-1.5 text-2xs leading-tight text-muted">
               <span className="truncate">{root}</span>
               <span className="shrink-0 opacity-50">·</span>
               <span className="shrink-0 tabular-nums">
@@ -986,12 +986,12 @@ export function FilesPanel() {
             style={{ border: "none", boxShadow: "none", WebkitAppearance: "none" }}
           />
           {filter && (
-            <span className="shrink-0 rounded bg-surface px-1.5 py-0.5 text-[10px] tabular-nums text-muted" title={`${loadedEntryCount} ${t("loaded entries")}`}>
+            <span className="shrink-0 rounded bg-surface px-1.5 py-0.5 text-3xs tabular-nums text-muted" title={`${loadedEntryCount} ${t("loaded entries")}`}>
               {searching ? t("Searching…") : `${searchMatchCount} ${t("matches")}`} · {visibleCount}/{loadedEntryCount}
             </span>
           )}
           {filter && (
-            <button className="shrink-0 rounded px-1.5 py-0.5 text-[10px] text-muted transition-colors hover:bg-surface hover:text-strong" title={t("Expand matching folders and focus the first result")} onClick={() => expandSearchMatches(true)}>
+            <button className="shrink-0 rounded px-1.5 py-0.5 text-3xs text-muted transition-colors hover:bg-surface hover:text-strong" title={t("Expand matching folders and focus the first result")} onClick={() => expandSearchMatches(true)}>
               {t("Reveal")}
             </button>
           )}
@@ -1010,7 +1010,7 @@ export function FilesPanel() {
                 key={ft}
                 onClick={() => setFilterType(ft)}
                 aria-pressed={filterType === ft}
-                className={`shrink-0 rounded-md px-2 py-1 text-[11px] font-medium transition-colors ${
+                className={`shrink-0 rounded-md px-2 py-1 text-2xs font-medium transition-colors ${
                   filterType === ft
                     ? "bg-accent/15 text-accent"
                     : "text-muted hover:bg-raised hover:text-strong"
@@ -1033,13 +1033,13 @@ export function FilesPanel() {
               title={showHidden ? t("Hide dotfiles") : t("Show hidden files")}
               aria-pressed={showHidden}
               onClick={toggleHidden}
-            >
+             aria-label={showHidden ? t("Hide dotfiles") : t("Show hidden files")}>
               {showHidden ? <Eye size={14} /> : <EyeOff size={14} />}
             </button>
-            <button className={TOOLBAR_BTN} title={t("Collapse all")} onClick={collapseAll}>
+            <button className={TOOLBAR_BTN} title={t("Collapse all")} onClick={collapseAll} aria-label={t("Collapse all")}>
               <CopyMinus size={14} />
             </button>
-            <button className={TOOLBAR_BTN} title={t("Refresh")} onClick={refresh}>
+            <button className={TOOLBAR_BTN} title={t("Refresh")} onClick={refresh} aria-label={t("Refresh")}>
               <RefreshCw size={14} />
             </button>
           </div>

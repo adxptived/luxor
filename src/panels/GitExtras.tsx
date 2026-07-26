@@ -199,14 +199,14 @@ export function ConflictsView({ repo }: { repo: string }) {
               [tr("Theirs (incoming)"), active.theirs],
             ] as const).map(([label, text]) => (
               <div key={label} className="flex min-h-24 flex-col overflow-hidden rounded border border-edge">
-                <div className="border-b border-edge bg-raised px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted">{label}</div>
+                <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs uppercase tracking-wide text-muted">{label}</div>
                 <pre className="min-h-0 flex-1 overflow-auto bg-surface p-2 font-mono text-xs leading-5 text-strong">{text}</pre>
               </div>
             ))}
           </div>
         )}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-edge">
-          <div className="border-b border-edge bg-raised px-2 py-0.5 text-[10px] uppercase tracking-wide text-muted">{tr("Result (editable)")}</div>
+          <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs uppercase tracking-wide text-muted">{tr("Result (editable)")}</div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}

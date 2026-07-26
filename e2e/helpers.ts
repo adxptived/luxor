@@ -15,6 +15,12 @@ export async function openApp(page: Page, opts: { onboarding?: boolean } = {}): 
       // Must be the literal "true": onboarding.ts compares
       // `localStorage.getItem(COMPLETED_KEY) === "true"`.
       window.localStorage.setItem("luxor.onboarding.completed", "true");
+      // Skip the one-time "v2 nav defaults" migration, which collapses the nav
+      // to terminal/git/files/settings and hides the other ten buttons. The
+      // suite drives panels through `clickNav`, so without this every
+      // `[data-nav-id="skills|agents|analytics|…"]` locator waits forever.
+      // Setting the latch leaves `nav_hidden` empty, i.e. all buttons visible.
+      window.localStorage.setItem("luxor.navDefaultsV2", "1");
     });
   }
   await page.goto("/");

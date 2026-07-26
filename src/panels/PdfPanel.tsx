@@ -56,7 +56,7 @@ export function PdfPanel(props: IDockviewPanelProps) {
           </div>
           <div className="text-sm font-medium text-strong">{t("PDF preview needs the desktop app")}</div>
           <div className="mt-1 text-xs leading-5">{t("The asset protocol is only available inside the Tauri runtime.")}</div>
-          <div className="mt-3 truncate rounded-lg border border-edge bg-surface px-2 py-1 font-mono text-[11px]" title={path}>{path}</div>
+          <div className="mt-3 truncate rounded-lg border border-edge bg-surface px-2 py-1 font-mono text-2xs" title={path}>{path}</div>
           <button
             onClick={() => setReloadKey((k) => k + 1)}
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs hover:bg-raised hover:text-strong"
@@ -77,7 +77,7 @@ export function PdfPanel(props: IDockviewPanelProps) {
           </span>
           <div className="min-w-0">
             <div className="truncate font-medium text-strong" title={path}>{fileName}</div>
-            <div className="truncate font-mono text-[10px] opacity-70" title={path}>{path}</div>
+            <div className="truncate font-mono text-3xs opacity-70" title={path}>{path}</div>
           </div>
         </div>
         <button
@@ -94,7 +94,7 @@ export function PdfPanel(props: IDockviewPanelProps) {
         >
           <Copy size={13} />
         </button>
-        <span className="hidden items-center gap-1 rounded-full border border-edge bg-surface px-2 py-1 text-[10px] sm:flex">
+        <span className="hidden items-center gap-1 rounded-full border border-edge bg-surface px-2 py-1 text-3xs sm:flex">
           <AlertTriangle size={11} className="text-muted" /> Native viewer
         </span>
       </div>

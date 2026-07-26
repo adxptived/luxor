@@ -497,7 +497,7 @@ function FileSection(props: {
               }
             >
               <span className="shrink-0 truncate text-strong group-hover:text-accent">{fileName}</span>
-              {fileDir && <span className="min-w-0 truncate text-[11px] text-muted">{fileDir}</span>}
+              {fileDir && <span className="min-w-0 truncate text-2xs text-muted">{fileDir}</span>}
             </button>
                 <div className="flex shrink-0 flex-wrap gap-1 opacity-80 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100">
               {props.kind === "unstaged" ? (
@@ -619,7 +619,7 @@ function BranchGraphView({ log }: { log: CommitInfo[] }) {
           >
             <span className="shrink-0 font-mono text-muted">{c.shortHash}</span>
             {c.heads.map((h) => (
-              <span key={h} className="shrink-0 rounded border border-accent/40 bg-accent/10 px-1 py-px font-mono text-[10px] text-accent">
+              <span key={h} className="shrink-0 rounded border border-accent/40 bg-accent/10 px-1 py-px font-mono text-3xs text-accent">
                 {h}
               </span>
             ))}
@@ -678,7 +678,7 @@ ${c.message}`}
             <span className="font-mono text-xs text-accent">{c.short_id}</span>
             <span className="flex-1 truncate">{c.summary}</span>
             {stats[c.id] && (
-              <span className="shrink-0 font-mono text-[11px]">
+              <span className="shrink-0 font-mono text-2xs">
                 <span className="text-success">+{stats[c.id].insertions}</span>{" "}
                 <span className="text-danger">−{stats[c.id].deletions}</span>
               </span>
@@ -708,7 +708,7 @@ ${c.message}`}
                   >
                     <span className={`font-mono font-bold ${badge.cls}`}>{badge.label}</span>
                     <span className="truncate">{f.path}</span>
-                    <span className="ml-auto shrink-0 font-mono text-[10px]">
+                    <span className="ml-auto shrink-0 font-mono text-3xs">
                       <span className="text-success">+{f.insertions}</span>{" "}
                       <span className="text-danger">−{f.deletions}</span>
                     </span>

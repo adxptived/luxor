@@ -62,7 +62,7 @@ export function ImagePanel(props: IDockviewPanelProps) {
           </div>
           <div className="font-medium text-strong">{t("Could not open image")}</div>
           <div className="mt-1 break-words text-xs leading-5">{error}</div>
-          <div className="mt-3 truncate rounded-lg border border-edge bg-surface px-2 py-1 font-mono text-[11px]" title={path}>
+          <div className="mt-3 truncate rounded-lg border border-edge bg-surface px-2 py-1 font-mono text-2xs" title={path}>
             {path}
           </div>
         </div>
@@ -79,11 +79,11 @@ export function ImagePanel(props: IDockviewPanelProps) {
           </span>
           <div className="min-w-0">
             <div className="truncate font-medium text-strong" title={path}>{fileName}</div>
-            <div className="truncate font-mono text-[10px] opacity-70" title={path}>{path}</div>
+            <div className="truncate font-mono text-3xs opacity-70" title={path}>{path}</div>
           </div>
         </div>
         {size && (
-          <span className="shrink-0 rounded-full border border-edge bg-surface px-2 py-1 font-mono text-[10px] text-muted">
+          <span className="shrink-0 rounded-full border border-edge bg-surface px-2 py-1 font-mono text-3xs text-muted">
             {size.w}×{size.h}
           </span>
         )}
@@ -91,7 +91,7 @@ export function ImagePanel(props: IDockviewPanelProps) {
           <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Zoom out")} onClick={() => zoomBy(1 / 1.25)}>
             <ZoomOut size={13} />
           </button>
-          <span className="w-12 text-center font-mono text-[11px]">{zoomLabel}</span>
+          <span className="w-12 text-center font-mono text-2xs">{zoomLabel}</span>
           <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Zoom in")} onClick={() => zoomBy(1.25)}>
             <ZoomIn size={13} />
           </button>

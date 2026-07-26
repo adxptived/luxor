@@ -145,7 +145,7 @@ function SnippetsTab() {
             className="w-full rounded-lg border border-edge bg-raised py-1.5 pl-7 pr-2 text-xs text-strong outline-none focus:border-accent"
           />
         </span>
-        <span className="rounded-full border border-edge px-2 py-1 text-[10px] text-muted">{filtered.length}/{snippets.length}</span>
+        <span className="rounded-full border border-edge px-2 py-1 text-3xs text-muted">{filtered.length}/{snippets.length}</span>
       </div>
       {snippets.length === 0 && <EmptyHint icon={<Scissors size={24} />} title={tr("No snippets yet")} text={tr("Save reusable commands, code blocks, prompts or config fragments here.")} />}
       {snippets.length > 0 && filtered.length === 0 && <EmptyHint icon={<Search size={24} />} title={tr("No matching snippets")} text={tr("Try another query or clear search to see the full library.")} />}
@@ -156,7 +156,7 @@ function SnippetsTab() {
               <button className="min-w-0 flex-1 truncate text-left font-medium text-strong" onClick={() => setEditing(s)}>
                 {s.title}
               </button>
-              {s.lang && <span className="rounded-full bg-raised px-2 py-0.5 text-[10px] text-muted">{s.lang}</span>}
+              {s.lang && <span className="rounded-full bg-raised px-2 py-0.5 text-3xs text-muted">{s.lang}</span>}
               <button
                 title={tr("Copy to clipboard")}
                 className="rounded p-1 text-muted hover:bg-raised hover:text-strong sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"

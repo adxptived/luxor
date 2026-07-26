@@ -37,6 +37,20 @@
   --color-chart-4: var(--lx-chart-4);
   --color-chart-5: var(--lx-chart-5);
   --color-chart-6: var(--lx-chart-6);
+
+  /* Type scale, extended DOWNWARD.
+   *
+   * Tailwind's own ramp is used heavily and correctly (text-xs 447x, text-sm
+   * 133x), but it bottoms out at `text-xs` = 12px, while this UI is dense and
+   * constantly wants 10-11px. With no token for that tier, 184 call sites
+   * hardcoded `text-[10px]` / `text-[11px]` / `text-[9px]` in brackets — outside
+   * the scale, inconsistent between panels, and in `px`, which does not scale
+   * proportionally with the app zoom (ZOOM_STEP / set-webview-zoom).
+   *
+   * These two rungs close that gap. 9px was simply unreadable and is folded up
+   * into `text-3xs`. */
+  --text-3xs: 0.625rem;   /* 10px — badges, status-bar labels, row numbers */
+  --text-2xs: 0.6875rem;  /* 11px — dense secondary text inside panels */
 }
 
 :root {
@@ -973,28 +987,6 @@ summary,
   background: #c50f1f;
   color: #fff;
 }
-@media (prefers-reduced-motion: reduce) {
-  .lx-caption-btn {
-    transition: none;
-  }
-}
-
-/* Respect users who prefer reduced motion (keeps the startup spinner spinning,
- * a meaningful "still loading" signal, but drops UI transitions). */
-@media (prefers-reduced-motion: reduce) {
-  button,
-  a,
-  summary,
-  [role="button"],
-  [draggable="true"],
-  .lx-slide-in,
-  .lx-pop-in,
-  .lx-browser-progress {
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-  }
-}
-
 /* Rendered Markdown preview (EditorPanel) */
 .lx-markdown {
   color: var(--lx-strong);
@@ -1524,7 +1516,7 @@ textarea {
  * Beautiful, performant animations for sidebars, tabs, panels, menus,
  * dialogs, toasts, and loading states. All use only transform + opacity
  * (compositor-only properties) for 60fps GPU-accelerated motion.
- * Respects prefers-reduced-motion (see the media query block above).
+ * Respects prefers-reduced-motion (see the global block near the end of this file).
  * =========================================================================*/
 
 /* --- Keyframes ---------------------------------------------------------- */
@@ -1681,6 +1673,51 @@ textarea {
 .lx-anim-dropdown {
   animation: lx-dropdown-in 0.16s cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top;
+}
+
+/* ── Exit animations ────────────────────────────────────────────────────────
+ * Counterparts to the enter animations above, driven by `useEnterExit`, which
+ * keeps the node mounted for exactly as long as these declare. Before this,
+ * only the modal / palette / dialog / toast had a leaving state: everything
+ * else faded in politely and then vanished on a single frame.
+ *
+ * All durations come from the motion tokens so `prefers-reduced-motion` (which
+ * clamps every duration globally) and any future retune apply here for free. */
+@keyframes lx-dropdown-out {
+  from { opacity: 1; transform: scaleY(1) translateY(0); }
+  to   { opacity: 0; transform: scaleY(0.96) translateY(-4px); }
+}
+.lx-anim-dropdown-out {
+  animation: lx-dropdown-out var(--lx-dur-fast) var(--lx-ease) forwards;
+  transform-origin: top;
+  pointer-events: none;
+}
+
+@keyframes lx-menu-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.97); }
+}
+.lx-anim-menu-out {
+  animation: lx-menu-out var(--lx-dur-fast) var(--lx-ease) forwards;
+  pointer-events: none;
+}
+
+@keyframes lx-panel-out {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(4px); }
+}
+.lx-anim-panel-out {
+  animation: lx-panel-out var(--lx-dur-fast) var(--lx-ease) forwards;
+  pointer-events: none;
+}
+
+@keyframes lx-widget-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-3px) scale(0.98); }
+}
+.lx-anim-widget-out {
+  animation: lx-widget-out var(--lx-dur-fast) var(--lx-ease) forwards;
+  pointer-events: none;
 }
 
 /* Settings modal: scale + fade */
@@ -2045,17 +2082,6 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 }
 
 /* Ripple effect on quick action button press */
-@keyframes lx-ripple {
-  from { transform: scale(0); opacity: 0.4; }
-  to   { transform: scale(2.5); opacity: 0; }
-}
-.lx-ripple {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  animation: lx-ripple 0.5s ease-out forwards;
-  background: color-mix(in srgb, var(--lx-accent) 40%, transparent);
-}
 
 /* Theme switch crossfade — applied to the root on theme change */
 @keyframes lx-theme-crossfade {
@@ -2401,67 +2427,48 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   height: 0 !important;
   display: none !important;
 }
-/* --- Reduced motion: disable all animations ----------------------------- */
+/* --- Reduced motion --------------------------------------------------------
+ *
+ * INVERTED on purpose. This used to be a hand-maintained allowlist of ~45 class
+ * names, which meant every new animation was unprotected until someone
+ * remembered to add it — and several already had been missed: Tailwind's
+ * `animate-pulse` (skeletons in DevTools/Editor/HtmlPreview) and `animate-spin`
+ * (23 sites) were never in the list, so they kept moving under `reduce`.
+ *
+ * Now everything is stopped by default and the few animations that carry
+ * MEANING rather than decoration opt back in below. Adding a new animation can
+ * no longer silently bypass the preference.
+ *
+ * `0.01ms` rather than `none`: it lets `animationend` / `transitionend` still
+ * fire, so components that wait for a transition to finish before unmounting
+ * (see `useEnterExit`) do not hang. */
 @media (prefers-reduced-motion: reduce) {
-  .lx-anim-nav,
-  .lx-anim-nav-item,
-  .lx-anim-panel-right,
-  .lx-anim-panel-left,
-  .lx-anim-panel,
-  .lx-anim-bar-top,
-  .lx-anim-bar-bottom,
-  .lx-anim-menu,
-  .lx-anim-dialog,
-  .lx-anim-toast,
-  .lx-anim-dropdown,
-  .lx-anim-modal,
-  .lx-anim-palette,
-  .lx-anim-spin,
-  .lx-nav-rail,
-  .lx-nav-rail > *,
-  .lx-anim-right-panel,
-  .lx-anim-side-panel,
-  .lx-anim-topbar,
-  .lx-anim-statusbar,
-  .lx-context-menu,
-  .lx-dialog-overlay,
-  .lx-toast,
-  .lx-settings-modal,
-  .lx-command-palette,
-  .lx-project-switcher,
-  .dv-tab,
-  .dv-content-container > .dv-panel,
-  .lx-toast-leaving,
-  .lx-hover-lift,
-  .lx-anim-pulse,
-  .lx-skeleton,
-  .lx-anim-expand,
-  .lx-anim-fade-in,
-  .lx-anim-widget-in,
-  .lx-rp-bar,
-  .lx-anim-focus-glow,
-  .lx-modal-leaving,
-  .lx-palette-leaving,
-  .lx-dialog-leaving,
-  .lx-status-changed,
-  .lx-theme-fade,
-  .lx-panel-skeleton-line,
-  .lx-anim-side-panel > section,
-  .lx-anim-right-panel > section,
-  .lx-status-dot::after,
-  .lx-nav-rail button[data-nav-id]:hover::after,
-  /* P2AX-07: these looping animations were still pulsing under reduce. */
-  .lx-empty-icon,
-  [data-pulse],
-  .lx-browser-progress {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-delay: 0s !important;
-    transition-duration: 0.01ms !important;
-  }
-  /* Kill the infinite loop entirely so the empty-state icon sits still. */
-  .lx-empty-icon,
-  .lx-browser-progress {
     animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Opt-outs: a spinner's rotation IS the "still working" signal. Removing it
+   * leaves a frozen glyph that reads as a hung app, which is worse for the
+   * users this preference exists to help. Kept slow and steady. */
+  .animate-spin,
+  .lx-anim-spin,
+  .lx-spinner {
+    animation-duration: 1.2s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* Purely decorative looping accents stay off entirely. */
+  .lx-empty-icon,
+  .lx-browser-progress,
+  .lx-status-dot::after {
+    animation: none !important;
   }
   .lx-status-dot::after {
     display: none;

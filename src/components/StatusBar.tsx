@@ -413,7 +413,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
             className="flex items-center gap-1 tabular-nums hover:text-strong"
             onClick={focusToggle}
             title={t("Focus timer — click to pause/resume")}
-          >
+           aria-label={t("Focus timer — click to pause/resume")}>
             <TimerIcon size={11} />
             {fmtClock(focusLeft)}
           </button>
@@ -511,7 +511,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
       </div>
       <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-1 bg-bar pl-1">
         <button
-          className="shrink-0 rounded px-1 text-[11px] tabular-nums text-muted hover:bg-raised hover:text-strong"
+          className="shrink-0 rounded px-1 text-2xs tabular-nums text-muted hover:bg-raised hover:text-strong"
           title={t("About Luxor — click for version & updates")}
           onClick={() => setSettingsOpen(true, "about")}
         >

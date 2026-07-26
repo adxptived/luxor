@@ -83,7 +83,7 @@ export function ActivityPanel() {
             <div className="font-semibold text-strong">{t("Activity log")}</div>
             <div className="text-xs text-muted">{t("Commits, terminal events, saves, errors and app notices in one searchable stream.")}</div>
           </div>
-          <span className="rounded-full border border-edge bg-surface px-2 py-1 text-[11px] tabular-nums text-muted">
+          <span className="rounded-full border border-edge bg-surface px-2 py-1 text-2xs tabular-nums text-muted">
             {visible.length}/{events.length}
           </span>
           <button
@@ -123,7 +123,7 @@ export function ActivityPanel() {
               <button
                 key={k.id}
                 onClick={() => toggleKind(k.id)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] transition ${
+                className={`rounded-full border px-2.5 py-1 text-2xs transition ${
                   kinds.has(k.id)
                     ? "border-muted bg-raised text-strong"
                     : "border-edge bg-surface text-muted hover:bg-raised hover:text-strong"
@@ -172,8 +172,8 @@ export function ActivityPanel() {
               data-testid="activity-item"
               className="flex gap-3 rounded-lg bg-bar/20 px-3 py-2 text-xs"
             >
-              <span className="mt-0.5 shrink-0 font-mono text-[10px] tabular-nums text-muted">{fmtTime(e.time)}</span>
-              <span className={`mt-0.5 flex w-[4.75rem] shrink-0 items-center gap-1.5 text-[10px] uppercase ${KIND_COLORS[e.kind]}`}>
+              <span className="mt-0.5 shrink-0 font-mono text-3xs tabular-nums text-muted">{fmtTime(e.time)}</span>
+              <span className={`mt-0.5 flex w-[4.75rem] shrink-0 items-center gap-1.5 text-3xs uppercase ${KIND_COLORS[e.kind]}`}>
                 <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${KIND_DOTS[e.kind]}`} />
                 {e.kind}
               </span>

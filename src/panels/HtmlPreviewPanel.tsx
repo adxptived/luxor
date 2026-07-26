@@ -33,6 +33,7 @@ import { errorMessage } from "@/lib/types";
 import { useAppStore } from "@/state/appStore";
 import { useDockStore } from "@/layout/dockStore";
 import { useElementWidth } from "@/lib/useElementWidth";
+import { useEnterExit } from "@/lib/useEnterExit";
 
 type ViewMode = "preview" | "source";
 
@@ -76,6 +77,11 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshIntervalMs, setRefreshIntervalMs] = useState(DEFAULT_INTERVAL_MS);
   const [showIntervalPicker, setShowIntervalPicker] = useState(false);
+  // Keeps the picker mounted through its exit animation instead of cutting it.
+  const intervalPicker = useEnterExit(showIntervalPicker, {
+    enter: "lx-anim-dropdown",
+    exit: "lx-anim-dropdown-out",
+  });
   const [lastRefreshed, setLastRefreshed] = useState<Date | null>(null);
   const autoRefreshTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -160,7 +166,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
       <div className="flex h-full flex-col items-center justify-center gap-3 bg-surface text-sm text-muted">
         <Loader2 size={22} className="animate-spin text-accent" />
         <div className="text-xs font-medium">{t("Loading HTML preview…")}</div>
-        <div className="max-w-xs truncate rounded border border-edge bg-raised px-2 py-1 font-mono text-[10px]">
+        <div className="max-w-xs truncate rounded border border-edge bg-raised px-2 py-1 font-mono text-3xs">
           {path}
         </div>
       </div>
@@ -176,7 +182,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
           </div>
           <div className="font-medium text-strong">{t("Could not load HTML file")}</div>
           <div className="mt-1 break-words text-xs leading-5 text-muted">{error}</div>
-          <div className="mt-3 truncate rounded border border-edge bg-surface px-2 py-1 font-mono text-[11px]">{path}</div>
+          <div className="mt-3 truncate rounded border border-edge bg-surface px-2 py-1 font-mono text-2xs">{path}</div>
           <button
             onClick={handleManualRefresh}
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs hover:bg-raised hover:text-strong transition"
@@ -261,7 +267,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
             <Timer size={12} />
             <span className="font-mono">{intervalLabel}</span>
           </button>
-          {showIntervalPicker && (
+          {intervalPicker.mounted && (
             <>
               <button
                 type="button"
@@ -269,7 +275,10 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
                 aria-label={t("Close refresh interval menu")}
                 onClick={() => setShowIntervalPicker(false)}
               />
-              <div className="absolute right-0 top-full z-[var(--lx-z-dropdown)] mt-1 flex flex-col overflow-hidden rounded-lg border border-edge bg-surface shadow-xl">
+              <div
+                ref={intervalPicker.ref}
+                className={`${intervalPicker.className} absolute right-0 top-full z-[var(--lx-z-dropdown)] mt-1 flex flex-col overflow-hidden rounded-lg border border-edge bg-surface shadow-xl`}
+              >
                 {AUTO_REFRESH_INTERVALS.map((opt) => (
                   <button
                     key={opt.ms}
@@ -290,20 +299,20 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
 
         <div className="w-px h-4 bg-edge" />
 
-        <button onClick={handleManualRefresh} title={t("Reload from disk")} className="rounded-lg border border-edge bg-surface p-1.5 text-muted hover:bg-raised hover:text-strong transition">
+        <button onClick={handleManualRefresh} title={t("Reload from disk")} className="rounded-lg border border-edge bg-surface p-1.5 text-muted hover:bg-raised hover:text-strong transition" aria-label={t("Reload from disk")}>
           <RefreshCw size={13} />
         </button>
-        <button onClick={handleOpenInEditor} title={t("Open in code editor")} className="rounded-lg border border-edge bg-surface p-1.5 text-muted hover:bg-raised hover:text-strong transition">
+        <button onClick={handleOpenInEditor} title={t("Open in code editor")} className="rounded-lg border border-edge bg-surface p-1.5 text-muted hover:bg-raised hover:text-strong transition" aria-label={t("Open in code editor")}>
           <Pencil size={13} />
         </button>
-        <button onClick={handleOpenInBrowser} title={t("Open in system browser")} className="rounded-lg border border-edge bg-surface p-1.5 text-muted hover:bg-raised hover:text-strong transition">
+        <button onClick={handleOpenInBrowser} title={t("Open in system browser")} className="rounded-lg border border-edge bg-surface p-1.5 text-muted hover:bg-raised hover:text-strong transition" aria-label={t("Open in system browser")}>
           <ExternalLink size={13} />
         </button>
       </div>
 
       {/* Status bar */}
       {(autoRefresh || lastRefreshed) && (
-        <div className="flex shrink-0 items-center justify-between border-b border-edge bg-bar/20 px-3 py-0.5 text-[10px] text-muted select-none">
+        <div className="flex shrink-0 items-center justify-between border-b border-edge bg-bar/20 px-3 py-0.5 text-3xs text-muted select-none">
           <span className="flex items-center gap-1.5">
             {autoRefresh && (
               <>
@@ -338,7 +347,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
         /* Source view */
         <div className="min-h-0 flex-1 overflow-auto bg-surface">
           <div className="flex items-center justify-between border-b border-edge bg-raised px-4 py-1.5">
-            <span className="text-[10px] uppercase tracking-widest font-bold text-muted flex items-center gap-1.5">
+            <span className="text-3xs uppercase tracking-widest font-bold text-muted flex items-center gap-1.5">
               <Code2 size={11} /> {t("HTML source")} — {name}
             </span>
             <button
@@ -352,7 +361,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
               <Code2 size={11} /> {t("Copy")}
             </button>
           </div>
-          <pre className="select-text whitespace-pre-wrap break-all px-4 py-4 font-mono text-[12px] leading-relaxed text-strong">
+          <pre className="select-text whitespace-pre-wrap break-all px-4 py-4 font-mono text-xs leading-relaxed text-strong">
             {htmlText || "(empty file)"}
           </pre>
         </div>

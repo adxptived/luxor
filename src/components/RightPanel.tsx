@@ -172,7 +172,7 @@ function Widget({
     >
       {ui.showTitles && (
         <div
-          className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted ${
+          className={`flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted ${
             compact ? "mb-1" : "mb-1.5"
           }`}
         >
@@ -272,13 +272,13 @@ function TimerWidget({ o, compact }: { o: RightWidgetOptions; compact: boolean }
           className="flex items-center gap-1 rounded border border-edge px-2 py-0.5 text-muted hover:border-muted hover:text-strong"
           onClick={reset}
           title={t("Reset")}
-        >
+         aria-label={t("Reset")}>
           <RotateCcw size={12} />
         </button>
         {presets.map((m) => (
           <button
             key={m}
-            className={`rounded border px-1.5 py-0.5 text-[11px] ${
+            className={`rounded border px-1.5 py-0.5 text-2xs ${
               mins === m ? "border-muted text-strong" : "border-edge text-muted hover:text-strong"
             }`}
             onClick={() => setLength(m)}
@@ -392,7 +392,7 @@ function AgentsWidget({ o, compact, onOpen }: { o: RightWidgetOptions; compact: 
         </button>
       ))}
       {agents.length > 0 && (
-        <div className="mt-1 flex items-center justify-between border-t border-edge pt-1 text-[11px] tabular-nums text-muted">
+        <div className="mt-1 flex items-center justify-between border-t border-edge pt-1 text-2xs tabular-nums text-muted">
           <span>{t("Total")}</span>
           <span>
             {totalCpu.toFixed(0)}% · {(totalMem / 1024 ** 2).toFixed(0)}M
@@ -416,7 +416,7 @@ function AccentPicker({
   return (
     <div className="flex flex-wrap items-center gap-1">
       <button
-        className={`flex h-5 items-center rounded border px-1.5 text-[10px] ${
+        className={`flex h-5 items-center rounded border px-1.5 text-3xs ${
           value === null ? "border-accent text-accent" : "border-edge text-muted hover:text-strong"
         }`}
         onClick={() => onChange(null)}
@@ -614,7 +614,7 @@ function PanelEditor({
 
   return (
     <div className="lx-anim-fade-in flex flex-col gap-1 p-2">
-      <div className="px-0.5 pb-1 text-[11px] text-muted">
+      <div className="px-0.5 pb-1 text-2xs text-muted">
         {t("Drag to reorder. Toggle, tint and tune each widget.")}
       </div>
       {cfg.widgets.map((w, i) => {
@@ -676,7 +676,7 @@ function PanelEditor({
             {open && (
               <div className="lx-anim-expand border-t border-edge px-2 py-1.5 text-xs">
                 <div className="mb-1.5">
-                  <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted">{t("Accent")}</div>
+                  <div className="mb-1 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Accent")}</div>
                   <AccentPicker value={w.accent} onChange={(a) => onChange(setWidgetAccent(cfg, w.id, a))} />
                 </div>
                 <WidgetOptionsEditor
@@ -691,14 +691,14 @@ function PanelEditor({
       })}
 
       <div className="mt-2 rounded-md border border-edge px-2 py-1.5">
-        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-muted">{t("Panel accent")}</div>
+        <div className="mb-1 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Panel accent")}</div>
         <AccentPicker value={cfg.accent} onChange={(a) => onChange({ ...cfg, accent: a })} />
-        <div className="mb-1 mt-2 text-[10px] font-semibold uppercase tracking-wide text-muted">{t("Density")}</div>
+        <div className="mb-1 mt-2 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Density")}</div>
         <div className="flex gap-1">
           {(["comfortable", "compact"] as const).map((d) => (
             <button
               key={d}
-              className={`rounded border px-2 py-0.5 text-[11px] ${
+              className={`rounded border px-2 py-0.5 text-2xs ${
                 cfg.density === d ? "border-accent text-accent" : "border-edge text-muted hover:text-strong"
               }`}
               onClick={() => onChange({ ...cfg, density: d })}
@@ -707,7 +707,7 @@ function PanelEditor({
             </button>
           ))}
         </div>
-        <div className="mb-1 mt-2 text-[10px] font-semibold uppercase tracking-wide text-muted">{t("Font size")}</div>
+        <div className="mb-1 mt-2 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Font size")}</div>
         <div className="flex gap-1">
           {(
             [
@@ -718,7 +718,7 @@ function PanelEditor({
           ).map(([fs, label]) => (
             <button
               key={fs}
-              className={`rounded border px-2 py-0.5 text-[11px] ${
+              className={`rounded border px-2 py-0.5 text-2xs ${
                 cfg.font_size === fs ? "border-accent text-accent" : "border-edge text-muted hover:text-strong"
               }`}
               onClick={() => onChange({ ...cfg, font_size: fs })}
@@ -827,7 +827,7 @@ function RightPanelImpl() {
   const visible = rpConfig.widgets.filter((w) => w.enabled);
   const has = (id: RightWidgetId) => visible.some((w) => w.id === id);
   const compact = rpConfig.density === "compact";
-  const fontClass = rpConfig.font_size === "xs" ? "text-[11px]" : rpConfig.font_size === "md" ? "text-[13px]" : "text-xs";
+  const fontClass = rpConfig.font_size === "xs" ? "text-2xs" : rpConfig.font_size === "md" ? "text-sm" : "text-xs";
   const panelUi = useMemo(
     () => ({ showTitles: rpConfig.show_titles, dividers: rpConfig.dividers }),
     [rpConfig.show_titles, rpConfig.dividers],
@@ -1044,7 +1044,7 @@ function RightPanelImpl() {
                   onClick={() => addTerminal({ cwd: dir, autorun: [cmd] })}
                 >
                   <Play size={11} className="shrink-0 text-muted" />
-                  <span className="truncate font-mono text-[11px] text-strong">{cmd}</span>
+                  <span className="truncate font-mono text-2xs text-strong">{cmd}</span>
                 </button>
               ))}
             </Widget>
@@ -1069,7 +1069,7 @@ function RightPanelImpl() {
       case "embed":
         return wrap(
           <div className="flex flex-col border-b border-edge">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
               <AppWindow size={12} /> {t("Embedded panel")}
             </div>
             {EmbedComp ? (
@@ -1114,7 +1114,7 @@ function RightPanelImpl() {
         style={{ width: responsiveWidth }}
       >
         <div className="flex items-center justify-between border-b border-edge px-2.5 py-1.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t("Panel")}</span>
+          <span className="text-2xs font-semibold uppercase tracking-wide text-muted">{t("Panel")}</span>
           <div className="flex items-center gap-0.5">
             <button
               className={`rounded p-0.5 hover:bg-raised ${editing ? "text-accent" : "text-muted hover:text-strong"}`}
@@ -1128,7 +1128,7 @@ function RightPanelImpl() {
               className="rounded p-0.5 text-muted hover:bg-raised hover:text-strong"
               title={t("Hide right panel")}
               onClick={collapse}
-            >
+             aria-label={t("Hide right panel")}>
               <PanelRightClose size={14} />
             </button>
           </div>

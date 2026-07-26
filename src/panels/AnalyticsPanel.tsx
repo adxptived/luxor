@@ -408,7 +408,7 @@ function Card({
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-1 flex items-center gap-3">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">{children}</span>
+      <span className="text-2xs font-semibold uppercase tracking-wider text-muted">{children}</span>
       <span className="h-px flex-1 bg-edge" />
     </div>
   );
@@ -779,7 +779,7 @@ function DetailedTotals({
     <div className="grid grid-cols-2 gap-3 @md:grid-cols-3 @2xl:grid-cols-4">
       {tiles.map((tile) => (
         <div key={tile.label} className="rounded-lg border border-edge bg-surface/50 p-3">
-          <div className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted">
+          <div className="flex items-center gap-1.5 text-2xs font-medium uppercase tracking-wide text-muted">
             <span className="text-muted">{tile.icon}</span>
             <span className="truncate">{tile.label}</span>
           </div>
@@ -874,7 +874,7 @@ function Heatmap({ data }: { data: DashboardSnapshot }) {
           </g>
         </svg>
       </div>
-      <div className="flex items-center gap-1.5 self-end text-[10px] text-muted">
+      <div className="flex items-center gap-1.5 self-end text-3xs text-muted">
         <span>{t("Less")}</span>
         {legend.map((r, i) => (
           <span
@@ -904,7 +904,7 @@ function ProjectLog({ data }: { data: DashboardSnapshot }) {
             <span className="flex min-w-0 items-center gap-2">
               <span className="truncate text-strong">{p.name}</span>
               {p.primary_lang && (
-                <span className="shrink-0 rounded border border-edge px-1.5 py-px text-[10px] text-muted">
+                <span className="shrink-0 rounded border border-edge px-1.5 py-px text-3xs text-muted">
                   {p.primary_lang}
                 </span>
               )}
@@ -1155,10 +1155,10 @@ function ExportShare() {
         <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
           <Share2 size={13} /> {t("Export & Share")}
         </span>
-        <span className="text-[11px] normal-case opacity-70 group-open:hidden">
+        <span className="text-2xs normal-case opacity-70 group-open:hidden">
           {t("Hidden advanced sharing options")}
         </span>
-        <span className="hidden text-[11px] normal-case opacity-70 group-open:inline">
+        <span className="hidden text-2xs normal-case opacity-70 group-open:inline">
           {t("Click to collapse")}
         </span>
       </summary>

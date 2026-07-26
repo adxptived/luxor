@@ -225,7 +225,7 @@ function DiagnosticsTab({ root }: { root: string }) {
               <section key={group} aria-labelledby={`diagnostic-${group}`} className="overflow-hidden rounded-xl border border-edge bg-surface shadow-sm">
                 <div className="flex items-center justify-between border-b border-edge bg-bar/30 px-3 py-2">
                   <h3 id={`diagnostic-${group}`} className="text-xs font-semibold uppercase tracking-wide text-muted">{group}</h3>
-                  <span className="text-[11px] text-muted">{checks.filter((check) => check.state === "pass").length}/{checks.length} passed</span>
+                  <span className="text-2xs text-muted">{checks.filter((check) => check.state === "pass").length}/{checks.length} passed</span>
                 </div>
                 <div className="divide-y divide-edge/60">
                   {checks.map((check) => <DiagnosticRow key={check.id} check={check} open={expanded.has(check.id)} onToggle={() => toggle(check.id)} />)}
@@ -235,7 +235,7 @@ function DiagnosticsTab({ root }: { root: string }) {
           })}
         </div>
       )}
-      {report && <div className="px-1 text-[11px] text-muted">Completed in {report.duration_ms} ms · {report.runtime === "tauri" ? "Native desktop runtime" : "Browser preview (native checks mocked)"}</div>}
+      {report && <div className="px-1 text-2xs text-muted">Completed in {report.duration_ms} ms · {report.runtime === "tauri" ? "Native desktop runtime" : "Browser preview (native checks mocked)"}</div>}
     </div>
   );
 }
@@ -249,11 +249,11 @@ function DiagnosticRow({ check, open, onToggle }: { check: DiagnosticCheck; open
         <Icon size={15} className={`shrink-0 ${ui.className}`} />
         <span className="min-w-0 flex-1">
           <span className="block text-xs font-medium text-strong">{check.label}</span>
-          <span className="block truncate text-[11px] text-muted">{check.summary}</span>
+          <span className="block truncate text-2xs text-muted">{check.summary}</span>
         </span>
-        <span className="shrink-0 font-mono text-[10px] text-muted">{check.duration_ms} ms</span>
+        <span className="shrink-0 font-mono text-3xs text-muted">{check.duration_ms} ms</span>
       </span>
-      {open && check.detail && <span className="ml-6 mt-2 block rounded-md border border-edge bg-bar/35 px-2.5 py-2 font-mono text-[11px] leading-5 text-muted">{check.detail}</span>}
+      {open && check.detail && <span className="ml-6 mt-2 block rounded-md border border-edge bg-bar/35 px-2.5 py-2 font-mono text-2xs leading-5 text-muted">{check.detail}</span>}
     </button>
   );
 }
@@ -374,7 +374,7 @@ function HtmlTab({ root }: { root: string }) {
         </div>
       ) : (
         <div className="p-2 space-y-1.5">
-          <div className="px-1 pb-1 text-[10px] uppercase tracking-widest font-bold text-muted">
+          <div className="px-1 pb-1 text-3xs uppercase tracking-widest font-bold text-muted">
             Click a page to open it as a preview tab with Source ↔ View toggle and auto-refresh
           </div>
           {files.map((f) => (
@@ -386,9 +386,9 @@ function HtmlTab({ root }: { root: string }) {
               <AppWindow size={14} className="text-accent shrink-0 group-hover:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
                 <div className="font-mono text-xs font-semibold text-strong truncate">{getRelPath(f).split(/[/\\]/).pop()}</div>
-                <div className="font-mono text-[10px] text-muted truncate mt-0.5">{getRelPath(f)}</div>
+                <div className="font-mono text-3xs text-muted truncate mt-0.5">{getRelPath(f)}</div>
               </div>
-              <div className="shrink-0 flex items-center gap-1 text-[10px] text-muted">
+              <div className="shrink-0 flex items-center gap-1 text-3xs text-muted">
                 <Eye size={11} className="text-accent opacity-50 group-hover:opacity-100 group-focus-within:opacity-100 transition" />
                 <span className="hidden group-hover:block group-focus-within:block text-accent font-medium">Open preview →</span>
               </div>
@@ -626,7 +626,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
             className="min-w-0 flex-1 bg-transparent font-mono text-xs text-strong outline-none placeholder:text-muted"
             spellCheck={false}
           />
-          <span className="shrink-0 rounded-lg bg-raised px-2 py-0.5 text-[11px] text-muted">
+          <span className="shrink-0 rounded-lg bg-raised px-2 py-0.5 text-2xs text-muted">
             {filteredExes.length}/{exes.length}
           </span>
         </div>
@@ -646,15 +646,15 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
                       {exeName(exe)}
                     </span>
                     {profile && (
-                      <span className={`shrink-0 rounded px-1 text-[10px] ${profile === "release" ? "bg-raised text-strong font-semibold" : "bg-raised text-muted"}`}>
+                      <span className={`shrink-0 rounded px-1 text-3xs ${profile === "release" ? "bg-raised text-strong font-semibold" : "bg-raised text-muted"}`}>
                         {profile}
                       </span>
                     )}
                     {/\.(exe|cmd|bat|com)$/i.test(exe) && (
-                      <span className="shrink-0 rounded bg-success-soft px-1.5 text-[10px] text-success">Windows</span>
+                      <span className="shrink-0 rounded bg-success-soft px-1.5 text-3xs text-success">Windows</span>
                     )}
                   </div>
-                  {!compact && <div className="truncate font-mono text-[11px] text-muted" title={rel}>{rel}</div>}
+                  {!compact && <div className="truncate font-mono text-2xs text-muted" title={rel}>{rel}</div>}
                 </div>
                 <div className="flex items-center gap-0.5">
                   <button onClick={() => void runExe(exe)} title={t("Run detached")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
@@ -755,7 +755,7 @@ function Header({
           className="shrink-0 rounded-lg border border-edge bg-surface p-1.5 hover:bg-raised hover:text-strong transition disabled:opacity-50"
           title={busy ? t("Refreshing…") : t("Refresh")}
           aria-busy={busy}
-        >
+         aria-label={busy ? t("Refreshing…") : t("Refresh")}>
           <RefreshCw size={13} className={busy ? "lx-anim-spin" : undefined} />
         </button>
       )}
@@ -855,7 +855,7 @@ function LogsTab({ root: _root }: { root: string }) {
 
   const getCategoryBadge = (category: string) => {
     return (
-      <span className="px-1 py-0.5 rounded bg-raised text-[9px] text-muted border border-edge font-mono tracking-wide">
+      <span className="px-1 py-0.5 rounded bg-raised text-3xs text-muted border border-edge font-mono tracking-wide">
         {category}
       </span>
     );
@@ -868,7 +868,7 @@ function LogsTab({ root: _root }: { root: string }) {
         <span className="font-semibold text-strong">System & Agent Live Console</span>
         <button
           onClick={() => { clearLogs(); setLogs([]); }}
-          className="ml-auto rounded border border-edge px-2 py-0.5 hover:text-strong transition text-[11px]"
+          className="ml-auto rounded border border-edge px-2 py-0.5 hover:text-strong transition text-2xs"
         >
           {t("Clear console")}
         </button>
@@ -882,7 +882,7 @@ function LogsTab({ root: _root }: { root: string }) {
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             placeholder={t("Search live logs…")}
-            className="min-w-0 flex-1 bg-transparent font-mono text-[11px] text-strong outline-none placeholder:text-muted"
+            className="min-w-0 flex-1 bg-transparent font-mono text-2xs text-strong outline-none placeholder:text-muted"
           />
         </div>
         <select
@@ -898,14 +898,14 @@ function LogsTab({ root: _root }: { root: string }) {
       </div>
 
       {/* Log Feed */}
-      <div className="flex-1 overflow-auto bg-surface p-3 font-mono text-[11px] space-y-1.5 select-text lx-noscrollbar leading-relaxed">
+      <div className="flex-1 overflow-auto bg-surface p-3 font-mono text-2xs space-y-1.5 select-text lx-noscrollbar leading-relaxed">
         {filteredLogs.length === 0 ? (
           <div className="text-center text-muted py-8 italic">No logs recorded matching filters.</div>
         ) : (
           filteredLogs.map((l) => (
             <div key={l.id} className="flex gap-2 items-start hover:bg-raised px-1 py-0.5 rounded transition">
-              <span className="text-muted shrink-0 text-[10px] select-none">{formatTime(l.ts)}</span>
-              <span className={`shrink-0 w-12 text-[10px] select-none ${getLevelColor(l.level)}`}>[{l.level}]</span>
+              <span className="text-muted shrink-0 text-3xs select-none">{formatTime(l.ts)}</span>
+              <span className={`shrink-0 w-12 text-3xs select-none ${getLevelColor(l.level)}`}>[{l.level}]</span>
               {getCategoryBadge(l.category)}
               <span className="text-strong whitespace-pre-wrap break-all flex-1">{l.text}</span>
             </div>
@@ -947,7 +947,7 @@ function DiskTab({ root }: { root: string }) {
             </div>
             <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
               <span className="font-semibold text-strong font-mono min-w-[70px] text-right">{fmtBytes(d.bytes)}</span>
-              {d.cleanable && <span className="rounded-full bg-warning-soft border border-warning-soft-strong px-2 py-0.5 text-[9px] text-warning font-semibold uppercase tracking-wider shrink-0">cleanable</span>}
+              {d.cleanable && <span className="rounded-full bg-warning-soft border border-warning-soft-strong px-2 py-0.5 text-3xs text-warning font-semibold uppercase tracking-wider shrink-0">cleanable</span>}
             </div>
           </div>
         ))}
@@ -1030,15 +1030,15 @@ function DepsTab({ root }: { root: string }) {
       {/* Dashboard Metrics */}
       <div className="grid grid-cols-3 gap-2 px-2">
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Manifests</div>
+          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Manifests</div>
           <div className="text-base font-bold text-strong">{manifests.length}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Total Deps</div>
+          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Total Deps</div>
           <div className="text-base font-bold text-strong">{totalDepsCount}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-[9px] uppercase tracking-wider text-muted mb-0.5">Vulnerable</div>
+          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Vulnerable</div>
           <div className={`text-base font-bold ${vulns && vulns.length > 0 ? "text-danger animate-pulse" : "text-success"}`}>
             {vulns ? vulns.length : "—"}
           </div>
@@ -1055,7 +1055,7 @@ function DepsTab({ root }: { root: string }) {
           </div>
           <div className="space-y-1.5">
             {vulns.map((v) => (
-              <div key={`${v.package}-${v.id}`} className="text-[11px] leading- relaxed border-b border-danger-soft pb-1.5 last:border-0 font-mono">
+              <div key={`${v.package}-${v.id}`} className="text-2xs leading- relaxed border-b border-danger-soft pb-1.5 last:border-0 font-mono">
                 <span className="font-bold text-danger bg-danger-soft border border-danger-soft-strong px-1.5 py-0.5 rounded mr-1.5">{v.id}</span>
                 <span className="text-strong font-semibold">{v.package}</span>
                 {v.summary && <span className="text-muted font-normal ml-1.5">— {v.summary}</span>}
@@ -1070,7 +1070,7 @@ function DepsTab({ root }: { root: string }) {
           <div key={m.path} className="p-3 rounded-lg border border-edge bg-bar/15 shadow-sm">
             <div className="font-semibold text-strong flex items-center justify-between border-b border-edge pb-1.5 mb-2">
               <span className="truncate">{m.path}</span>
-              <span className="rounded-full bg-raised px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted border border-edge">
+              <span className="rounded-full bg-raised px-2.5 py-0.5 text-3xs font-semibold uppercase tracking-wider text-muted border border-edge">
                 {m.kind} ({m.deps.length})
               </span>
             </div>
@@ -1081,9 +1081,9 @@ function DepsTab({ root }: { root: string }) {
                   <div key={`${d.name}-${d.dev}`} className="flex gap-2 items-center hover:bg-raised/40 px-1 py-0.5 rounded transition">
                     <span className="text-strong font-medium flex-1 truncate">{d.name}</span>
                     <span className="text-muted font-normal shrink-0">{d.req}</span>
-                    {d.dev && <span className="text-muted/60 text-[10px] bg-raised px-1 rounded">dev</span>}
+                    {d.dev && <span className="text-muted/60 text-3xs bg-raised px-1 rounded">dev</span>}
                     {newer && (
-                      <span className="text-warning flex items-center gap-1 shrink-0 bg-warning-soft border border-warning-soft-strong px-1 rounded text-[10px]">
+                      <span className="text-warning flex items-center gap-1 shrink-0 bg-warning-soft border border-warning-soft-strong px-1 rounded text-3xs">
                         ➔ {newer}
                       </span>
                     )}
@@ -1131,7 +1131,7 @@ function ProcsTab() {
             <span className="flex-1 truncate text-strong select-text font-medium" title={n.cmd}>{n.name}</span>
             <span className="w-14 text-right font-mono text-muted">{n.cpu_percent.toFixed(1)}%</span>
             <span className="w-18 text-right font-mono text-muted">{fmtBytes(n.memory_bytes)}</span>
-            <button onClick={() => void kill(n)} className="text-muted hover:text-danger bg-surface border border-edge rounded px-1.5 py-0.5 text-[10px] font-semibold opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shadow-sm hover:border-danger-soft-strong hover:bg-danger-soft">KILL</button>
+            <button onClick={() => void kill(n)} className="text-muted hover:text-danger bg-surface border border-edge rounded px-1.5 py-0.5 text-3xs font-semibold opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition shadow-sm hover:border-danger-soft-strong hover:bg-danger-soft">KILL</button>
           </div>
         ))}
       </div>
@@ -1203,7 +1203,7 @@ function PerfTab() {
           {/* Simple sparkline for heap usage */}
           {samples.length > 2 && (
             <div className="p-3 rounded-lg border border-edge bg-bar/15 shadow-sm">
-              <div className="mb-2 text-[10px] uppercase tracking-wider text-muted font-bold">Heap usage timeline (MB)</div>
+              <div className="mb-2 text-3xs uppercase tracking-wider text-muted font-bold">Heap usage timeline (MB)</div>
               <svg width="100%" height={80} className="overflow-visible">
                 {(() => {
                   const max = Math.max(...samples.map((s) => s.heapUsedMB), 1);
@@ -1229,7 +1229,7 @@ function PerfTab() {
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-edge bg-bar/15 px-3 py-2 text-center shadow-sm">
-      <div className="text-[9px] uppercase tracking-wider text-muted font-bold mb-0.5">{label}</div>
+      <div className="text-3xs uppercase tracking-wider text-muted font-bold mb-0.5">{label}</div>
       <div className="font-mono text-sm text-strong font-bold">{value}</div>
     </div>
   );
@@ -1252,7 +1252,7 @@ function CrashesTab() {
       <div className="flex h-full flex-col">
         <Header>
           <button onClick={() => setActive(null)} className="rounded border border-edge px-2.5 py-0.5 hover:text-strong transition">← Back</button>
-          <span className="font-semibold text-strong text-[11px] font-mono truncate max-w-sm">{active.name}</span>
+          <span className="font-semibold text-strong text-2xs font-mono truncate max-w-sm">{active.name}</span>
           <button onClick={() => void navigator.clipboard.writeText(content)} className="ml-auto hover:text-strong transition text-xs">Copy</button>
         </Header>
         <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-all px-3 py-2 font-mono text-xs text-strong bg-surface select-text leading-relaxed">{content}</pre>

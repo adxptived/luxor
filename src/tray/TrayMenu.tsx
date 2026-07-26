@@ -45,8 +45,8 @@ function MenuRow(props: {
     <button
       onClick={onClick}
       title={title ?? label}
-      className="lx-menu-row flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[var(--lx-strong)]"
-    >
+      className="lx-menu-row flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--lx-strong)]"
+     aria-label={title ?? label}>
       {leading}
       <span className="min-w-0 flex-1 truncate">{label}</span>
     </button>
@@ -104,8 +104,8 @@ export function TrayMenu(props: TrayMenuProps) {
             title={t("Keep running when window closes")}
             role="menuitemcheckbox"
             aria-checked={closeToTray}
-            className="lx-menu-row flex w-full items-center gap-2 px-4 py-2 text-left text-[13px] text-[var(--lx-strong)]"
-          >
+            className="lx-menu-row flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[var(--lx-strong)]"
+           aria-label={t("Keep running when window closes")}>
             <span className="min-w-0 flex-1 truncate">
               {t("Keep running when window closes")}
             </span>

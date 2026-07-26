@@ -162,7 +162,7 @@ export function SearchPanel() {
             </div>
           </div>
           {report && (
-            <div className="flex flex-wrap items-center gap-1 text-[11px] text-muted">
+            <div className="flex flex-wrap items-center gap-1 text-2xs text-muted">
               <Stat>{report.hits.length} result(s)</Stat>
               <Stat>{byFile.size} file(s)</Stat>
               <Stat>{report.files_scanned} scanned</Stat>
@@ -202,7 +202,7 @@ export function SearchPanel() {
                 aria-label={t("Recent searches")}
                 className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-edge bg-raised shadow-lg"
               >
-                <div className="flex items-center justify-between border-b border-edge/60 px-3 py-1.5 text-[10px] uppercase tracking-wide text-muted">
+                <div className="flex items-center justify-between border-b border-edge/60 px-3 py-1.5 text-3xs uppercase tracking-wide text-muted">
                   <span className="inline-flex items-center gap-1"><History size={11} /> {t("Recent searches")}</span>
                   <button
                     className="rounded px-1.5 py-0.5 hover:bg-surface hover:text-strong"
@@ -327,7 +327,7 @@ export function SearchPanel() {
                 >
                   {path}
                 </button>
-                <span className="rounded-full border border-edge bg-surface px-2 py-0.5 font-mono text-[10px] text-muted">{hits.length}</span>
+                <span className="rounded-full border border-edge bg-surface px-2 py-0.5 font-mono text-3xs text-muted">{hits.length}</span>
               </div>
               <div className="divide-y divide-edge/50">
                 {hits.map((hit, i) => {
@@ -342,7 +342,7 @@ export function SearchPanel() {
                       onClick={() => openFile(`${root}/${path}`, { line: hit.line })}
                       className="flex w-full gap-3 px-3 py-1.5 text-left hover:bg-raised/70"
                     >
-                      <span className="w-12 shrink-0 rounded-md bg-surface px-1 py-0.5 text-right font-mono text-[11px] text-muted">{hit.line}</span>
+                      <span className="w-12 shrink-0 rounded-md bg-surface px-1 py-0.5 text-right font-mono text-2xs text-muted">{hit.line}</span>
                       <span className="min-w-0 flex-1 truncate whitespace-pre font-mono text-xs leading-5 text-strong">
                         {hit.text.slice(0, hit.start)}
                         {preview?.replaced != null ? (
@@ -396,7 +396,7 @@ function Toggle({
       className={`flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs ${
         active ? "bg-raised text-strong" : "text-muted hover:bg-raised hover:text-strong"
       }`}
-    >
+     aria-label={title}>
       {children}
       <span className="hidden sm:inline">{label}</span>
     </button>

@@ -121,7 +121,7 @@ export function ProjectSwitcher() {
               placeholder={t("Switch to project…")}
               className="min-w-0 flex-1 bg-transparent py-3 text-strong outline-none placeholder:text-muted/70"
             />
-            <span className="rounded-full border border-edge px-2 py-0.5 text-[10px] text-muted">
+            <span className="rounded-full border border-edge px-2 py-0.5 text-3xs text-muted">
               {filtered.length}/{projects.length}
             </span>
           </div>
@@ -157,7 +157,7 @@ export function ProjectSwitcher() {
                 </span>
                 <span className="block truncate text-xs text-muted">{p.path || t("Blank workspace")}</span>
               </span>
-              {p.id === activeId && <span className="rounded-full border border-edge px-2 py-0.5 text-[10px] uppercase text-muted">{t("active")}</span>}
+              {p.id === activeId && <span className="rounded-full border border-edge px-2 py-0.5 text-3xs uppercase text-muted">{t("active")}</span>}
               {i === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
             </button>
           ))}
@@ -184,6 +184,6 @@ export function ProjectSwitcher() {
 }
 
 function SwitcherKbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="shrink-0 rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-[10px] text-muted">{children}</kbd>;
+  return <kbd className="shrink-0 rounded border border-edge bg-raised px-1.5 py-0.5 font-mono text-3xs text-muted">{children}</kbd>;
 }
 

@@ -109,7 +109,7 @@ export function SkillsPanel() {
             <div className="font-semibold text-strong">Skills</div>
             <div className="truncate text-xs text-muted">{project ? project.name : "no project"}</div>
           </div>
-          <span className="rounded-md border border-edge bg-raised px-2 py-1 text-[11px] text-muted">Project · Global · Market</span>
+          <span className="rounded-md border border-edge bg-raised px-2 py-1 text-2xs text-muted">Project · Global · Market</span>
         </div>
       </div>
       <div className="flex gap-1 overflow-x-auto border-b border-edge bg-bar/30 px-2 py-2 lx-noscrollbar">
@@ -445,7 +445,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
         .map((g) => (
           <div key={g.id} className="mb-3 overflow-hidden rounded-lg border border-edge bg-bar/25">
             <div className="border-b border-edge bg-raised/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
-              {g.dir} <span className="ml-1 rounded-full bg-surface px-2 py-0.5 text-[10px] font-normal">{g.skills.length}</span>
+              {g.dir} <span className="ml-1 rounded-full bg-surface px-2 py-0.5 text-3xs font-normal">{g.skills.length}</span>
             </div>
             {g.skills.map((s) => (
               <div
@@ -475,11 +475,11 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
                   <Star size={13} className={favorites.has(s.path) ? "fill-current" : ""} />
                 </button>
                 {!s.enabled && (
-                  <span className="rounded bg-raised px-1 text-[10px] text-warning">off</span>
+                  <span className="rounded bg-raised px-1 text-3xs text-warning">off</span>
                 )}
                 {(hashCount.get(s.content_hash) ?? 0) > 1 && (
                   <span
-                    className="rounded bg-raised px-1 text-[10px] text-warning"
+                    className="rounded bg-raised px-1 text-3xs text-warning"
                     title={t("Identical copy exists in another convention folder")}
                   >
                     identical copy
@@ -488,14 +488,14 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
                 {(nameCount.get(s.name.toLowerCase()) ?? 0) > 1 &&
                   (hashCount.get(s.content_hash) ?? 0) <= 1 && (
                     <span
-                      className="rounded bg-raised px-1 text-[10px] text-info"
+                      className="rounded bg-raised px-1 text-3xs text-info"
                       title="A skill with the same name exists elsewhere (different content)"
                     >
                       duplicate name
                     </span>
                   )}
-                {!s.is_dir && <span className="text-[10px] text-muted">bare .md</span>}
-                <span className="text-[10px] text-muted">{(s.size / 1024).toFixed(1)} KB</span>
+                {!s.is_dir && <span className="text-3xs text-muted">bare .md</span>}
+                <span className="text-3xs text-muted">{(s.size / 1024).toFixed(1)} KB</span>
                 <button
                   data-testid="skill-toggle"
                   className={`rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 ${
@@ -765,7 +765,7 @@ function MarketTab(props: { root: string | null; globalRoot: string | null }) {
       </div>
       {/* Context line: what the list currently represents. */}
       {!busy && !err && (
-        <div className="flex items-center gap-1.5 px-3 pb-1 text-[11px] text-muted">
+        <div className="flex items-center gap-1.5 px-3 pb-1 text-2xs text-muted">
           {searchMode ? (
             <>
               <span>
@@ -774,7 +774,7 @@ function MarketTab(props: { root: string | null; globalRoot: string | null }) {
               </span>
               {offlineSearch && (
                 <span
-                  className="rounded-full border border-edge bg-raised px-1.5 py-px text-[10px] text-warning"
+                  className="rounded-full border border-edge bg-raised px-1.5 py-px text-3xs text-warning"
                   title={t("skills.sh is unreachable — showing cached results")}
                 >
                   {t("offline")}
@@ -798,8 +798,8 @@ function MarketTab(props: { root: string | null; globalRoot: string | null }) {
         {err && !busy && (
           <div className="p-4 text-center text-muted">
             <div className="text-strong">{t("Couldn’t reach skills.sh")}</div>
-            <div className="mt-1 text-[11px] text-muted">{err}</div>
-            <div className="mt-1 text-[11px] text-muted">
+            <div className="mt-1 text-2xs text-muted">{err}</div>
+            <div className="mt-1 text-2xs text-muted">
               {t("Check your connection — installed and cached skills are still searchable.")}
             </div>
             <button
@@ -830,7 +830,7 @@ function MarketTab(props: { root: string | null; globalRoot: string | null }) {
                     )}
                     {isInstalled(s) && (
                       <span
-                        className="flex shrink-0 items-center gap-0.5 rounded bg-raised px-1 text-[10px] text-success"
+                        className="flex shrink-0 items-center gap-0.5 rounded bg-raised px-1 text-3xs text-success"
                         title={t("Already installed in this project or globally")}
                       >
                         <CircleCheck size={10} /> installed

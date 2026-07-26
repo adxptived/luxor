@@ -113,7 +113,7 @@ function TabIcon({ stored }: { stored: string | null }) {
     const Cmp = TAB_ICON_COMPONENTS[parsed.value as TabIconId];
     return Cmp ? <Cmp size={13} className="shrink-0 text-muted" /> : null;
   }
-  return <span className="shrink-0 text-[13px] leading-none">{parsed.value}</span>;
+  return <span className="shrink-0 text-sm leading-none">{parsed.value}</span>;
 }
 
 /** Project tab bar + global actions. Renders horizontally (top) or vertically (side). */
@@ -485,7 +485,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
     >
       {group.map((def) => renderNavBtn(def, zone))}
       {group.length === 0 && navDragId && (
-        <span className="whitespace-nowrap rounded border border-dashed border-accent/50 px-2 py-0.5 text-[10px] text-muted">
+        <span className="whitespace-nowrap rounded border border-dashed border-accent/50 px-2 py-0.5 text-3xs text-muted">
           {label}
         </span>
       )}
@@ -871,13 +871,13 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           }`}
           style={{ color: group.color, borderRadius: "var(--lx-tab-radius)" }}
         >
-<span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border text-[10px] leading-none" style={{ borderColor: group.color }}>
+<span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border text-3xs leading-none" style={{ borderColor: group.color }}>
             {group.collapsed ? "+" : "−"}
           </span>
           {!leftCollapsed && <Layers size={11} className="shrink-0" />}
           {!leftCollapsed && <span className="max-w-28 truncate">{group.name}</span>}
           {group.collapsed && !leftCollapsed && (
-            <span className="rounded px-1 text-[10px] text-black" style={{ backgroundColor: group.color }}>
+            <span className="rounded px-1 text-3xs text-black" style={{ backgroundColor: group.color }}>
               {members.length}
             </span>
           )}
@@ -1014,7 +1014,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               )}
               {recents.length > 0 && (
                 <>
-                  <div className="mt-1 flex items-center gap-1.5 border-t border-edge px-2 pb-0.5 pt-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                  <div className="mt-1 flex items-center gap-1.5 border-t border-edge px-2 pb-0.5 pt-1.5 text-3xs font-semibold uppercase tracking-wide text-muted">
                     <History size={11} /> {t("Recent projects")}
                   </div>
                   {recents.map((r) => (
@@ -1034,7 +1034,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
                         onClick={() => void reopenRecent(r)}
                       >
                         <span className="block truncate text-strong">{r.name}</span>
-                        <span className="block truncate text-[10px] text-muted">{r.path}</span>
+                        <span className="block truncate text-3xs text-muted">{r.path}</span>
                       </button>
                       <button
                         className="shrink-0 text-muted opacity-0 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
@@ -1070,7 +1070,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               <div
                 className="lx-pop-in absolute right-0 top-full z-[var(--lx-z-dropdown)] max-h-80 w-56 overflow-y-auto rounded-lg border border-edge bg-bar p-1 shadow-xl"
               >
-                <div className="mb-1 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted">
+                <div className="mb-1 px-2 py-0.5 text-3xs font-semibold uppercase tracking-wide text-muted">
                   {t("All tabs")}
                 </div>
                 {sortedProjects.map((p) => (

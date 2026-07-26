@@ -94,7 +94,7 @@ export function LauncherPanel() {
               {t("Open the current folder in your tools, scan runnable files, and pin repeat commands for one-click starts.")}
             </p>
           </div>
-          <span className="min-w-0 truncate rounded-full border border-edge bg-bar px-2 py-1 font-mono text-[10px] text-muted" title={project.path}>
+          <span className="min-w-0 truncate rounded-full border border-edge bg-bar px-2 py-1 font-mono text-3xs text-muted" title={project.path}>
             {project.path}
           </span>
         </div>
@@ -206,7 +206,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
     <section className="mb-3 rounded-lg border border-edge bg-bar/70 p-3">
       <div className="mb-2">
         <div className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</div>
-        <div className="mt-0.5 text-[11px] text-muted">{subtitle}</div>
+        <div className="mt-0.5 text-2xs text-muted">{subtitle}</div>
       </div>
       {children}
     </section>
@@ -230,7 +230,7 @@ function Action(props: {
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-sm font-medium text-strong">{t(props.label)}</span>
-        <span className="block truncate text-[11px] text-muted">{t(props.hint)}</span>
+        <span className="block truncate text-2xs text-muted">{t(props.hint)}</span>
       </span>
     </button>
   );

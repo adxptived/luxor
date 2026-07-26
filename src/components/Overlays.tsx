@@ -188,7 +188,7 @@ function ContextMenu() {
               )}
               {item.icon && <item.icon size={14} className="shrink-0 text-muted group-hover:text-strong" />}
               <span className="min-w-0 flex-1 truncate">{item.label}</span>
-              {item.hint && <span className="shrink-0 rounded border border-edge bg-surface px-1 py-0.5 font-mono text-[10px] text-muted">{item.hint}</span>}
+              {item.hint && <span className="shrink-0 rounded border border-edge bg-surface px-1 py-0.5 font-mono text-3xs text-muted">{item.hint}</span>}
             </button>
           ),
         )}
