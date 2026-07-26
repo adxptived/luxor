@@ -96,6 +96,40 @@ export function matchChord(e: KeyboardEvent, chord: string): boolean {
   return chordFromEvent(e) === normalizeChord(chord);
 }
 
+/**
+ * Reverse index: normalized chord -> action id, memoized per config object.
+ *
+ * The global keydown handler used to test the event against every binding in
+ * turn (`matchChord(e, keys["palette"])`, `…["projects.switch"]`, … ~15 of them),
+ * re-deriving the event's chord string on each call. That ran on EVERY keystroke
+ * in the app, including ordinary typing in the editor and terminal. One
+ * `chordFromEvent` + one map lookup replaces the whole chain.
+ *
+ * On a conflict the FIRST action wins, matching the old if/else precedence and
+ * what `findHotkeyConflicts` reports to the user.
+ */
+let cachedLookupConfig: AppConfig | null | undefined;
+let cachedLookup: Map<string, string> | null = null;
+
+export function hotkeyLookup(config: AppConfig | null): Map<string, string> {
+  if (cachedLookup && config === cachedLookupConfig) return cachedLookup;
+  const map = new Map<string, string>();
+  for (const [action, chord] of Object.entries(effectiveHotkeys(config))) {
+    if (chord && !map.has(chord)) map.set(chord, action);
+  }
+  cachedLookupConfig = config;
+  cachedLookup = map;
+  return map;
+}
+
+/** The action bound to this key event, or `undefined`. */
+export function actionForEvent(e: KeyboardEvent, config: AppConfig | null): string | undefined {
+  // `chordFromEvent` returns null for keys that cannot form a chord (bare
+  // modifiers, dead keys); those never match a binding.
+  const chord = chordFromEvent(e);
+  return chord === null ? undefined : hotkeyLookup(config).get(chord);
+}
+
 /** Map of chord -> action ids using it. Chords bound to 2+ actions are
  *  conflicts: only the first-processed action would win (audit 7.4). */
 export function findHotkeyConflicts(config: AppConfig | null): Record<string, string[]> {

@@ -32,7 +32,7 @@ import { frontendLog } from "@/lib/ipc";
 import { schedulePoll } from "@/lib/poll";
 import { pushStructured } from "@/lib/logBuffer";
 import { ensurePtyBus } from "@/lib/ptyBus";
-import { effectiveHotkeys, hintFor, matchChord } from "@/lib/hotkeys";
+import { actionForEvent, hintFor } from "@/lib/hotkeys";
 import { DEFAULT_NAV_HIDDEN } from "@/lib/navButtons";
 import { saveAllEditors } from "@/lib/editorBus";
 import { ZOOM_STEP } from "@/lib/zoom";
@@ -348,41 +348,28 @@ export default function App() {
     };
   }, []);
 
-  // Tray popup "New terminal" action: open a terminal in the active dock.
+  // Tray popup actions. One effect with a handler table instead of a separate
+  // effect per event: each copy carried its own `disposed` latch and cleanup, so
+  // the boilerplate was duplicated verbatim and every new tray action meant
+  // another chance to get the unsubscribe-after-unmount race subtly wrong.
   useEffect(() => {
     if (!ipc.isTauri) return;
-    let disposed = false;
-    let unlisten: (() => void) | undefined;
-    void ipc
-      .listen("luxor://tray-new-terminal", () => {
-        useDockStore.getState().addTerminal();
-      })
-      .then((u) => {
-        if (disposed) u();
-        else unlisten = u;
-      });
-    return () => {
-      disposed = true;
-      unlisten?.();
+    const handlers: Record<string, () => void> = {
+      "luxor://tray-new-terminal": () => useDockStore.getState().addTerminal(),
+      "luxor://open-settings": () => useAppStore.getState().setSettingsOpen(true),
     };
-  }, []);
-
-  // Tray popup "Settings" action: open the settings modal in the main window.
-  useEffect(() => {
-    if (!ipc.isTauri) return;
     let disposed = false;
-    let unlisten: (() => void) | undefined;
-    void ipc
-      .listen("luxor://open-settings", () => {
-        useAppStore.getState().setSettingsOpen(true);
-      })
-      .then((u) => {
-        if (disposed) u();
-        else unlisten = u;
+    const unlisteners: (() => void)[] = [];
+    for (const [event, handler] of Object.entries(handlers)) {
+      void ipc.listen(event, handler).then((un) => {
+        // The listener may resolve after unmount; drop it immediately if so.
+        if (disposed) un();
+        else unlisteners.push(un);
       });
+    }
     return () => {
       disposed = true;
-      unlisten?.();
+      unlisteners.forEach((un) => un());
     };
   }, []);
 
@@ -452,7 +439,6 @@ export default function App() {
   // Global hotkeys (editable in Settings → Hotkeys).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const keys = effectiveHotkeys(useAppStore.getState().config);
       const app = useAppStore.getState();
       const dock = useDockStore.getState();
       const fire = (fn: () => void) => {
@@ -480,80 +466,86 @@ export default function App() {
         if (!e.repeat) cycleTab(e.shiftKey ? -1 : 1);
         return;
       }
-      if (matchChord(e, keys["palette"])) fire(() => app.setPaletteOpen(!app.paletteOpen));
-      else if (matchChord(e, keys["projects.switch"])) {
-        if (e.repeat) {
-          e.preventDefault();
-          return;
-        }
-        fire(() => app.setSwitcherOpen(!app.switcherOpen));
-      }
-      else if (matchChord(e, keys["terminal.new"])) {
-        if (e.repeat) {
-          e.preventDefault();
-          return;
-        }
-        fire(() => dock.addTerminal());
-      }
-      else if (matchChord(e, keys["project.open"])) {
-        if (e.repeat) {
-          e.preventDefault();
-          return;
-        }
-        fire(() => void useProjectsStore.getState().addProject());
-      }
-      else if (matchChord(e, keys["git.open"])) fire(() => dock.openPanel("git"));
-      else if (matchChord(e, keys["files.open"])) fire(() => dock.openPanel("files"));
-      else if (matchChord(e, keys["settings.open"])) fire(() => app.setSettingsOpen(true));
-      else if (matchChord(e, keys["search.open"])) fire(() => dock.openPanel("search"));
-      else if (matchChord(e, keys["file.saveAll"])) {
-        if (e.repeat) {
-          e.preventDefault();
-          return;
-        }
-        fire(() =>
-          void saveAllEditors().then((n) =>
-            app.toast(
-              n > 0 ? `${t("Saved files:")} ${n}` : t("No unsaved changes"),
-              n > 0 ? "success" : "info",
-            ),
-          ),
-        );
-      }
-      else if (matchChord(e, keys["zen.toggle"])) fire(() => app.toggleZen());
-      else if (matchChord(e, keys["tab.next"])) fire(() => cycleTab(1));
-      else if (matchChord(e, keys["tab.prev"])) fire(() => cycleTab(-1));
-      else if (matchChord(e, keys["tab.reopen"])) {
-        if (e.repeat) {
-          e.preventDefault();
-          return;
-        }
-        fire(() => {
-          void useProjectsStore
-            .getState()
-            .reopenClosedProjectTab()
-            .then((reopened) => {
-              if (!reopened) dock.reopenLastClosed();
-            });
-        });
-      }
-      else if (matchChord(e, keys["tab.close"])) {
-        // Always swallow the chord so the webview can't close the whole window,
-        // but only close the tab when we're NOT typing: in a terminal Ctrl+W is
-        // readline "delete word" (xterm already handled it at the target), and
-        // in plain inputs it can be the same. Code editors do close (VS Code).
+      // One chord derivation + one map lookup, instead of ~15 sequential
+      // `matchChord` calls per keystroke (this handler sees every key pressed
+      // anywhere in the app, including typing in the editor and terminal).
+      const action = actionForEvent(e, useAppStore.getState().config);
+
+      // Actions that must not auto-repeat while the key is held: each of these
+      // toggles or spawns something, so a held key would fire it dozens of times.
+      const NO_REPEAT = new Set([
+        "projects.switch",
+        "terminal.new",
+        "project.open",
+        "file.saveAll",
+        "tab.reopen",
+      ]);
+      if (action && NO_REPEAT.has(action) && e.repeat) {
         e.preventDefault();
-        const el = e.target as HTMLElement | null;
-        const inTerminal = Boolean(el?.closest?.(".xterm"));
-        // CodeMirror's content is `contenteditable`, so it also matches the
-        // input selector below; treat it as an editor (not a plain input) so
-        // Ctrl+W still closes the tab like in VS Code.
-        const inEditor = Boolean(el?.closest?.(".cm-editor"));
-        const inInput = Boolean(el?.closest?.("input, textarea, [contenteditable=true]"));
-        if (!inTerminal && !(inInput && !inEditor)) dock.closeActivePanel();
+        return;
       }
+
+      switch (action) {
+        case "palette":
+          return fire(() => app.setPaletteOpen(!app.paletteOpen));
+        case "projects.switch":
+          return fire(() => app.setSwitcherOpen(!app.switcherOpen));
+        case "terminal.new":
+          return fire(() => dock.addTerminal());
+        case "project.open":
+          return fire(() => void useProjectsStore.getState().addProject());
+        case "git.open":
+          return fire(() => dock.openPanel("git"));
+        case "files.open":
+          return fire(() => dock.openPanel("files"));
+        case "settings.open":
+          return fire(() => app.setSettingsOpen(true));
+        case "search.open":
+          return fire(() => dock.openPanel("search"));
+        case "file.saveAll":
+          return fire(() =>
+            void saveAllEditors().then((n) =>
+              app.toast(
+                n > 0 ? `${t("Saved files:")} ${n}` : t("No unsaved changes"),
+                n > 0 ? "success" : "info",
+              ),
+            ),
+          );
+        case "zen.toggle":
+          return fire(() => app.toggleZen());
+        case "tab.next":
+          return fire(() => cycleTab(1));
+        case "tab.prev":
+          return fire(() => cycleTab(-1));
+        case "tab.reopen":
+          return fire(() => {
+            void useProjectsStore
+              .getState()
+              .reopenClosedProjectTab()
+              .then((reopened) => {
+                if (!reopened) dock.reopenLastClosed();
+              });
+          });
+        case "tab.close": {
+          // Always swallow the chord so the webview can't close the whole window,
+          // but only close the tab when we're NOT typing: in a terminal Ctrl+W is
+          // readline "delete word" (xterm already handled it at the target), and
+          // in plain inputs it can be the same. Code editors do close (VS Code).
+          e.preventDefault();
+          const el = e.target as HTMLElement | null;
+          const inTerminal = Boolean(el?.closest?.(".xterm"));
+          // CodeMirror's content is `contenteditable`, so it also matches the
+          // input selector below; treat it as an editor (not a plain input) so
+          // Ctrl+W still closes the tab like in VS Code.
+          const inEditor = Boolean(el?.closest?.(".cm-editor"));
+          const inInput = Boolean(el?.closest?.("input, textarea, [contenteditable=true]"));
+          if (!inTerminal && !(inInput && !inEditor)) dock.closeActivePanel();
+          return;
+        }
+      }
+
       // App zoom (fixed bindings, matches browser conventions).
-      else if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "Equal" || e.code === "NumpadAdd"))
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "Equal" || e.code === "NumpadAdd"))
         fire(() => app.setZoom((app.config?.ui.zoom ?? 1) + ZOOM_STEP));
       else if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "Minus" || e.code === "NumpadSubtract"))
         fire(() => app.setZoom((app.config?.ui.zoom ?? 1) - ZOOM_STEP));
