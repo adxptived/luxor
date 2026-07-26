@@ -1892,13 +1892,17 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   overflow: hidden;
 }
 
-/* Simple fade-in for the right-panel edit mode. */
-@keyframes lx-fade-in {
+/* Fade + slight rise, for the right-panel edit mode and settings sections.
+ * NOTE: this used to be a SECOND `@keyframes lx-fade-in`, redeclaring the pure
+ * opacity fade defined earlier. The later declaration wins for every consumer,
+ * so `.lx-fade-in` (the panel loading skeleton) silently inherited this
+ * translateY as well. Distinct names keep the two effects independent. */
+@keyframes lx-fade-slide-in {
   from { opacity: 0; transform: translateY(3px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .lx-anim-fade-in {
-  animation: lx-fade-in 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-fade-slide-in var(--lx-dur-fast) var(--lx-ease);
 }
 
 /* ── Right panel widgets ─────────────────────────────────────────────────────

@@ -271,7 +271,9 @@ pub async fn fs_write_text_encoded(
     path: String,
     content: String,
     encoding: String,
-) -> Result<(), Error> {
+    expected_mtime_ms: Option<i64>,
+) -> Result<Option<i64>, Error> {
     ensure_within_projects(&state, &path)?;
-    blocking(move || fsx::write_text_encoded(&path, &content, &encoding)).await
+    blocking(move || fsx::write_text_encoded_checked(&path, &content, &encoding, expected_mtime_ms))
+        .await
 }

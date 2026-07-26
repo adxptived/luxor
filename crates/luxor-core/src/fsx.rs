@@ -1006,6 +1006,36 @@ pub fn write_text_encoded(path: &str, content: &str, encoding: &str) -> Result<(
     atomic_write(Path::new(path), &out)
 }
 
+/// [`write_text_encoded`] with the same on-disk-conflict check as
+/// [`write_text_checked`].
+///
+/// Saving a file in a non-UTF-8 encoding used to bypass the conflict guard
+/// entirely: `write_text` refused to clobber a file that had changed underneath
+/// the editor, but the encoded path wrote unconditionally, so an external edit
+/// was silently overwritten whenever the buffer happened to be windows-1251,
+/// UTF-16, … Returns the file's new mtime, like `write_text_checked`.
+pub fn write_text_encoded_checked(
+    path: &str,
+    content: &str,
+    encoding: &str,
+    expected_mtime_ms: Option<i64>,
+) -> Result<Option<i64>> {
+    let p = Path::new(path);
+    if let Some(expected) = expected_mtime_ms {
+        if let Some(actual) = file_mtime_ms(p) {
+            if actual != expected {
+                return Err(Error::Conflict(format!(
+                    "file changed on disk: {path} (expected mtime {expected}, found {actual})"
+                )));
+            }
+        }
+        // Missing file → allow the write (re-create) rather than lose the buffer,
+        // matching `write_text_checked`.
+    }
+    write_text_encoded(path, content, encoding)?;
+    Ok(file_mtime_ms(p))
+}
+
 #[cfg(test)]
 mod tests {
     #[test]
@@ -1312,6 +1342,41 @@ mod tests {
         assert!(res.rows[0][0].contains("1 row"));
         let rows = db_query(p, "SELECT COUNT(*) AS n FROM t", false, 100).unwrap();
         assert_eq!(rows.rows[0][0], "1");
+    }
+
+    #[test]
+    fn write_text_encoded_checked_guards_external_edits() {
+        let dir = tempfile::tempdir().unwrap();
+        let p = dir.path().join("cp1251.txt");
+        let path = p.to_str().unwrap();
+
+        // Initial save establishes a known mtime.
+        let mtime = write_text_encoded_checked(path, "v1", "windows-1251", None)
+            .unwrap()
+            .expect("mtime after first write");
+
+        // Saving again with the mtime we last saw must succeed.
+        let mtime2 = write_text_encoded_checked(path, "v2", "windows-1251", Some(mtime))
+            .unwrap()
+            .expect("mtime after second write");
+        assert_eq!(
+            read_text_encoded(path, "windows-1251", 1_000_000).unwrap().content,
+            "v2"
+        );
+
+        // Somebody else edits the file behind the editor's back.
+        std::thread::sleep(std::time::Duration::from_millis(1100));
+        std::fs::write(&p, b"external").unwrap();
+
+        // A save carrying the STALE mtime must be refused, not silently clobber.
+        let err = write_text_encoded_checked(path, "v3", "windows-1251", Some(mtime2)).unwrap_err();
+        assert_eq!(err.kind(), "conflict");
+        assert_eq!(std::fs::read(&p).unwrap(), b"external");
+
+        // A missing file is re-created rather than losing the buffer.
+        std::fs::remove_file(&p).unwrap();
+        write_text_encoded_checked(path, "recreated", "utf-8", Some(mtime2)).unwrap();
+        assert_eq!(std::fs::read_to_string(&p).unwrap(), "recreated");
     }
 
     #[test]

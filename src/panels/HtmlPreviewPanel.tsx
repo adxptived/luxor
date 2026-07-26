@@ -2,10 +2,10 @@
  * HTML Preview Panel — a first-class dockview tab for rendering local HTML
  * files. Mirrors the Source ↔ View toggle pattern used in EditorPanel for
  * Markdown and HTML files, extended with:
- *   • Tauri-native rendering via ipc.fileSrc (asset protocol). The preview
- *     iframe is sandboxed WITHOUT `allow-same-origin` so previewed HTML cannot
- *     reach the asset protocol or IPC — scripts run in an opaque origin.
- *   • Fallback to srcDoc in browser/dev mode (reads file text via ipc)
+ *   • Rendering via a sandboxed `srcDoc` iframe WITHOUT `allow-same-origin`, so
+ *     previewed HTML cannot reach the asset protocol or IPC — scripts run in an
+ *     opaque origin. (An earlier asset-protocol path was removed: it required a
+ *     wide-open `assetProtocol.scope`, which let a preview read any file.)
  *   • Auto-refresh with configurable interval + on/off toggle
  *   • "Open in browser" and "Open in editor" shortcuts
  *   • Responsive toolbar that collapses labels on narrow panels
@@ -28,7 +28,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { IDockviewPanelProps } from "dockview";
 
 import * as ipc from "@/lib/ipc";
-import { isTauri } from "@/lib/ipc";
 import { t } from "@/lib/i18n";
 import { errorMessage } from "@/lib/types";
 import { useAppStore } from "@/state/appStore";
@@ -48,16 +47,6 @@ const DEFAULT_INTERVAL_MS = 2_000;
 
 function fileNameFromPath(path: string): string {
   return path.split(/[\/]/).pop() ?? path;
-}
-
-async function resolvePreviewSrc(_path: string): Promise<string | null> {
-  // Security: previews render via sandboxed `srcDoc` only. Serving arbitrary
-  // project files through the asset protocol required a wide-open
-  // `assetProtocol.scope` ("**"), which let any previewed HTML read any file
-  // on disk. The scope is now narrowed to app data (see tauri.conf.json), so
-  // asset URLs for project files would be denied anyway — srcDoc in an
-  // opaque-origin sandbox is the single, safe rendering path.
-  return null;
 }
 
 async function readHtmlText(path: string): Promise<string> {
@@ -80,7 +69,6 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [htmlText, setHtmlText] = useState<string>("");
   const [reloadKey, setReloadKey] = useState(0);
 
@@ -103,11 +91,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
     setLoading(true);
     setError(null);
     try {
-      const [src, text] = await Promise.all([
-        resolvePreviewSrc(path),
-        readHtmlText(path),
-      ]);
-      setPreviewSrc(src);
+      const text = await readHtmlText(path);
       setHtmlText(text);
       setLastRefreshed(new Date());
     } catch (e) {
@@ -123,17 +107,14 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
 
   // ── Auto-refresh ──────────────────────────────────────────────────────────
   const doRefresh = useCallback(() => {
-    if (isTauri && previewSrc) {
-      setReloadKey((k) => k + 1);
-      setLastRefreshed(new Date());
-    } else {
-      if (!path) return;
-      void readHtmlText(path).then((text) => {
+    if (!path) return;
+    void readHtmlText(path)
+      .then((text) => {
         setHtmlText(text);
         setLastRefreshed(new Date());
-      }).catch(() => {});
-    }
-  }, [path, previewSrc]);
+      })
+      .catch(() => {});
+  }, [path]);
 
   useEffect(() => {
     if (autoRefreshTimerRef.current) {
@@ -168,7 +149,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
       <div className="flex h-full items-center justify-center bg-surface text-sm text-muted">
         <div className="text-center">
           <FileCode size={32} className="mx-auto mb-2 opacity-30" />
-          <div>No file path provided.</div>
+          <div>{t("No file path provided.")}</div>
         </div>
       </div>
     );
@@ -327,7 +308,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
             {autoRefresh && (
               <>
                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-success animate-pulse" />
-                <span className="text-success font-medium">Live — every {intervalLabel}</span>
+                <span className="text-success font-medium">{t("Live — every")} {intervalLabel}</span>
               </>
             )}
           </span>
@@ -339,32 +320,26 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
 
       {/* ── Main content ── */}
       {mode === "preview" ? (
-        isTauri && previewSrc ? (
-          <iframe
-            key={`tauri-${reloadKey}`}
-            src={previewSrc}
-            title={name}
-            // No `allow-same-origin`: combined with `allow-scripts` it would let
-            // previewed HTML fetch arbitrary asset: URLs (i.e. read local files).
-            // Scripts still run, but in an opaque origin without IPC/asset reach.
-            sandbox="allow-scripts allow-modals allow-forms allow-popups"
-            className="min-h-0 w-full flex-1 border-0 bg-white"
-          />
-        ) : (
-          <iframe
-            key={`srcdoc-${reloadKey}`}
-            srcDoc={htmlText || "<html><body style='font-family:sans-serif;padding:20px;color:#888'>Empty file</body></html>"}
-            title={name}
-            sandbox="allow-scripts allow-modals allow-forms allow-popups"
-            className="min-h-0 w-full flex-1 border-0 bg-white"
-          />
-        )
+        /* Previews render ONLY via sandboxed `srcDoc`. Serving project files
+           through the asset protocol needed a wide-open `assetProtocol.scope`
+           ("**"), which let previewed HTML read any file on disk; the scope is
+           now narrowed to app data, so asset URLs for project files are denied
+           anyway. No `allow-same-origin` either — combined with `allow-scripts`
+           it would let the page fetch asset: URLs. Scripts still run, in an
+           opaque origin with no IPC or asset reach. */
+        <iframe
+          key={`srcdoc-${reloadKey}`}
+          srcDoc={htmlText || "<html><body style='font-family:sans-serif;padding:20px;color:#888'>Empty file</body></html>"}
+          title={name}
+          sandbox="allow-scripts allow-modals allow-forms allow-popups"
+          className="min-h-0 w-full flex-1 border-0 bg-white"
+        />
       ) : (
         /* Source view */
         <div className="min-h-0 flex-1 overflow-auto bg-surface">
           <div className="flex items-center justify-between border-b border-edge bg-raised px-4 py-1.5">
             <span className="text-[10px] uppercase tracking-widest font-bold text-muted flex items-center gap-1.5">
-              <Code2 size={11} /> HTML Source — {name}
+              <Code2 size={11} /> {t("HTML source")} — {name}
             </span>
             <button
               onClick={() => {
@@ -374,7 +349,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
               }}
               className="text-xs text-muted hover:text-strong transition flex items-center gap-1 px-2 py-0.5 rounded border border-edge hover:border-muted"
             >
-              <Code2 size={11} /> Copy
+              <Code2 size={11} /> {t("Copy")}
             </button>
           </div>
           <pre className="select-text whitespace-pre-wrap break-all px-4 py-4 font-mono text-[12px] leading-relaxed text-strong">

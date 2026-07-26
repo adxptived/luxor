@@ -30,7 +30,7 @@ display server or webkit toolchain.
 | `layout` | `LayoutPreset` JSON persistence, versioned (`PRESET_VERSION`) for forward compatibility | `serde_json` |
 | `projects` | Project registry (id, name, path, favorite commands, ordering) | `rusqlite` (bundled) |
 | `pty` | `PtyManager`: spawn/write/resize/kill sessions; output is pushed through an `OutputSink` callback from a reader thread; a wait thread reports exit | `portable-pty` |
-| `gitx` | Status (+ahead/behind), log, file history, commit, stage/unstage/discard, branches, stash, fetch/pull(ff-only)/push. Diffs return old/new file contents for Monaco (4 MB binary guard). Credentials: stored token → credential helper → ssh-agent | `git2` |
+| `gitx` | Status (+ahead/behind), log, file history, commit, stage/unstage/discard, branches, stash, fetch/pull(ff-only)/push. Diffs return old/new file contents for CodeMirror (4 MB binary guard). Credentials: stored token → credential helper → ssh-agent | `git2` |
 | `launcher` | Spawn plans for external terminal / file manager / IDE; executable discovery; `run_executable` is restricted to the project directory | `which` |
 | `secrets` | OS keychain access. Service `luxor`, accounts `git:{host}` and `ai:{provider}` | `keyring` |
 | `error` | Single `Error` enum, serialized to the frontend as `{ kind, message }` | `thiserror` |

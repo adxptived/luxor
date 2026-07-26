@@ -609,8 +609,18 @@ export const fsEncodings = () => invoke<string[]>("fs_encodings");
 export const fsDetectEncoding = (path: string) => invoke<string>("fs_detect_encoding", { path });
 export const fsReadTextEncoded = (path: string, encoding: string, maxBytes?: number) =>
   invoke<TextFile>("fs_read_text_encoded", { path, encoding, maxBytes: maxBytes ?? null });
-export const fsWriteTextEncoded = (path: string, content: string, encoding: string) =>
-  invoke<void>("fs_write_text_encoded", { path, content, encoding });
+export const fsWriteTextEncoded = (
+  path: string,
+  content: string,
+  encoding: string,
+  expectedMtimeMs?: number | null,
+) =>
+  invoke<number | null>("fs_write_text_encoded", {
+    path,
+    content,
+    encoding,
+    expectedMtimeMs: expectedMtimeMs ?? null,
+  });
 
 export const searchInProject = (
   root: string,
@@ -1332,8 +1342,10 @@ async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>): Promi
     case "bookmark_delete":
     case "session_delete":
     case "docker_action":
-    case "fs_write_text_encoded":
       return undefined as T;
+    case "fs_write_text_encoded":
+      // Mirrors `fs_write_text`: the command returns the file's new mtime.
+      return Date.now() as T;
     case "git_cherry_pick":
       return "b".repeat(40) as T;
     case "git_conflict_sides":

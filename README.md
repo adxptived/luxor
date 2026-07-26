@@ -20,7 +20,7 @@
   (e.g. `cargo watch` left, `bun run dev` right, logs at the bottom).
 - **🗂 Project tabs** — every project is a tab (top bar or side bar, your choice). Per-project
   layouts are restored when you switch. Project registry is stored in SQLite.
-- **⎇ Git explorer** — status, staging, commits, side-by-side Monaco diffs, commit history,
+- **⎇ Git explorer** — status, staging, commits, side-by-side CodeMirror diffs, commit history,
   per-file history, branches (create/checkout/delete), stash, fetch / pull / push. Powered by
   libgit2 — no git CLI required. Tokens live in the OS keychain; ssh-agent and git credential
   helpers are also supported.
@@ -55,7 +55,7 @@ UI without Tauri (browser, mocked backend): `bun run dev` → http://localhost:5
 ```
 crates/luxor-core   # all logic: pty, git, projects, layouts, config, secrets
 src-tauri           # thin Tauri v2 shell: IPC commands + events
-src                 # React + TypeScript UI: dockview, xterm.js, Monaco, zustand, Tailwind
+src                 # React + TypeScript UI: dockview, xterm.js, CodeMirror 6, zustand, Tailwind
 ```
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for details, and

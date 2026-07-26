@@ -17,7 +17,7 @@ See [docs/ARCHITECTURE.md](ARCHITECTURE.md) for the full layering diagram.
 ```
 crates/luxor-core   # all logic: pty, git, projects, layouts, config, secrets
 src-tauri           # thin Tauri v2 shell: IPC commands + events
-src                 # React + TypeScript UI: dockview, xterm.js, Monaco, zustand, Tailwind
+src                 # React + TypeScript UI: dockview, xterm.js, CodeMirror 6, zustand, Tailwind
 ```
 
 ## Key Design Decisions
@@ -125,7 +125,7 @@ It checks `releases/latest/download/latest.json` for new versions. The
 
 Open an issue before starting work on:
 
-- Replacing key libraries (PTY, git2, dockview, xterm, Monaco).
+- Replacing key libraries (PTY, git2, dockview, xterm, CodeMirror).
 - IPC or process architecture changes.
 - New top-level modules / features outside the roadmap.
 - Storage model changes (SQLite schema, config/preset formats).
