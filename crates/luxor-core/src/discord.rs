@@ -392,8 +392,11 @@ pub fn build_carousel_frames(ctx: &PresenceContext) -> Vec<Presence> {
     }
     let mut frames = Vec::new();
 
-    // Frame 1 — project.
-    if ctx.show_project {
+    // Frame 1 — project. Requires an actual project: with none open the
+    // `{project}` placeholder rendered as a dash and Discord showed the literal
+    // status "Working on —". The always-on fallback frame below is the honest
+    // status in that case.
+    if ctx.show_project && ctx.project_name.is_some() {
         let mut f = Presence {
             details: Some(ctx.render(&ctx.templates.project_details)),
             large_image: ctx.language_asset.clone().or_else(|| Some("luxor".into())),
@@ -1480,6 +1483,45 @@ mod tests {
         assert_eq!(frames.len(), 1);
         assert!(frames[0].details.as_ref().unwrap().contains("Luxor"));
         assert!(frames[0].state.as_ref().unwrap().contains("10m"));
+    }
+
+    /// With no project open, `{project}` rendered as the placeholder dash and
+    /// Discord showed the literal status "Working on —". A frame that has
+    /// nothing to say about a project must not be built at all; the always-on
+    /// fallback frame is the honest status.
+    #[test]
+    fn project_frame_is_skipped_when_no_project_is_open() {
+        let ctx = PresenceContext {
+            project_name: None,
+            session_seconds: 600,
+            show_project: true,
+            show_branch: true,
+            ..Default::default()
+        };
+        let frames = build_carousel_frames(&ctx);
+        assert_eq!(frames.len(), 1);
+        assert_eq!(frames[0].details.as_deref(), Some("Working in Luxor"));
+        assert_eq!(frames[0].state.as_deref(), Some("Session: 10m"));
+    }
+
+    /// A project frame must still be skipped when other frames carry the
+    /// carousel, rather than sitting there saying "Working on —".
+    #[test]
+    fn no_project_still_shows_the_agent_frame() {
+        let ctx = PresenceContext {
+            project_name: None,
+            agent: Some("Claude Code".into()),
+            session_seconds: 600,
+            show_project: true,
+            show_agent: true,
+            ..Default::default()
+        };
+        let frames = build_carousel_frames(&ctx);
+        assert_eq!(frames.len(), 1);
+        assert_eq!(
+            frames[0].details.as_deref(),
+            Some("Pair programming with Claude Code")
+        );
     }
 
     #[test]

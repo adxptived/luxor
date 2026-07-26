@@ -8,7 +8,7 @@
 use std::time::{Duration, Instant};
 
 use luxor_core::discord::{
-    build_carousel_frames, blacklisted, mask_project_name, Carousel, DiscordIpc, Presence,
+    blacklisted, build_carousel_frames, mask_project_name, Carousel, DiscordIpc, Presence,
     PresenceButton, PresenceContext, PresenceTemplates, Priority, PriorityQueue, QueuedPresence,
 };
 use luxor_core::Error;
@@ -206,9 +206,7 @@ impl DiscordEngine {
 
     fn context_from(&self, input: PresenceInput) -> PresenceContext {
         let mask = self.settings.mask_projects;
-        let project_name = input
-            .project_name
-            .map(|n| mask_project_name(&n, mask));
+        let project_name = input.project_name.map(|n| mask_project_name(&n, mask));
         // When masking is on, a private branch name (e.g. `feature/project-titan`)
         // must not leak to Discord either (plan 5.3).
         let branch = match (input.branch, mask) {
@@ -237,47 +235,61 @@ impl DiscordEngine {
         }
     }
 
-    /// Tick the engine with a fresh context; returns the presence actually
-    /// shown (for the frontend live preview), or `None` when nothing is sent.
-    fn tick(&mut self, input: PresenceInput) -> Result<Option<Presence>, Error> {
+    /// Decide which frame should be on screen for `input`. Performs **no**
+    /// network I/O, so the entire decision layer — enable switch, privacy
+    /// blacklist, masking, idle frame, carousel rotation and the priority
+    /// override — is unit-testable without a running Discord client.
+    fn resolve_presence(&mut self, input: PresenceInput, now: Instant) -> Option<Presence> {
         if !self.settings.enabled || self.settings.client_id.is_empty() {
-            return Ok(None);
+            return None;
         }
-        let ctx = self.context_from(input);
 
         // Blacklist: any match on branch/project disables RPC (part 5.4).
-        let blocked = ctx
+        //
+        // Matched against the **raw** names from the frontend, before masking
+        // (5.3) rewrites them to "🔒 private" / "🔒 Private Project". Testing the
+        // masked values made every pattern dead whenever masking was enabled, so
+        // a blacklisted NDA branch still broadcast a presence — the blacklist
+        // silently protected nothing for exactly the privacy-conscious users who
+        // had both switches on.
+        let blocked = input
             .branch
             .as_deref()
             .map(|b| blacklisted(b, &self.settings.blacklist))
             .unwrap_or(false)
-            || ctx
+            || input
                 .project_name
                 .as_deref()
                 .map(|p| blacklisted(p, &self.settings.blacklist))
                 .unwrap_or(false);
         if blocked {
+            // Deliberately logs no names: the blacklist exists precisely because
+            // these strings are private.
             tracing::debug!(
                 target: "luxor::discord",
-                project = ctx.project_name.as_deref().unwrap_or("-"),
-                branch = ctx.branch.as_deref().unwrap_or("-"),
+                patterns = self.settings.blacklist.len(),
                 "presence blocked by privacy blacklist, clearing"
             );
             let _ = self.ipc.clear();
-            return Ok(None);
+            return None;
         }
 
+        let ctx = self.context_from(input);
         self.carousel.set_frames(build_carousel_frames(&ctx));
-        let now = Instant::now();
         // Clone the override out first so the queue borrow ends before we touch
         // the carousel (keeps the borrow checker happy with disjoint fields).
-        let override_presence = self.queue.active(now).cloned();
-        let presence = match override_presence {
-            Some(p) => p,
-            None => match self.carousel.current(now) {
-                Some(p) => p,
-                None => return Ok(None),
-            },
+        if let Some(p) = self.queue.active(now).cloned() {
+            return Some(p);
+        }
+        self.carousel.current(now)
+    }
+
+    /// Tick the engine with a fresh context; returns the presence actually
+    /// shown (for the frontend live preview), or `None` when nothing is sent.
+    fn tick(&mut self, input: PresenceInput) -> Result<Option<Presence>, Error> {
+        let now = Instant::now();
+        let Some(presence) = self.resolve_presence(input, now) else {
+            return Ok(None);
         };
         // Best-effort: a transport error (Discord closed) is not fatal — the
         // engine reconnects with backoff on the next tick.
@@ -304,24 +316,34 @@ impl DiscordEngine {
     /// recomputation. A quiet webview also means no keyboard/mouse in the app,
     /// so the context itself ("working on X") remains an accurate description.
     pub fn heartbeat(&mut self, quiet_after: Duration) {
-        if !self.settings.enabled || self.settings.client_id.is_empty() {
+        let now = Instant::now();
+        let Some(input) = self.heartbeat_context(quiet_after, now) else {
             return;
-        }
-        let (Some(last_push), Some(input)) = (self.last_frontend_push, self.last_input.clone())
-        else {
-            return; // frontend never pushed — nothing trustworthy to replay
         };
-        if last_push.elapsed() < quiet_after {
-            return; // driver is alive; let it own the cadence
-        }
         tracing::trace!(
             target: "luxor::discord",
-            quiet_s = last_push.elapsed().as_secs(),
             "heartbeat: frontend quiet, replaying last context"
         );
         if let Err(e) = self.tick(input) {
             tracing::debug!(target: "luxor::discord", "heartbeat tick failed: {e}");
         }
+    }
+
+    /// The context the heartbeat should replay, or `None` when RPC is off, the
+    /// frontend has never pushed a context, or the driver is still alive and
+    /// owns the cadence. Split out of [`Self::heartbeat`] so the gating is
+    /// testable without performing IPC.
+    fn heartbeat_context(&self, quiet_after: Duration, now: Instant) -> Option<PresenceInput> {
+        if !self.settings.enabled || self.settings.client_id.is_empty() {
+            return None;
+        }
+        // Frontend never pushed — nothing trustworthy to replay (the privacy
+        // switches live on the frontend).
+        let last_push = self.last_frontend_push?;
+        if now.duration_since(last_push) < quiet_after {
+            return None;
+        }
+        self.last_input.clone()
     }
 
     /// Immediately surface the active high-priority queued presence, bypassing
@@ -458,4 +480,283 @@ pub fn discord_clear(state: State<'_, AppState>) -> Result<(), Error> {
     engine.last_input = None;
     engine.last_frontend_push = None;
     engine.ipc.clear()
+}
+
+/// Engine tests. They exercise [`DiscordEngine::resolve_presence`] and
+/// [`DiscordEngine::heartbeat_context`] — the decision layer — and deliberately
+/// never call [`DiscordEngine::tick`]: `tick` performs real IPC, so a test that
+/// touched it would push a presence to the developer's own Discord and pass or
+/// fail depending on whether a client happens to be running.
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn engine(settings: DiscordSettings) -> DiscordEngine {
+        let mut e = DiscordEngine::new();
+        e.apply_settings(settings);
+        e
+    }
+
+    fn working_input() -> PresenceInput {
+        PresenceInput {
+            project_name: Some("luxor".into()),
+            branch: Some("main".into()),
+            agent: Some("Claude Code".into()),
+            session_seconds: 7800,
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn disabled_engine_resolves_no_presence() {
+        let mut e = engine(DiscordSettings {
+            enabled: false,
+            ..Default::default()
+        });
+        assert!(e
+            .resolve_presence(working_input(), Instant::now())
+            .is_none());
+    }
+
+    #[test]
+    fn empty_client_id_resolves_no_presence() {
+        let mut e = engine(DiscordSettings {
+            client_id: String::new(),
+            ..Default::default()
+        });
+        assert!(e
+            .resolve_presence(working_input(), Instant::now())
+            .is_none());
+    }
+
+    #[test]
+    fn working_context_resolves_the_project_frame() {
+        let mut e = engine(DiscordSettings::default());
+        let p = e
+            .resolve_presence(working_input(), Instant::now())
+            .expect("an enabled engine must always produce a frame");
+        assert_eq!(p.details.as_deref(), Some("Working on luxor"));
+        assert_eq!(p.state.as_deref(), Some("On branch main"));
+    }
+
+    /// Every privacy toggle off must still yield the always-on fallback frame,
+    /// never an empty carousel (the original "RPC shows nothing" symptom).
+    #[test]
+    fn all_toggles_off_still_resolves_the_fallback_frame() {
+        let mut e = engine(DiscordSettings {
+            show_project: false,
+            show_branch: false,
+            show_agent: false,
+            show_audit: false,
+            ..Default::default()
+        });
+        let p = e
+            .resolve_presence(working_input(), Instant::now())
+            .expect("fallback frame guaranteed");
+        assert_eq!(p.details.as_deref(), Some("Working in Luxor"));
+        assert!(!p.state.as_deref().unwrap_or_default().contains("main"));
+    }
+
+    #[test]
+    fn idle_context_resolves_the_single_afk_frame() {
+        let mut e = engine(DiscordSettings::default());
+        let input = PresenceInput {
+            idle: true,
+            idle_since_unix: Some(1_700_000_000),
+            ..working_input()
+        };
+        let p = e
+            .resolve_presence(input, Instant::now())
+            .expect("idle frame");
+        assert_eq!(p.details.as_deref(), Some("Idle"));
+        assert_eq!(p.state.as_deref(), Some("Taking a break"));
+        assert_eq!(p.start_timestamp, Some(1_700_000_000));
+    }
+
+    #[test]
+    fn blacklisted_branch_suppresses_presence() {
+        let mut e = engine(DiscordSettings {
+            blacklist: vec!["*nda*".into()],
+            ..Default::default()
+        });
+        let input = PresenceInput {
+            branch: Some("feature/nda-titan".into()),
+            ..working_input()
+        };
+        assert!(e.resolve_presence(input, Instant::now()).is_none());
+    }
+
+    #[test]
+    fn blacklisted_project_suppresses_presence() {
+        let mut e = engine(DiscordSettings {
+            blacklist: vec!["*secret*".into()],
+            ..Default::default()
+        });
+        let input = PresenceInput {
+            project_name: Some("top-secret-app".into()),
+            ..working_input()
+        };
+        assert!(e.resolve_presence(input, Instant::now()).is_none());
+    }
+
+    /// The blacklist (plan 5.4) must be evaluated against the **raw** names.
+    /// Masking (5.3) rewrites project/branch to a generic label, so matching
+    /// after masking silently disabled the blacklist: a user with masking on and
+    /// `*nda*` blacklisted still broadcast a presence while on an NDA branch.
+    #[test]
+    fn blacklist_still_matches_when_masking_is_enabled() {
+        let mut e = engine(DiscordSettings {
+            mask_projects: true,
+            blacklist: vec!["*nda*".into()],
+            ..Default::default()
+        });
+        let input = PresenceInput {
+            branch: Some("feature/nda-titan".into()),
+            ..working_input()
+        };
+        assert!(
+            e.resolve_presence(input, Instant::now()).is_none(),
+            "masking must not defeat the branch blacklist"
+        );
+    }
+
+    #[test]
+    fn masking_hides_project_and_branch_names() {
+        let mut e = engine(DiscordSettings {
+            mask_projects: true,
+            ..Default::default()
+        });
+        let p = e
+            .resolve_presence(working_input(), Instant::now())
+            .expect("masked frame");
+        let text = format!(
+            "{} {}",
+            p.details.as_deref().unwrap_or(""),
+            p.state.as_deref().unwrap_or("")
+        );
+        assert!(!text.contains("luxor"), "project name leaked: {text}");
+        assert!(!text.contains("main"), "branch name leaked: {text}");
+        assert!(text.contains("Private Project"));
+    }
+
+    #[test]
+    fn queued_critical_presence_overrides_the_carousel() {
+        let mut e = engine(DiscordSettings::default());
+        e.queue.push(
+            QueuedPresence {
+                presence: Presence {
+                    details: Some("Critical finding".into()),
+                    ..Default::default()
+                },
+                priority: Priority::Critical,
+                hold: Duration::from_secs(15),
+            },
+            Instant::now(),
+        );
+        let p = e
+            .resolve_presence(working_input(), Instant::now())
+            .expect("override frame");
+        assert_eq!(p.details.as_deref(), Some("Critical finding"));
+    }
+
+    #[test]
+    fn carousel_advances_between_ticks() {
+        let mut e = engine(DiscordSettings {
+            rotate_seconds: 12,
+            ..Default::default()
+        });
+        let t0 = Instant::now();
+        let first = e
+            .resolve_presence(working_input(), t0)
+            .expect("first frame");
+        let second = e
+            .resolve_presence(working_input(), t0 + Duration::from_secs(13))
+            .expect("second frame");
+        assert_ne!(
+            first.details, second.details,
+            "the carousel must rotate once the interval elapses"
+        );
+    }
+
+    #[test]
+    fn apply_settings_clamps_rotation_and_rejects_insecure_buttons() {
+        let e = engine(DiscordSettings {
+            rotate_seconds: 900,
+            buttons: vec![
+                PresenceButton {
+                    label: "insecure".into(),
+                    url: "http://x.io".into(),
+                },
+                PresenceButton {
+                    label: "ok".into(),
+                    url: "https://luxor.dev".into(),
+                },
+            ],
+            blacklist: vec!["  ".into(), " *nda* ".into()],
+            ..Default::default()
+        });
+        assert_eq!(e.settings.rotate_seconds, 30);
+        assert_eq!(e.settings.buttons.len(), 1);
+        assert_eq!(e.settings.buttons[0].url, "https://luxor.dev");
+        assert_eq!(e.settings.blacklist, vec!["*nda*".to_string()]);
+    }
+
+    #[test]
+    fn cleared_template_falls_back_to_the_default_text() {
+        let e = engine(DiscordSettings {
+            templates: PresenceTemplates {
+                project_details: "   ".into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        });
+        assert_eq!(e.settings.templates.project_details, "Working on {project}");
+    }
+
+    // ---- heartbeat gating (WebView2 throttles JS timers in the tray) ----
+
+    #[test]
+    fn heartbeat_does_not_invent_a_context_before_the_first_push() {
+        let e = engine(DiscordSettings::default());
+        assert!(e
+            .heartbeat_context(Duration::from_secs(15), Instant::now())
+            .is_none());
+    }
+
+    #[test]
+    fn heartbeat_stays_quiet_while_the_frontend_driver_is_alive() {
+        let mut e = engine(DiscordSettings::default());
+        let now = Instant::now();
+        e.last_input = Some(working_input());
+        e.last_frontend_push = Some(now);
+        assert!(e
+            .heartbeat_context(Duration::from_secs(15), now + Duration::from_secs(5))
+            .is_none());
+    }
+
+    #[test]
+    fn heartbeat_replays_the_last_context_once_the_frontend_goes_quiet() {
+        let mut e = engine(DiscordSettings::default());
+        let now = Instant::now();
+        e.last_input = Some(working_input());
+        e.last_frontend_push = Some(now);
+        let replayed = e
+            .heartbeat_context(Duration::from_secs(15), now + Duration::from_secs(20))
+            .expect("a quiet webview must be replaced by the backend heartbeat");
+        assert_eq!(replayed.project_name.as_deref(), Some("luxor"));
+    }
+
+    #[test]
+    fn heartbeat_stays_quiet_when_rpc_is_disabled() {
+        let mut e = engine(DiscordSettings {
+            enabled: false,
+            ..Default::default()
+        });
+        let now = Instant::now();
+        e.last_input = Some(working_input());
+        e.last_frontend_push = Some(now);
+        assert!(e
+            .heartbeat_context(Duration::from_secs(15), now + Duration::from_secs(60))
+            .is_none());
+    }
 }

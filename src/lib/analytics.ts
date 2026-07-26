@@ -439,6 +439,44 @@ const TICKS_PER_SAMPLE = Math.max(1, Math.round(SAMPLE_POLL_SECONDS / PRESENCE_P
 /** A session is closed only after this much idle (matches the Rust
  * `SESSION_GAP_SECONDS` = 30 min) — a single idle blip must not reset it. */
 const SESSION_GAP_SECONDS = 30 * 60;
+/** Seconds without keyboard/mouse input before the user counts as AFK.
+ * Mirrors `luxor_core::activity_os::AFK_THRESHOLD_SECONDS`. */
+export const AFK_THRESHOLD_SECONDS = 300;
+
+/**
+ * Is the user working right now?
+ *
+ * The OS input-idle counter (`GetLastInputInfo` on Windows,
+ * `CGEventSourceSecondsSinceLastEventType` on macOS) is the authority: Luxor is
+ * a cockpit, so the user spends most of their time typing in an external
+ * editor, a terminal or the AI agent's own window, and the app frequently sits
+ * in the tray. Requiring `document.hasFocus()` classified all of that as idle,
+ * which replaced the whole Discord carousel with the single "Idle" frame and
+ * recorded every interval as idle time.
+ *
+ * Window focus is only the fallback for platforms without an idle counter
+ * (Linux returns `null`).
+ */
+export function isUserActive(args: { focused: boolean; osIdleSeconds: number | null }): boolean {
+  if (args.osIdleSeconds === null) return args.focused;
+  return args.osIdleSeconds < AFK_THRESHOLD_SECONDS;
+}
+
+/**
+ * Translate "is the user active + which AI agent is running" into the activity
+ * category recorded by telemetry and rendered by Discord. An agent detected
+ * just before the user walked away must never leak into an idle presence.
+ */
+export function classifyActivity(args: {
+  focused: boolean;
+  osIdleSeconds: number | null;
+  agent: string | null;
+}): { category: SampleInput["category"]; agent: string | null } {
+  if (!isUserActive(args)) return { category: "idle", agent: null };
+  return args.agent
+    ? { category: "ai", agent: args.agent }
+    : { category: "coding", agent: null };
+}
 
 // ---- privacy preferences (plan 5.1 Paranoid Mode / 5.5 collection toggle) --
 //
@@ -533,42 +571,39 @@ export function startTelemetryDriver(): () => void {
     const { projects, activeId } = useProjectsStore.getState();
     const active = projects.find((p) => p.id === activeId) ?? null;
 
-    // OS idle/AFK detection (plan part 9.3) overrides focus when available.
-    let afk = false;
+    // OS idle/AFK detection (plan part 9.3) overrides focus when available:
+    // working in an external editor or with Luxor in the tray is still working.
+    let osIdleSeconds: number | null = null;
     try {
-      const idle = await telemetryIdleSeconds();
-      if (idle !== null && idle >= 300) afk = true;
+      osIdleSeconds = await telemetryIdleSeconds();
     } catch {
       /* idle counter unavailable on this OS — fall back to focus */
     }
 
-    let category: SampleInput["category"] = focused && !afk ? "coding" : "idle";
-    let agent: string | null = null;
-    if (focused && !afk) {
+    let detectedAgent: string | null = null;
+    if (isUserActive({ focused, osIdleSeconds })) {
       try {
         const agents = await agentsSample();
         const busy = agents.find((a) => a.cpu_percent > 1 || a.count > 0);
-        if (busy) {
-          category = "ai";
-          agent = busy.label;
-        }
+        if (busy) detectedAgent = busy.label;
       } catch {
         /* agents sampler unavailable — keep coding */
       }
       // Refine via the focused window title (a focused AI tool counts as AI
       // even if its CPU is momentarily idle) — plan part 1.1 / 9.1.
-      if (!agent) {
+      if (!detectedAgent) {
         try {
-          const matched = aiAgentFromTitle(await telemetryActiveWindow());
-          if (matched) {
-            category = "ai";
-            agent = matched;
-          }
+          detectedAgent = aiAgentFromTitle(await telemetryActiveWindow());
         } catch {
           /* active-window unavailable on this OS */
         }
       }
     }
+    const { category, agent } = classifyActivity({
+      focused,
+      osIdleSeconds,
+      agent: detectedAgent,
+    });
 
     // Session accounting: accumulate active time; only reset after a real gap
     // (a single idle tick must not wipe the session — matches the Rust session
