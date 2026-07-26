@@ -767,7 +767,7 @@ export function SettingsModal() {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Section nav */}
-        <nav className="flex w-48 shrink-0 flex-col border-r border-edge bg-surface/35 p-2">
+        <nav className="flex w-48 min-h-0 shrink-0 flex-col border-r border-edge bg-surface/35 p-2">
           <div className="px-2 pb-1 pt-1 text-lg font-semibold text-strong">Settings</div>
           <div className="px-2 pb-2 text-2xs leading-4 text-muted">Search, tune and export your Luxor workspace.</div>
           <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-edge bg-raised px-2 py-1.5 transition-colors focus-within:border-transparent">
@@ -791,6 +791,10 @@ export function SettingsModal() {
               </button>
             )}
           </div>
+          {/* The section list scrolls on its own: on a short window the lower
+              sections (Hotkeys, Developer, About) used to be clipped away with
+              no way to reach them except the search box. */}
+          <div className="lx-sidebar-scroll -mx-1 min-h-0 flex-1 overflow-y-auto px-1">
           {(() => {
             const q = search.toLowerCase().trim();
             const found = searchSettings(search);
@@ -841,11 +845,12 @@ export function SettingsModal() {
               </>
             );
           })()}
+          </div>
           {/* Modal scale controls (Ctrl+= / Ctrl+- / Ctrl+0 while open).
               Full-bleed (-mx-2 -mb-2) and h-8 to exactly match the content
               pane's footer bar, so both border-t lines form one straight line. */}
           <div
-            className="-mx-2 -mb-2 mt-auto flex h-8 shrink-0 items-center justify-between border-t border-edge bg-surface/35 px-3 text-2xs text-muted"
+            className="-mx-2 -mb-2 flex h-8 shrink-0 items-center justify-between border-t border-edge bg-surface/35 px-3 text-2xs text-muted"
             title={`${t("settings.scale_hint", "Resize this window")}: Ctrl+= / Ctrl+- · Ctrl+0`}
           >
             <span>{t("settings.scale", "Window scale")}</span>

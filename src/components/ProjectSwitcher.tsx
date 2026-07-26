@@ -89,11 +89,14 @@ export function ProjectSwitcher() {
       aria-label={t("Switch project")}
       onClick={() => setOpen(false)}
     >
+      {/* Column bounded by the viewport, so the list — not the dialog — is what
+          gives way on a short window (see CommandPalette). */}
       <div
-        className="lx-pop-in lx-glass w-[34rem] max-w-[96vw] overflow-hidden" style={{ borderRadius: "var(--lx-radius-xl)" }}
+        className="lx-pop-in lx-glass flex max-h-[calc(100vh-20vh)] w-[34rem] max-w-[96vw] flex-col overflow-hidden"
+        style={{ borderRadius: "var(--lx-radius-xl)" }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-edge bg-[radial-gradient(circle_at_top_left,var(--lx-raised),transparent_56%)] p-3">
+        <div className="shrink-0 border-b border-edge bg-[radial-gradient(circle_at_top_left,var(--lx-raised),transparent_56%)] p-3">
           <div className="mb-2 flex items-center justify-between gap-3 px-1">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted">{t("Switch project")}</div>
           </div>
@@ -126,7 +129,7 @@ export function ProjectSwitcher() {
             </span>
           </div>
         </div>
-        <div className="max-h-[min(24rem,58vh)] overflow-auto p-1.5">
+        <div className="min-h-0 flex-1 overflow-auto p-1.5 [max-height:min(24rem,58vh)]">
           {filtered.map((p, i) => (
             <button
               key={p.id}

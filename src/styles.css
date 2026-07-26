@@ -394,6 +394,71 @@ body,
   width: 4px;
 }
 
+/* Vertical sidebar stacks (project tabs, nav buttons). Both scroll on their own
+ * once they run out of room, and the scrollbar is the only signal that there is
+ * more below — so unlike the rest of the app it stays visible instead of
+ * fading out, just muted until hovered. */
+/* Back to `auto` on purpose: the global `*` rule sets `scrollbar-width`/
+ * `scrollbar-color`, and any non-auto value makes Chromium (and therefore
+ * WebView2) render an OVERLAY scrollbar that fades out when idle — invisible
+ * exactly when it is needed as a hint. Resetting both hands control back to
+ * the ::-webkit-scrollbar rules below, which stay painted while the stack
+ * overflows. */
+.lx-sidebar-scroll {
+  scrollbar-width: auto;
+  scrollbar-color: auto;
+}
+.lx-sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+.lx-sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.lx-sidebar-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--lx-muted) 32%, transparent);
+  border-radius: 3px;
+  transition: background var(--lx-dur) var(--lx-ease);
+}
+.lx-sidebar-scroll:hover::-webkit-scrollbar-thumb,
+.lx-sidebar-scroll:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--lx-muted) 65%, transparent);
+}
+.lx-sidebar-scroll::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--lx-muted) 85%, transparent);
+}
+
+/* Edge fades for those stacks. The scrollbar alone cannot carry the "there is
+ * more below" message — Chromium/WebView2 render overlay scrollbars that fade
+ * out when idle — so each stack paints a gradient over the edge it is scrolled
+ * away from.
+ *
+ * These are `sticky` children of the scroll container rather than a mask on it:
+ * a mask would clip the popups that deliberately escape the strip (the "+"
+ * tab menu is `position: fixed` for exactly that reason). The negative margin
+ * keeps them out of the layout flow. */
+.lx-scroll-fade {
+  position: sticky;
+  z-index: 6;
+  height: 16px;
+  flex-shrink: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--lx-dur) var(--lx-ease);
+}
+.lx-scroll-fade[data-on] {
+  opacity: 1;
+}
+.lx-scroll-fade-top {
+  top: 0;
+  margin-bottom: -16px;
+  background: linear-gradient(to bottom, var(--lx-bar), transparent);
+}
+.lx-scroll-fade-bottom {
+  bottom: 0;
+  margin-top: -16px;
+  background: linear-gradient(to top, var(--lx-bar), transparent);
+}
+
 /* ── Sidebar collapse/expand animation ───────────────────────────────────── */
 .lx-anim-side-panel,
 .lx-anim-right-panel {
@@ -895,7 +960,8 @@ summary,
 }
 
 /* ── NavRail tooltip on hover: small floating label ─────────────────────── */
-.lx-nav-rail button[data-nav-id]:hover::after {
+.lx-nav-rail button[data-nav-id]:hover::after,
+.lx-nav-rail button[data-nav-more]:hover::after {
   content: attr(title);
   position: absolute;
   left: calc(100% + 8px);
@@ -1180,15 +1246,6 @@ input[type="range"]:focus-visible {
   outline: none;
 }
 
-/* Opt-in: hide the scrollbar on a strip that still scrolls (e.g. an overflowing
- * tab bar in a narrow panel) — keeps the scroll gesture without the visual bar. */
-.lx-noscrollbar {
-  scrollbar-width: none;
-}
-.lx-noscrollbar::-webkit-scrollbar {
-  display: none;
-}
-
 /* The dockview grid/tab area should never show its own scrollbars. */
 .dv-scrollable::-webkit-scrollbar,
 .dv-tabs-container::-webkit-scrollbar,
@@ -1197,8 +1254,10 @@ input[type="range"]:focus-visible {
   height: 0;
 }
 
-/* Fully hide the scrollbar while keeping the area scrollable. Used for the
- * workspace tab strip / sidebar so no scrollbar is ever visible there. */
+/* Fully hide the scrollbar while keeping the area scrollable — for strips that
+ * still scroll by gesture (workspace tab strip, panel tab bars). This used to
+ * have a near-identical `.lx-noscrollbar` twin one screen above it; the two are
+ * now one class. */
 .lx-no-scrollbar {
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* legacy Edge */

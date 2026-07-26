@@ -1,5 +1,15 @@
-import { AlignCenter, AlignLeft, AlignRight, ArrowRightToLine, Eye, EyeOff, RotateCcw, SlidersHorizontal } from "lucide-react";
-import { memo, type MouseEvent } from "react";
+import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
+  ArrowRightToLine,
+  Eye,
+  EyeOff,
+  MoreHorizontal,
+  RotateCcw,
+  SlidersHorizontal,
+} from "lucide-react";
+import { memo, useEffect, useState, type MouseEvent } from "react";
 
 import { useDockStore, type PanelKind } from "@/layout/dockStore";
 import {
@@ -58,6 +68,25 @@ function NavRailImpl() {
     return null;
   });
 
+  // How many icons fit in the rail at the current window height. Everything
+  // past that goes into the "⋯" menu — without this the extra buttons were
+  // simply clipped by the window edge and became unreachable.
+  // Callback ref (not useRef): the rail mounts only after the config loads, and
+  // a plain ref would leave the measuring effect stuck on its initial null.
+  const [railEl, setRailEl] = useState<HTMLDivElement | null>(null);
+  const [capacity, setCapacity] = useState(Number.POSITIVE_INFINITY);
+  useEffect(() => {
+    if (!railEl) return;
+    // Button 32px (h-8) + 4px gap (gap-1); container padding 6px × 2 (p-1.5).
+    // n buttons occupy `n * 36 - 4`px.
+    const measure = () =>
+      setCapacity(Math.max(0, Math.floor((railEl.clientHeight - 12 + 4) / 36)));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(railEl);
+    return () => ro.disconnect();
+  }, [railEl]);
+
   if (!config) return null;
   const navSidebar = config.ui.nav_sidebar ?? [];
   const navHidden = config.ui.nav_hidden ?? [];
@@ -98,6 +127,11 @@ function NavRailImpl() {
     .filter((d): d is NavButtonDef => d !== undefined)
     .map(localizedNavButton);
 
+  // Reserve the last slot for the "⋯" button when not everything fits.
+  const overflowing = buttons.length > capacity;
+  const railButtons = overflowing ? buttons.slice(0, Math.max(0, capacity - 1)) : buttons;
+  const overflowButtons = overflowing ? buttons.slice(railButtons.length) : [];
+
   const menu = (e: MouseEvent, def?: NavButtonDef) => {
     openContextMenu(e, [
       ...(def
@@ -130,6 +164,7 @@ function NavRailImpl() {
     <div
       className={`lx-nav-rail flex w-11 shrink-0 flex-col border-r border-edge bg-[var(--lx-glass-bg)] ${dragId && buttons.length === 0 ? "ring-1 ring-accent/60" : ""}`} style={{ backdropFilter: "blur(var(--lx-glass-blur))", WebkitBackdropFilter: "blur(var(--lx-glass-blur))" }}
       data-testid="nav-rail"
+      ref={setRailEl}
       onContextMenu={(e) => {
         if (e.target === e.currentTarget) menu(e);
       }}
@@ -154,7 +189,7 @@ function NavRailImpl() {
           focusables[next]?.focus();
         }}
       >
-        {buttons.map((def) => {
+        {railButtons.map((def) => {
           const isActive = activePanelId !== null && PANEL_BY_NAV_ID[def.id] === activePanelId;
           // Surface the keyboard shortcut in the tooltip (matches TopBar):
           // rail buttons are icon-only, so this is the only discovery point.
@@ -183,6 +218,37 @@ function NavRailImpl() {
           </button>
           );
         })}
+
+        {overflowButtons.length > 0 && (
+          <button
+            data-nav-more
+            data-testid="nav-rail-more"
+            title={`${t("More buttons")} (${overflowButtons.length})`}
+            aria-label={`${t("More buttons")} (${overflowButtons.length})`}
+            aria-haspopup="menu"
+            className="lx-square-btn relative flex h-8 w-8 items-center justify-center text-muted hover:text-strong"
+            onClick={(e) =>
+              openContextMenu(
+                e,
+                overflowButtons.map((def) => ({
+                  label: def.label,
+                  icon: def.icon,
+                  onClick: () => getNavAction(def.id)(),
+                })),
+              )
+            }
+            onContextMenu={(e) => menu(e)}
+            onDragOver={(e) => dragId && e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (dragId) handleNavDrop(dragId, null, "sidebar");
+              setDragId(null);
+            }}
+          >
+            <MoreHorizontal size={16} />
+          </button>
+        )}
       </div>
     </div>
   );

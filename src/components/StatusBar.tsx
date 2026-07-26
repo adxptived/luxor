@@ -91,6 +91,30 @@ function StatusBarImpl() {
   // that triggers the lx-status-pulse animation.
   const prevSnapshot = useRef("");
   const [pulseKey, setPulseKey] = useState(0);
+  // Width of the pinned version/right-panel cluster. The segment row is
+  // absolutely positioned (so "center" centers against the whole bar, not the
+  // leftover space), which used to let the last segment slide underneath the
+  // cluster — with the clock enabled it was simply invisible behind "v0.1.1".
+  // Reserving the width on BOTH sides keeps the centre axis and the clearance.
+  const barRef = useRef<HTMLDivElement>(null);
+  const clusterRef = useRef<HTMLDivElement>(null);
+  const [reserved, setReserved] = useState(12);
+  useEffect(() => {
+    const bar = barRef.current;
+    const cluster = clusterRef.current;
+    if (!bar || !cluster) return;
+    // Measured from the bar's own right edge, so the cluster's offset from it
+    // is part of the reservation and cannot drift out of sync with the CSS.
+    const measure = () =>
+      setReserved(
+        Math.max(12, Math.round(bar.getBoundingClientRect().right - cluster.getBoundingClientRect().left) + 6),
+      );
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(bar);
+    ro.observe(cluster);
+    return () => ro.disconnect();
+  }, []);
   useEffect(() => {
     const snap = JSON.stringify({ git: git?.branch, cpu: stats?.cpu_percent, ram: stats?.mem_used, ping, agents: agents.length, tasks: tasks?.filter((t) => t.status !== "done").length });
     if (snap !== prevSnapshot.current) {
@@ -448,13 +472,15 @@ Click: Git explorer · right-click: fetch / pull / push`}
   return (
     <div
       className="lx-anim-statusbar relative flex h-6 shrink-0 items-center border-t border-edge bg-[var(--lx-glass-bg)] px-3 text-xs text-muted" style={{ backdropFilter: "blur(var(--lx-glass-blur))", WebkitBackdropFilter: "blur(var(--lx-glass-blur))" }}
+      ref={barRef}
       onContextMenu={barMenu}
       data-testid="statusbar"
       title={t("Right-click to customize the status bar (segments, order, alignment)")}
     >
       <div
-        className="absolute inset-y-0 left-3 right-3 flex min-w-0 items-center gap-3 overflow-hidden"
-        style={{ justifyContent: alignToJustify(align) }}
+        className="absolute inset-y-0 flex min-w-0 items-center gap-3 overflow-hidden"
+        data-testid="statusbar-segments"
+        style={{ left: reserved, right: reserved, justifyContent: alignToJustify(align) }}
       >
       {order.map((id) => {
         if (id === SPACER_ID) {
@@ -509,7 +535,13 @@ Click: Git explorer · right-click: fetch / pull / push`}
         );
       })}
       </div>
-      <div className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-1 bg-bar pl-1">
+      {/* No opaque backdrop here any more: the segment row now keeps clear of
+          this cluster, so the bar's glass stays uniform across its width. */}
+      <div
+        ref={clusterRef}
+        className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-1 pl-1"
+        data-testid="statusbar-meta"
+      >
         <button
           className="shrink-0 rounded px-1 text-2xs tabular-nums text-muted hover:bg-raised hover:text-strong"
           title={t("About Luxor — click for version & updates")}

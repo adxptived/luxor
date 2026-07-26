@@ -112,7 +112,7 @@ export function SkillsPanel() {
           <span className="rounded-md border border-edge bg-raised px-2 py-1 text-2xs text-muted">Project · Global · Market</span>
         </div>
       </div>
-      <div className="flex gap-1 overflow-x-auto border-b border-edge bg-bar/30 px-2 py-2 lx-noscrollbar">
+      <div className="flex gap-1 overflow-x-auto border-b border-edge bg-bar/30 px-2 py-2 lx-no-scrollbar">
         <TabButton active={tab === "project"} onClick={() => setTab("project")} icon={FolderInput}>
           Project skills
         </TabButton>

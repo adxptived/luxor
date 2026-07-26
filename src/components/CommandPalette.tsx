@@ -478,12 +478,17 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       aria-label={t("Command palette")}
       onClick={() => setOpen(false)}
     >
+      {/* Bounded by the viewport and laid out as a column: on a short window the
+          palette used to run past the bottom edge, cutting off the last results
+          and the shortcut footer entirely. The result list (flex-1, min-h-0)
+          absorbs the difference instead. */}
       <div
-        className="lx-glass w-[44rem] max-w-[96vw] overflow-hidden" style={{ borderRadius: "var(--lx-radius-xl)" }}
+        className="lx-glass flex max-h-[calc(100vh-16vh)] w-[44rem] max-w-[96vw] flex-col overflow-hidden"
+        style={{ borderRadius: "var(--lx-radius-xl)" }}
         data-testid="command-palette"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="border-b border-edge bg-[radial-gradient(circle_at_top_left,var(--lx-raised),transparent_52%)] p-3">
+        <div className="shrink-0 border-b border-edge bg-[radial-gradient(circle_at_top_left,var(--lx-raised),transparent_52%)] p-3">
           <div className="mb-2 flex items-center justify-between gap-3 px-1">
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
@@ -557,7 +562,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
           </div>
         </div>
 
-        <div role="listbox" aria-label={t("Results")} className="max-h-[min(28rem,62vh)] overflow-auto p-1.5">
+        <div role="listbox" aria-label={t("Results")} className="min-h-0 flex-1 overflow-auto p-1.5 [max-height:min(28rem,62vh)]">
           {navLoading && (
             <div className="m-2 rounded-lg border border-dashed border-edge px-4 py-8 text-center text-sm text-muted">
               <Sparkles size={20} className="mx-auto mb-2 text-muted" />
@@ -727,7 +732,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
           )}
         </div>
 
-        <div className="flex min-h-10 items-center justify-between gap-3 border-t border-edge bg-surface/60 px-3 py-2 text-xs text-muted">
+        <div className="flex min-h-10 shrink-0 items-center justify-between gap-3 border-t border-edge bg-surface/60 px-3 py-2 text-xs text-muted">
           <span className="min-w-0 truncate">
             {selectedCommand ? `${commandParts(selectedCommand.label).section} · ${commandParts(selectedCommand.label).title}` : t("Ready")}
           </span>

@@ -51,6 +51,88 @@ test.describe("nav buttons", () => {
     await expect(page.locator('[data-nav-id="git"]')).toBeVisible();
   });
 
+  /**
+   * Regression: in side-tab mode the vertical sidebar stacks the project tab
+   * strip above the nav-button stack. The strip scrolls, so its automatic
+   * minimum height is 0 — and the nav stack used to be unbounded, so every
+   * button moved into the sidebar stole height from the tabs until they
+   * collapsed to nothing and the projects became unreachable.
+   */
+  test("a full nav stack cannot squeeze the project tabs out of the sidebar", async ({ page }) => {
+    await openApp(page);
+
+    // Mock mode starts without projects — add two so the strip has content.
+    for (let i = 0; i < 2; i++) {
+      await page.getByTestId("tab-add").click();
+      await page.getByTestId("tab-add-menu").getByText("Blank workspace", { exact: true }).click();
+    }
+
+    await clickNav(page, "settings");
+    const modal = page.getByTestId("settings-modal");
+    await modal.getByRole("button", { name: /^Appearance$/ }).click();
+    // The "Project tabs" position select — the only top/side one without a
+    // "hidden" option (that one is the quick-actions placement).
+    await modal
+      .locator('select:has(option[value="side"]):not(:has(option[value="hidden"]))')
+      .selectOption("side");
+    await page.keyboard.press("Escape");
+
+    // Side-tab mode puts every visible nav button into the sidebar.
+    const sidebar = page.getByTestId("topbar");
+    const strip = page.getByTestId("tab-strip");
+    const navStack = page.getByTestId("nav-buttons");
+    await expect(page.getByTestId("project-tab").first()).toBeVisible();
+
+    const sidebarBox = (await sidebar.boundingBox())!;
+    const stripBox = (await strip.boundingBox())!;
+    const navBox = (await navStack.boundingBox())!;
+    // Nav stack capped at 45%, so the tabs always keep the majority.
+    expect(navBox.height).toBeLessThanOrEqual(sidebarBox.height * 0.46);
+    expect(stripBox.height).toBeGreaterThan(sidebarBox.height * 0.5);
+    // And nothing is clipped away: the stack scrolls instead.
+    const scrollable = await navStack.evaluate((el) => el.scrollHeight > el.clientHeight);
+    const overflow = await navStack.evaluate((el) => getComputedStyle(el).overflowY);
+    expect(scrollable).toBe(true);
+    expect(overflow).toBe("auto");
+  });
+
+  /**
+   * Regression: the left icon rail had no overflow handling, so on a short
+   * window every icon past the bottom edge was clipped and unreachable.
+   */
+  test("icon rail moves the icons that do not fit into a ⋯ menu", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 420 });
+    await openApp(page);
+
+    // Move every nav button into the left rail.
+    await clickNav(page, "settings");
+    const modal = page.getByTestId("settings-modal");
+    await modal.getByRole("button", { name: /^Interface$/ }).click();
+    const rows = modal.locator('[data-testid^="nav-row-"]');
+    const count = await rows.count();
+    for (let i = 0; i < count; i++) {
+      await rows.nth(i).locator("select").selectOption("sidebar");
+    }
+    await page.keyboard.press("Escape");
+
+    const rail = page.getByTestId("nav-rail");
+    const more = page.getByTestId("nav-rail-more");
+    await expect(more).toBeVisible();
+
+    // Every rendered icon stays inside the rail — nothing is cut off.
+    const railBox = (await rail.boundingBox())!;
+    const iconBottoms = await rail
+      .locator("button")
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().bottom));
+    for (const bottom of iconBottoms) {
+      expect(bottom).toBeLessThanOrEqual(railBox.y + railBox.height + 1);
+    }
+
+    // The overflow menu reaches the buttons that were left out.
+    await more.click();
+    await expect(page.getByTestId("context-menu")).toBeVisible();
+  });
+
   test("nav buttons can be reordered from Settings", async ({ page }) => {
     await openApp(page);
     await clickNav(page, "settings");

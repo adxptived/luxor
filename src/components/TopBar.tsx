@@ -25,6 +25,7 @@ import {
   History,
   LayoutGrid,
   Layers,
+  MoreHorizontal,
   Music,
   Palette,
   PanelLeft,
@@ -55,6 +56,7 @@ import { getNavAction, getNavActionNew } from "@/lib/navActions";
 import { setDragGhost } from "@/lib/dragGhost";
 import { TAB_ICON_IDS, lucideIcon, parseTabIcon, type TabIconId } from "@/lib/tabIcon";
 import { useDismiss } from "@/lib/dismiss";
+import { useScrollEdges } from "@/lib/scrollEdges";
 import { effectiveHotkeys } from "@/lib/hotkeys";
 import { DEFAULT_NAV_HIDDEN, localizedNavButton, navButtonDef, visibleNavButtons, type NavButtonDef } from "@/lib/navButtons";
 import type { LayoutPreset, RecentProject } from "@/lib/types";
@@ -121,6 +123,11 @@ function TabIcon({ stored }: { stored: string | null }) {
  *  keeps useMemo dependency identities from changing on every render. */
 const EMPTY_NAV_LIST: string[] = [];
 
+/** Width the project tabs keep in the horizontal bar no matter how many nav
+ *  buttons are visible. Sized so a full-width tab (name capped at `max-w-36`)
+ *  plus the "+" button always fit — a strip narrower than one tab is useless. */
+const MIN_TAB_STRIP_WIDTH = 240;
+
 function TopBarImpl({ vertical }: { vertical: boolean }) {
   // Subscribe to language changes. This component is `memo`-wrapped and its
   // props do not change on a language switch, so without this it would keep
@@ -158,10 +165,9 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
   const navDragId = useNavDragStore((s) => s.dragId);
   const setNavDragId = useNavDragStore((s) => s.setDragId);
   const [navDragOverId, setNavDragOverId] = useState<string | null>(null);
-  const [overflowLeft, setOverflowLeft] = useState(false);
-  const [overflowRight, setOverflowRight] = useState(false);
   const [moreMenu, setMoreMenu] = useState(false);
   const tabStripRef = useRef<HTMLDivElement>(null);
+  const navStackRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLSpanElement>(null);
   const reorder = useProjectsStore((s) => s.reorder);
   const tabGroups = useTabGroups();
@@ -178,35 +184,13 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
   useDismiss(addMenu, () => setAddMenu(false), addMenuRef);
   useDismiss(moreMenu, () => setMoreMenu(false), moreMenuRef);
 
-  // Detect tab overflow for edge shadows + "more" button (horizontal mode only)
-  useEffect(() => {
-    if (vertical) return;
-    const el = tabStripRef.current;
-    if (!el) return;
-    const check = () => {
-      setOverflowLeft(el.scrollLeft > 2);
-      setOverflowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
-    };
-    check();
-    // Defer the observer callback to the next frame: `check` sets state that
-    // can toggle the overflow shadows / "more" button and thus change the
-    // strip's own layout, which would re-enter the observer synchronously and
-    // fire the "ResizeObserver loop completed" warning.
-    let raf = 0;
-    const ro = new ResizeObserver(() => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(check);
-    });
-    ro.observe(el);
-    el.addEventListener("scroll", check, { passive: true });
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-      el.removeEventListener("scroll", check);
-    };
-    // `tabLayout` is declared later in the component; the resize/scroll check
-    // re-runs on project changes, which is sufficient here.
-  }, [vertical, projects.length]);
+  // Tab-strip overflow: drives the edge fades, and the "more tabs" dropdown.
+  // The strip scrolls horizontally in the top bar and vertically in the
+  // sidebar, so the axis follows the orientation.
+  // (`tabLayout` is declared later in the component; re-measuring on project
+  // count changes is sufficient here.)
+  const tabEdges = useScrollEdges(tabStripRef, vertical ? "y" : "x", [vertical, projects.length]);
+
 
   // Keep browser-style keyboard navigation visible: when Ctrl+Tab changes the
   // active project, scroll that tab into view instead of leaving focus hidden in
@@ -283,6 +267,58 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       right: navButtons.filter((b) => !leftSet.has(b.id) && !centerSet.has(b.id)),
     };
   }, [navButtons, navTopbarLeft, navTopbarCenter, vertical]);
+  // Nav-stack overflow (vertical sidebar only). The stack is height-capped so
+  // it can never squeeze the project tabs out, which means it scrolls on its
+  // own once enough buttons are moved into the sidebar.
+  const navEdges = useScrollEdges(navStackRef, "y", [vertical, navButtons.length, quickActionsHere, leftCollapsed]);
+
+  // How many nav buttons the HORIZONTAL bar can show next to the project tabs.
+  // The button cluster is `shrink-0`, so a dozen visible buttons used to shrink
+  // the tab strip to a ~100px slit — the same squeeze the vertical sidebar had.
+  // Everything past the capacity moves into a "⋯" menu.
+  const [navCapacity, setNavCapacity] = useState(Number.POSITIVE_INFINITY);
+  useEffect(() => {
+    if (vertical) {
+      setNavCapacity(Number.POSITIVE_INFINITY);
+      return;
+    }
+    const cluster = navStackRef.current;
+    const strip = tabStripRef.current;
+    if (!cluster || !strip) return;
+    const measure = () => {
+      // The strip and the cluster share a fixed pool of width (the strip grows
+      // into whatever the cluster leaves), so the budget does not depend on how
+      // many buttons are rendered right now — measuring cannot feed back on
+      // itself and oscillate.
+      const navItems = Array.from(cluster.children).filter(
+        (el): el is HTMLElement => el instanceof HTMLElement && el.querySelector("[data-nav-id],[data-nav-more]") !== null,
+      );
+      if (navItems.length === 0) return;
+      const gap = 2; // gap-0.5
+      const itemWidth = navItems[0].offsetWidth + gap;
+      const navWidth = navItems.reduce((sum, el) => sum + el.offsetWidth + gap, 0);
+      const pool = strip.clientWidth + cluster.offsetWidth;
+      const budget = pool - MIN_TAB_STRIP_WIDTH - (cluster.offsetWidth - navWidth);
+      setNavCapacity(Math.max(0, Math.floor(budget / itemWidth)));
+    };
+    measure();
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(measure);
+    });
+    ro.observe(cluster);
+    ro.observe(strip);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [vertical, navGroups.right.length]);
+  // Split the horizontal cluster into what fits and what moves to the "⋯" menu.
+  const barNav = vertical ? navButtons : navGroups.right;
+  const navOverflowing = !vertical && barNav.length > navCapacity;
+  const barNavShown = navOverflowing ? barNav.slice(0, Math.max(0, navCapacity - 1)) : barNav;
+  const barNavHidden = navOverflowing ? barNav.slice(barNavShown.length) : [];
   const hiddenButtons = useMemo(() => {
     void langVersion; // see `allVisibleNavButtons`
     return navHidden
@@ -949,12 +985,16 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       {/* Project tabs */}
       <div
         ref={tabStripRef}
-        className={`lx-no-scrollbar lx-tab-overflow flex min-w-0 flex-1 ${
-          vertical ? "flex-col overflow-y-auto" : "items-center overflow-x-auto"
+        className={`flex min-w-0 flex-1 ${
+          vertical
+            ? "lx-sidebar-scroll min-h-0 flex-col overflow-y-auto"
+            : "lx-no-scrollbar lx-tab-overflow items-center overflow-x-auto"
         }`}
-        data-overflow-left={overflowLeft || undefined}
-        data-overflow-right={overflowRight || undefined}
+        data-testid="tab-strip"
+        data-overflow-left={(!vertical && tabEdges.start) || undefined}
+        data-overflow-right={(!vertical && tabEdges.end) || undefined}
       >
+        {vertical && <ScrollFade edge="top" on={tabEdges.start} />}
         {tabLayout.map((item) =>
           item.kind === "tab" ? renderTab(item.project) : renderGroup(item.group, item.tabs),
         )}
@@ -1056,7 +1096,44 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           )}
         </span>
         {!vertical && <div className="h-full min-w-8 flex-1" data-tauri-drag-region />}
-        {!vertical && (overflowLeft || overflowRight) && (
+        {vertical && <ScrollFade edge="bottom" on={tabEdges.end} />}
+      </div>
+
+      {/* Quick actions + nav buttons.
+          In the vertical sidebar this stack shares the height with the project
+          tabs above it. It is therefore capped at 45% and scrolls internally —
+          without the cap, every button moved into the sidebar stole height from
+          the tab strip (whose `overflow-y-auto` makes its automatic minimum
+          size 0), and enough of them collapsed the project tabs to nothing. */}
+      <div
+        ref={navStackRef}
+        className={`flex shrink-0 ${
+          vertical
+            ? "lx-sidebar-scroll max-h-[45%] min-h-0 flex-col items-stretch gap-0.5 overflow-y-auto border-t border-edge p-1"
+            : "items-center gap-0.5 pr-1"
+        }`}
+        data-testid="nav-buttons"
+        onContextMenu={(e) => {
+          if (e.target === e.currentTarget) navContextMenu(e);
+        }}
+        onDragOver={(e) => {
+          if (!navDragId) return;
+          e.preventDefault();
+          setNavDragOverId("topbar-zone");
+        }}
+        onDragLeave={(e) => {
+          if (e.target === e.currentTarget) setNavDragOverId(null);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          if (navDragId) onNavDrop(null);
+        }}
+      >
+        {vertical && <ScrollFade edge="top" on={navEdges.start} />}
+        {/* "All tabs" list. Lives here rather than inside the strip: it used to
+            be the strip's last child, so as soon as the tabs overflowed — the
+            only time it appears — it was itself scrolled out of reach. */}
+        {!vertical && (tabEdges.start || tabEdges.end) && (
           <span className="relative" ref={moreMenuRef}>
             <button
               data-testid="tab-more"
@@ -1108,34 +1185,42 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
             )}
           </span>
         )}
-      </div>
-
-      {/* Quick actions + nav buttons */}
-      <div
-        className={`flex shrink-0 ${
-          vertical ? "flex-col items-stretch gap-0.5 border-t border-edge p-1" : "items-center gap-0.5 pr-1"
-        }`}
-        data-testid="nav-buttons"
-        onContextMenu={(e) => {
-          if (e.target === e.currentTarget) navContextMenu(e);
-        }}
-        onDragOver={(e) => {
-          if (!navDragId) return;
-          e.preventDefault();
-          setNavDragOverId("topbar-zone");
-        }}
-        onDragLeave={(e) => {
-          if (e.target === e.currentTarget) setNavDragOverId(null);
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          if (navDragId) onNavDrop(null);
-        }}
-      >
         {!vertical && <ChromeQuickActions compact />}
         {quickActionsHere && <QuickActions vertical={vertical} expanded={vertical && !leftCollapsed} />}
-        {(vertical ? navButtons : navGroups.right).map((def) => renderNavBtn(def, "topbar"))}
+        {barNavShown.map((def) => renderNavBtn(def, "topbar"))}
+        {barNavHidden.length > 0 && (
+          <span className="relative">
+            <button
+              data-nav-more
+              data-testid="nav-more"
+              title={`${t("More buttons")} (${barNavHidden.length})`}
+              aria-label={`${t("More buttons")} (${barNavHidden.length})`}
+              aria-haspopup="menu"
+              className="lx-square-btn lx-toolbar-item flex h-7 w-7 items-center justify-center text-muted hover:text-strong"
+              onClick={(e) =>
+                openContextMenu(
+                  e,
+                  barNavHidden.map((def) => ({
+                    label: def.label,
+                    icon: def.icon,
+                    onClick: () => runNavAction(def.id),
+                  })),
+                )
+              }
+              onContextMenu={(e) => navContextMenu(e)}
+              onDragOver={(e) => navDragId && e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onNavDropZone(null, "topbar");
+              }}
+            >
+              <MoreHorizontal size={15} />
+            </button>
+          </span>
+        )}
         {!vertical && <WindowControls />}
+        {vertical && <ScrollFade edge="bottom" on={navEdges.end} />}
       </div>
 
       {/* Sidebar resize handle (kept off the buttons so it never eats their clicks) */}
@@ -1149,6 +1234,16 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       )}
     </div>
   );
+}
+
+/**
+ * Gradient hint pinned to the top/bottom edge of a scrollable sidebar stack,
+ * shown while there is content past that edge. Rendered as a sticky first/last
+ * child of the scroll container itself — see `.lx-scroll-fade` for why it is
+ * not a mask on the container.
+ */
+function ScrollFade({ edge, on }: { edge: "top" | "bottom"; on: boolean }) {
+  return <span aria-hidden data-on={on || undefined} className={`lx-scroll-fade lx-scroll-fade-${edge}`} />;
 }
 
 function AddItem(props: { icon: React.ComponentType<{ size?: number; className?: string }>; label: string; onClick: () => void }) {

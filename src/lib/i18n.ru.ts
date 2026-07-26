@@ -337,6 +337,7 @@ export const RU: Record<string, string> = {
   "Hide \"{0}\" button": "Скрыть кнопку «{0}»",
   "Show \"{0}\" button": "Показать к��о��ку «{0}»",
   "Show button": "Показать кнопку",
+  "More buttons": "Ещё кнопки",
   "Reset buttons to default": "Сбросить кнопки к настройкам по умолчанию",
   "Customize in Settings…": "Настроить в параметрах…",
   "Tab is pinned — unpin it first to close": "Вкладка закреплена — сначала открепите её, чтобы закрыть",

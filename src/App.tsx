@@ -670,12 +670,19 @@ export default function App() {
           {!sideTabs && <NavRail />}
           {/* In side-tab mode the vertical TopBar already *is* the left sidebar,
               so the optional widget side panel would be a confusing second left
-              panel — show it only in top-tab mode. */}
-          {!sideTabs && !win.hideLeftSidebar && <SidePanel />}
+              panel — show it only in top-tab mode.
+
+              Neither panel is gated on the window breakpoints any more: below
+              them the toggles (status bar / titlebar / settings) turned into
+              dead controls — the button lit up as "on" while nothing appeared
+              and nothing explained why. Both panels clamp their own width
+              against the viewport instead, so a narrow window still keeps the
+              majority of its space for the dock. */}
+          {!sideTabs && <SidePanel />}
           <div className="min-h-0 min-w-0 flex-1">
             <DockLayout />
           </div>
-          {!zenMode && !win.hideRightPanel && <RightPanel />}
+          {!zenMode && <RightPanel />}
         </div>
       </div>
       {!zenMode && !win.hideStatusBar && <StatusBar />}

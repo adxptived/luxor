@@ -85,6 +85,10 @@ function SidePanelImpl() {
     ? config.ui.side_panel_widgets
     : DEFAULT_SIDE_WIDGETS;
   const width = Math.min(480, Math.max(180, config?.ui.side_panel_width ?? 260));
+  // Clamp against the viewport (mirrors RightPanel): the panel is no longer
+  // force-hidden on narrow windows, so it has to keep the dock the larger
+  // share on its own.
+  const panelWidth = `min(${width}px, max(180px, 32vw))`;
   const railWidth = 44;
   const iconPosition = config?.ui.left_sidebar_icon_position ?? "top";
   const iconRailJustify =
@@ -177,7 +181,7 @@ function SidePanelImpl() {
   if (!enabled && !render) return null;
 
   // shown=false (closing) → 0; collapsed → rail width (icons stay visible).
-  const targetWidth = shown ? (collapsed ? railWidth : width) : 0;
+  const targetWidth = shown ? (collapsed ? `${railWidth}px` : panelWidth) : 0;
   const openTasks = tasks.filter((t) => t.status !== "done");
 
   return (
@@ -193,7 +197,7 @@ function SidePanelImpl() {
         className={`flex h-full flex-col overflow-y-auto text-xs transition-opacity duration-150 ${
           shown ? "opacity-100" : "opacity-0"
         }`}
-        style={{ width: collapsed ? railWidth : width }}
+        style={{ width: collapsed ? railWidth : panelWidth }}
       >
       {collapsed ? (
         <div className={`lx-nav-rail flex h-full flex-col items-center gap-1 p-1.5 ${iconRailJustify}`}>

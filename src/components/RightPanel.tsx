@@ -1113,7 +1113,10 @@ function RightPanelImpl() {
         } ${rpConfig.accent ? "lx-rp-accented" : ""}`}
         style={{ width: responsiveWidth }}
       >
-        <div className="flex items-center justify-between border-b border-edge px-2.5 py-1.5">
+        {/* Sticky: the header lives inside the panel's scroll container, so with
+            enough widgets the "customize" and "hide" buttons used to scroll out
+            of reach. */}
+        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-edge bg-bar px-2.5 py-1.5">
           <span className="text-2xs font-semibold uppercase tracking-wide text-muted">{t("Panel")}</span>
           <div className="flex items-center gap-0.5">
             <button

@@ -95,7 +95,7 @@ export function DevToolsPanel() {
 
   return (
     <div ref={ref} className="flex h-full flex-col bg-surface text-sm">
-      <div className="flex gap-1 overflow-x-auto border-b border-edge bg-bar/55 px-2 py-2 lx-noscrollbar select-none">
+      <div className="flex gap-1 overflow-x-auto border-b border-edge bg-bar/55 px-2 py-2 lx-no-scrollbar select-none">
         {visibleTabs.map((tb) => {
           const Icon = tb.icon;
           const active = tab === tb.id;
@@ -898,7 +898,7 @@ function LogsTab({ root: _root }: { root: string }) {
       </div>
 
       {/* Log Feed */}
-      <div className="flex-1 overflow-auto bg-surface p-3 font-mono text-2xs space-y-1.5 select-text lx-noscrollbar leading-relaxed">
+      <div className="flex-1 overflow-auto bg-surface p-3 font-mono text-2xs space-y-1.5 select-text lx-no-scrollbar leading-relaxed">
         {filteredLogs.length === 0 ? (
           <div className="text-center text-muted py-8 italic">No logs recorded matching filters.</div>
         ) : (
