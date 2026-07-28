@@ -394,10 +394,13 @@ body,
   width: 4px;
 }
 
-/* Vertical sidebar stacks (project tabs, nav buttons). Both scroll on their own
- * once they run out of room, and the scrollbar is the only signal that there is
- * more below — so unlike the rest of the app it stays visible instead of
- * fading out, just muted until hovered. */
+/* Settings modal section list (the only `.lx-sidebar-scroll` user). It scrolls
+ * on its own once sections run out of room, and the scrollbar is the only
+ * signal that there is more below — so unlike the rest of the app it stays
+ * visible instead of fading out, just muted until hovered. The vertical
+ * sidebar stacks (project tabs, nav buttons) intentionally show NO scrollbar:
+ * they use `.lx-no-scrollbar`, with the edge fades below as the overflow
+ * hint. */
 /* Back to `auto` on purpose: the global `*` rule sets `scrollbar-width`/
  * `scrollbar-color`, and any non-auto value makes Chromium (and therefore
  * WebView2) render an OVERLAY scrollbar that fades out when idle — invisible

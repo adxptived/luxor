@@ -149,6 +149,18 @@ pub struct UiConfig {
     pub left_sidebar_icon_position: LeftSidebarIconPosition,
     /// Tab corner radius in px (0 = square, default = subtle rounding).
     pub tab_radius: u16,
+    /// Height of each project tab row in the SIDE tab bar, in px. 0 = compact
+    /// default (content-driven, matches the original look). Clamped 0–64 by the
+    /// frontend; only applies in side-tab mode — the top bar uses `topbar_size`.
+    #[serde(default)]
+    pub tab_height: u16,
+    /// Fixed height of the project-tab region in the SIDE tab bar, in px. 0 =
+    /// automatic (the strip grows to fill leftover sidebar height — the original
+    /// behavior). A positive value fixes the strip height so the nav-button stack
+    /// below reclaims the freed space; set by dragging the divider between them.
+    /// Only applies in side-tab mode.
+    #[serde(default)]
+    pub tab_strip_height: u16,
     /// Where the launcher quick-action buttons live.
     #[serde(deserialize_with = "de_enum_lenient")]
     pub quick_actions: QuickActionsPlacement,
@@ -253,6 +265,8 @@ impl Default for UiConfig {
             chrome_actions: Vec::new(),
             left_sidebar_icon_position: LeftSidebarIconPosition::default(),
             tab_radius: 7,
+            tab_height: 0,
+            tab_strip_height: 0,
             quick_actions: QuickActionsPlacement::default(),
             nav_order: Vec::new(),
             // Fresh installs show only the essentials in the sidebar (Terminal,
@@ -676,6 +690,10 @@ mod tests {
         assert!(!cfg.ui.nav_hidden.contains(&"settings".to_string()));
         assert!(cfg.status_bar.show_project);
         assert!(cfg.status_bar.segment_order.is_empty());
+        // Side tab bar row height defaults to 0 (compact / content-driven).
+        assert_eq!(cfg.ui.tab_height, 0);
+        // Side tab strip height defaults to 0 (automatic / fills leftover).
+        assert_eq!(cfg.ui.tab_strip_height, 0);
         // v0.6.6 additions.
         assert!(cfg.notifications.enabled);
         assert!(cfg.notifications.os_native);

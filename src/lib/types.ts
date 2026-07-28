@@ -72,6 +72,13 @@ export interface UiConfig {
   left_sidebar_icon_position: LeftSidebarIconPosition;
   /** Tab corner radius in px (0 = square, default = subtle rounding). */
   tab_radius: number;
+  /** Height of each project tab row in the SIDE tab bar (px, 0 = compact
+   *  content-driven default). Only applies in side-tab mode. */
+  tab_height: number;
+  /** Fixed height of the project-tab region in the SIDE tab bar (px, 0 =
+   *  automatic — the strip fills leftover sidebar height). Set by dragging the
+   *  divider between the tab strip and the nav-button stack. Side-tab mode only. */
+  tab_strip_height: number;
   /** Draw a visible outline/border around the active tab (off = selection shown
    *  by background colour only). */
   tab_outline: boolean;

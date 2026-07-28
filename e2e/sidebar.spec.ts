@@ -53,12 +53,15 @@ test.describe("nav buttons", () => {
 
   /**
    * Regression: in side-tab mode the vertical sidebar stacks the project tab
-   * strip above the nav-button stack. The strip scrolls, so its automatic
-   * minimum height is 0 — and the nav stack used to be unbounded, so every
-   * button moved into the sidebar stole height from the tabs until they
-   * collapsed to nothing and the projects became unreachable.
+   * strip above the nav-button stack. The nav stack sizes to its content, so
+   * without a floor on the strip a full stack would squeeze it (automatic
+   * minimum height 0) down to nothing. The strip keeps a fixed minimum
+   * height; on short windows the nav stack is the one that shrinks and
+   * scrolls — inside the sidebar, never past its bottom edge.
    */
   test("a full nav stack cannot squeeze the project tabs out of the sidebar", async ({ page }) => {
+    // Short window: not enough room for the tab strip AND every nav button.
+    await page.setViewportSize({ width: 1280, height: 480 });
     await openApp(page);
 
     // Mock mode starts without projects — add two so the strip has content.
@@ -86,14 +89,54 @@ test.describe("nav buttons", () => {
     const sidebarBox = (await sidebar.boundingBox())!;
     const stripBox = (await strip.boundingBox())!;
     const navBox = (await navStack.boundingBox())!;
-    // Nav stack capped at 45%, so the tabs always keep the majority.
-    expect(navBox.height).toBeLessThanOrEqual(sidebarBox.height * 0.46);
-    expect(stripBox.height).toBeGreaterThan(sidebarBox.height * 0.5);
-    // And nothing is clipped away: the stack scrolls instead.
+    // The tab strip never drops below its minimum height (7.5rem = 120px) …
+    expect(stripBox.height).toBeGreaterThanOrEqual(119);
+    // … and the nav stack stays inside the sidebar instead of overflowing it.
+    expect(navBox.y + navBox.height).toBeLessThanOrEqual(sidebarBox.y + sidebarBox.height + 1);
+    // Nothing is clipped away: the stack scrolls instead …
     const scrollable = await navStack.evaluate((el) => el.scrollHeight > el.clientHeight);
     const overflow = await navStack.evaluate((el) => getComputedStyle(el).overflowY);
     expect(scrollable).toBe(true);
     expect(overflow).toBe("auto");
+    // … but no scrollbar is painted — the edge fades carry the overflow hint.
+    const scrollbarWidth = await navStack.evaluate((el) => getComputedStyle(el).scrollbarWidth);
+    expect(scrollbarWidth).toBe("none");
+  });
+
+  /**
+   * The other half of the contract: with a normally tall window the nav stack
+   * sizes to its content, so EVERY sidebar button fits without internal
+   * scrolling — and the "+" tab button keeps a compact fixed size instead of
+   * stretching across the sidebar.
+   */
+  test("every nav button fits in the sidebar without scrolling", async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 1200 });
+    await openApp(page);
+
+    await clickNav(page, "settings");
+    const modal = page.getByTestId("settings-modal");
+    await modal.getByRole("button", { name: /^Appearance$/ }).click();
+    await modal
+      .locator('select:has(option[value="side"]):not(:has(option[value="hidden"]))')
+      .selectOption("side");
+    await page.keyboard.press("Escape");
+
+    // Compact fixed-size add button (w-8 = 32px), not a sidebar-wide strip.
+    const addBox = (await page.getByTestId("tab-add").boundingBox())!;
+    expect(addBox.width).toBeLessThanOrEqual(40);
+
+    const navStack = page.getByTestId("nav-buttons");
+    await expect
+      .poll(async () => navStack.evaluate((el) => el.scrollHeight <= el.clientHeight + 1))
+      .toBe(true);
+    // Every rendered button sits fully inside the stack's box.
+    const stackBox = (await navStack.boundingBox())!;
+    const buttonBottoms = await navStack
+      .locator("button")
+      .evaluateAll((els) => els.map((el) => el.getBoundingClientRect().bottom));
+    for (const bottom of buttonBottoms) {
+      expect(bottom).toBeLessThanOrEqual(stackBox.y + stackBox.height + 1);
+    }
   });
 
   /**

@@ -1119,6 +1119,7 @@ export const RU: Record<string, string> = {
   "Move right/down": "Вправо/вниз",
   "Click to record a new hotkey": "Нажмите, чтобы задать новую горячую клавишу",
   "Drag to resize sidebar": "Потяните, чтобы изменить ширину панели",
+  "Drag to resize tab area": "Потяните, чтобы изменить высоту вкладок",
   "Move right (⇧ Click card)": "Вправо (⇧ клик по карточке)",
   "Search live logs…": "Поиск в логах…",
   "Couldn't load table structure": "Не удалось загрузить структуру таблицы",

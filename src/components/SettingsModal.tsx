@@ -1313,6 +1313,14 @@ export function SettingsModal() {
                     onChange={(v) => set({ ui: { ...draft.ui, sidebar_width: v } })}
                   />
                 </Row>
+                <Row label="Side tab height (px)" help="Height of each project tab in the side tab bar. Lower = more workspace tabs fit; 0 = compact default.">
+                  <NumberInput
+                    value={draft.ui.tab_height ?? 0}
+                    min={0}
+                    max={64}
+                    onChange={(v) => set({ ui: { ...draft.ui, tab_height: v } })}
+                  />
+                </Row>
                 <Row label="Tab rounding (px)" help="0 = square tabs, 6–8 = subtle rounded default, 18 = very round.">
                   <NumberInput
                     value={draft.ui.tab_radius ?? 7}

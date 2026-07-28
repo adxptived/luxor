@@ -177,6 +177,8 @@ const CONFIG_INT_UI_FIELDS = [
   "topbar_size",
   "sidebar_width",
   "tab_radius",
+  "tab_height",
+  "tab_strip_height",
   "side_panel_width",
   "right_panel_width",
   "glass_opacity",

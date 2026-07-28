@@ -221,6 +221,15 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
 
   const topbarSize = Math.min(64, Math.max(28, config?.ui.topbar_size ?? 36));
   const sidebarWidth = Math.min(420, Math.max(140, config?.ui.sidebar_width ?? 208));
+  // Side-tab row height: 0 = compact content-driven default (unchanged look);
+  // any positive value fixes each vertical tab at that height so more workspaces
+  // fit. Only applied in side-tab mode (see renderTab), never in the top bar.
+  const tabHeight = Math.min(64, Math.max(0, config?.ui.tab_height ?? 0));
+  // Side-tab strip height: 0 = automatic (strip fills leftover sidebar height —
+  // the original behavior). A positive value fixes the strip height; the
+  // nav-button stack below reclaims the freed space. Set by dragging the divider
+  // between them (see startTabStripResize). Side-tab mode only.
+  const tabStripHeight = Math.min(4096, Math.max(0, config?.ui.tab_strip_height ?? 0));
   const quickActionsHere = (config?.ui.quick_actions ?? "top") === "top" && vertical;
   // The main vertical sidebar can be closed (animated to width 0); reopen from
   // the window top-bar's left-sidebar toggle. Only meaningful in side-tab mode.
@@ -267,9 +276,9 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       right: navButtons.filter((b) => !leftSet.has(b.id) && !centerSet.has(b.id)),
     };
   }, [navButtons, navTopbarLeft, navTopbarCenter, vertical]);
-  // Nav-stack overflow (vertical sidebar only). The stack is height-capped so
-  // it can never squeeze the project tabs out, which means it scrolls on its
-  // own once enough buttons are moved into the sidebar.
+  // Nav-stack overflow (vertical sidebar only). The stack sizes to its content
+  // and only scrolls once the tab strip above has shrunk to its minimum
+  // height, so the edge fades appear exactly when buttons are actually cut off.
   const navEdges = useScrollEdges(navStackRef, "y", [vertical, navButtons.length, quickActionsHere, leftCollapsed]);
 
   // How many nav buttons the HORIZONTAL bar can show next to the project tabs.
@@ -785,6 +794,39 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
     window.addEventListener("pointerup", onUp);
   };
 
+  // Drag the divider between the project-tab strip and the nav-button stack to
+  // fix the strip height (vertical, expanded mode only). 0 = automatic; any
+  // drag commits a concrete pixel height that persists across restarts. Mirrors
+  // `startResize` for the sidebar width, but on the Y axis.
+  const startTabStripResize = (e: React.PointerEvent) => {
+    if (!vertical || leftCollapsed || !tabStripRef.current || !config) return;
+    e.preventDefault();
+    resizing.current = true;
+    const startY = e.clientY;
+    // Start from the strip's *current* rendered height (works whether the strip
+    // is in automatic flex-1 mode or already fixed at a saved height).
+    const startH = tabStripRef.current.getBoundingClientRect().height;
+    let next = Math.round(startH);
+    const onMove = (ev: PointerEvent) => {
+      // Clamp to the existing min-height floor (7.5rem ≈ 120px) so a full nav
+      // stack can never squeeze the tabs out, and never exceed the sidebar.
+      next = Math.round(Math.max(120, startH + ev.clientY - startY));
+      tabStripRef.current!.style.height = `${next}px`;
+      tabStripRef.current!.style.flex = "0 0 auto";
+    };
+    const onUp = () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      resizing.current = false;
+      const cfg = useAppStore.getState().config;
+      if (cfg && next !== cfg.ui.tab_strip_height) {
+        void saveConfig({ ...cfg, ui: { ...cfg.ui, tab_strip_height: next } });
+      }
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerup", onUp);
+  };
+
   // Pinned tabs float to the front, then browser-style groups cluster their
   // members contiguously (see lib/tabGroups). renderTab is shared by grouped
   // and ungrouped rendering so the tab markup stays in one place.
@@ -839,6 +881,12 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       style={{
         ...(p.color ? { boxShadow: `inset 0 2px 0 0 ${p.color}` } : {}),
         borderRadius: "var(--lx-tab-radius)",
+        // Side-tab mode only: a configured row height fixes each tab at that
+        // height (overriding the content-driven `py-2`) so more workspaces fit
+        // in the rail. Top-bar and collapsed modes keep their own sizing.
+        ...(vertical && !leftCollapsed && tabHeight > 0
+          ? { height: `${tabHeight}px`, paddingTop: 0, paddingBottom: 0 }
+          : {}),
       }}
       className={`group relative flex cursor-pointer items-center ${leftCollapsed ? "justify-center gap-0 px-0" : "gap-1.5 px-3"} ${
         vertical ? (leftCollapsed ? "mx-1 my-0.5 h-8 rounded-lg py-0" : "my-0.5 border-b border-edge py-2") : "mx-0.5 my-1 h-[calc(100%-0.5rem)] border border-transparent"
@@ -985,11 +1033,15 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       {/* Project tabs */}
       <div
         ref={tabStripRef}
-        className={`flex min-w-0 flex-1 ${
+        className={`flex min-w-0 ${
           vertical
-            ? "lx-sidebar-scroll min-h-0 flex-col overflow-y-auto"
-            : "lx-no-scrollbar lx-tab-overflow items-center overflow-x-auto"
+            ? // A fixed tab_strip_height overrides flex-1 (the strip no longer
+              // grows to fill; the nav stack below reclaims the freed space).
+              // 0 keeps the original automatic flex-1 behavior.
+              `${tabStripHeight > 0 ? "flex-none" : "flex-1"} lx-no-scrollbar min-h-[7.5rem] flex-col overflow-y-auto`
+            : "flex-1 lx-no-scrollbar lx-tab-overflow items-center overflow-x-auto"
         }`}
+        style={vertical && tabStripHeight > 0 ? { height: `${tabStripHeight}px`, flexBasis: "auto" } : undefined}
         data-testid="tab-strip"
         data-overflow-left={(!vertical && tabEdges.start) || undefined}
         data-overflow-right={(!vertical && tabEdges.end) || undefined}
@@ -1017,7 +1069,10 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               setAddMenu((v) => !v);
             }}
             title={t("Add tab")}
-            className={`lx-square-btn flex items-center justify-center text-muted hover:text-strong ${vertical ? "mx-1 my-0.5 px-2 py-1.5" : "mx-1 h-7 w-7"}`}
+            // Fixed size in the vertical sidebar: a `display: flex` button with
+            // `width: auto` stretches to the full width of its block container,
+            // which turned this into a sidebar-wide strip.
+            className={`lx-square-btn flex items-center justify-center text-muted hover:text-strong ${vertical ? "mx-1 my-0.5 h-8 w-8" : "mx-1 h-7 w-7"}`}
           >
             <Plus size={15} />
           </button>
@@ -1099,18 +1154,35 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
         {vertical && <ScrollFade edge="bottom" on={tabEdges.end} />}
       </div>
 
+      {/* Draggable divider between the project-tab strip and the nav-button
+          stack (vertical, expanded mode only). Dragging fixes the strip height
+          via startTabStripResize; 0 = automatic. Hidden when collapsed since the
+          strip and stack collapse into icon rows. */}
+      {vertical && !leftCollapsed && (
+        <div
+          className="group relative z-10 flex h-1.5 shrink-0 cursor-row-resize items-center justify-center bg-transparent hover:bg-muted/40"
+          onPointerDown={startTabStripResize}
+          title={t("Drag to resize tab area")}
+          data-testid="tab-strip-resize"
+        >
+          <span className="h-px w-8 rounded bg-edge group-hover:bg-muted" />
+        </div>
+      )}
+
       {/* Quick actions + nav buttons.
           In the vertical sidebar this stack shares the height with the project
-          tabs above it. It is therefore capped at 45% and scrolls internally —
-          without the cap, every button moved into the sidebar stole height from
-          the tab strip (whose `overflow-y-auto` makes its automatic minimum
-          size 0), and enough of them collapsed the project tabs to nothing. */}
+          tabs above it. It sizes to its content so every button fits whenever
+          there is room; on short windows the tab strip bottoms out at its
+          min-height and THIS stack is the one that shrinks and scrolls — so a
+          full stack still can never squeeze the project tabs out of the
+          sidebar. The horizontal bar keeps `shrink-0`: its overflow is handled
+          by the capacity-based "⋯" menu instead of scrolling. */}
       <div
         ref={navStackRef}
-        className={`flex shrink-0 ${
+        className={`flex ${
           vertical
-            ? "lx-sidebar-scroll max-h-[45%] min-h-0 flex-col items-stretch gap-0.5 overflow-y-auto border-t border-edge p-1"
-            : "items-center gap-0.5 pr-1"
+            ? "lx-no-scrollbar min-h-0 shrink flex-col items-stretch gap-0.5 overflow-y-auto border-t border-edge p-1"
+            : "shrink-0 items-center gap-0.5 pr-1"
         }`}
         data-testid="nav-buttons"
         onContextMenu={(e) => {

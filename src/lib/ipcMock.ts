@@ -134,6 +134,8 @@ function defaultMockConfig(): AppConfig {
       chrome_actions: [],
       left_sidebar_icon_position: "top",
       tab_radius: 7,
+      tab_height: 0,
+      tab_strip_height: 0,
       tab_outline: false,
       quick_actions: "top",
       nav_order: [],
