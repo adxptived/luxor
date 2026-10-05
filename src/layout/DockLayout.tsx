@@ -252,6 +252,8 @@ import {
   saveDockLayout,
   useDockStore,
 } from "./dockStore";
+import { deleteTerminalState, terminalStateId } from "@/lib/terminalState";
+import { DockKeyContext } from "./DockKeyContext";
 
 /** Wrap a lazily-loaded panel in Suspense so its chunk can stream in without
  *  blanking the tab (the spinner shows for the one network round-trip). */
@@ -576,9 +578,15 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
         if (!disposedRef.current) saveDockLayout(dockKey, event.api);
       }, 400);
     });
+    // A closed terminal's saved scrollback goes with it. (Moving a panel does
+    // not fire this; project/dock teardown is handled by the startup prune.)
+    const removeSub = event.api.onDidRemovePanel((panel) => {
+      deleteTerminalState(terminalStateId(dockKey, panel.id));
+    });
     cleanupRef.current = () => {
       if (timer) clearTimeout(timer);
       disposable.dispose();
+      removeSub.dispose();
       saveDockLayout(dockKey, event.api);
     };
   };
@@ -626,6 +634,7 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
         if (api) openContextMenu(e, panelsMenuItems(api));
       }}
     >
+      <DockKeyContext.Provider value={dockKey}>
       <DockviewReact
         components={components}
         defaultTabComponent={tabComponents.default}
@@ -635,6 +644,7 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
         theme={isLightTheme(theme) ? themeLight : themeDark}
         className="lx-anim-panel h-full w-full"
       />
+      </DockKeyContext.Provider>
       {empty && (
         <div className="absolute inset-0 z-20 bg-surface">
           <EmptyDock dockKey={dockKey} />

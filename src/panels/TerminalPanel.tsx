@@ -1,5 +1,6 @@
 import { FitAddon } from "@xterm/addon-fit";
 import { SearchAddon } from "@xterm/addon-search";
+import { SerializeAddon } from "@xterm/addon-serialize";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Terminal } from "@xterm/xterm";
 import type { IDockviewPanelProps } from "dockview";
@@ -16,6 +17,18 @@ import { captureBuffer, suggestOutputFilename } from "@/lib/terminalBuffer";
 import { shellQuote } from "@/lib/shellQuote";
 import { CommandTracker, type TrackerNotice } from "@/lib/commandTracker";
 import { matchPathLinks, resolveMatchedPath } from "@/lib/terminalLinks";
+import {
+  MAX_DATA_CHARS,
+  isRestoreEnabled,
+  loadTerminalState,
+  looksLikeSecretPrompt,
+  parseOsc7Cwd,
+  registerTerminalFlush,
+  sanitizeDraft,
+  saveTerminalState,
+  terminalStateId,
+} from "@/lib/terminalState";
+import { formatDateTime } from "@/lib/format";
 import { t } from "@/lib/i18n";
 import { notifyDone, osNotifyIfAway } from "@/lib/notify";
 import { schedulePoll } from "@/lib/poll";
@@ -25,6 +38,7 @@ import { openContextMenu } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
 import type { TerminalPanelParams } from "@/layout/dockStore";
 import { useDockStore } from "@/layout/dockStore";
+import { useDockKey } from "@/layout/DockKeyContext";
 import { ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
 import { loadProfiles } from "@/lib/shellProfiles";
 
@@ -50,6 +64,7 @@ function xtermTheme() {
 export function TerminalPanel(props: IDockviewPanelProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const params = (props.params ?? {}) as TerminalPanelParams;
+  const dockKey = useDockKey();
   const [exited, setExited] = useState<number | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -118,8 +133,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     const fit = new FitAddon();
     const search = new SearchAddon();
     searchRef.current = search;
+    const serializer = new SerializeAddon();
     term.loadAddon(fit);
     term.loadAddon(search);
+    term.loadAddon(serializer);
     term.loadAddon(
       new WebLinksAddon((e, uri) => {
         e.preventDefault();
@@ -270,6 +287,70 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     // panel is created hidden, the ResizeObserver opens it when it gets size.
     requestAnimationFrame(() => void openTerminal());
 
+    let line = emptyLine();
+
+    // --- Restore (scrollback, unsent input, cwd) --------------------------------
+    // The previous shell is gone; what we can give back is what was on screen.
+    // Written before `start()` so it always precedes the new shell's banner.
+    const panelId = terminalStateId(dockKey, props.api.id);
+    const restoreOn = isRestoreEnabled();
+    const saved = restoreOn ? loadTerminalState(panelId) : null;
+    let pendingDraft = saved ? sanitizeDraft(saved.draft) : "";
+    let liveCwd: string | null = saved?.cwd ?? null;
+    if (saved?.data) {
+      writeTerminal(saved.data);
+      const when = formatDateTime(saved.savedAt);
+      writeTerminal(`\x1b[0m\r\n\x1b[90m── ${t("term.restored", "restored from previous session")} · ${when} ──\x1b[0m\r\n`);
+    }
+    let draftTimer: ReturnType<typeof setTimeout> | null = null;
+    const injectDraft = () => {
+      draftTimer = null;
+      if (!pendingDraft || !sessionId || disposed) return;
+      const text = pendingDraft;
+      pendingDraft = "";
+      // Typed, not executed: the user decides whether to press Enter.
+      void ipc.ptyWrite(sessionId, ipc.strToB64(text)).catch(() => {});
+      line = { buffer: text, poisoned: false };
+    };
+
+    // --- Save (debounced, flushed on hide/unload) --------------------------------
+    let saveTimer: ReturnType<typeof setTimeout> | null = null;
+    const snapshotData = (): string => {
+      // Serialized rows can't be cut at an arbitrary offset without breaking
+      // escape sequences, so shrink the row count until the budget fits.
+      let rows = Math.min(cfg?.scrollback ?? 10000, 2000);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const data = serializer.serialize({ scrollback: rows, excludeModes: true, excludeAltBuffer: true });
+        if (data.length <= MAX_DATA_CHARS) return data;
+        rows = Math.floor(rows / 2);
+      }
+      return "";
+    };
+    const saveNow = () => {
+      if (saveTimer) {
+        clearTimeout(saveTimer);
+        saveTimer = null;
+      }
+      if (disposed || !opened || !isRestoreEnabled()) return;
+      try {
+        saveTerminalState(panelId, {
+          cwd: liveCwd,
+          // An untracked line (arrow keys, Ctrl+R…) or a no-echo prompt must not be replayed.
+          draft: line.poisoned ? "" : sanitizeDraft(line.buffer),
+          data: snapshotData(),
+        });
+      } catch {
+        /* persistence is best effort */
+      }
+    };
+    // Throttle, not debounce: a long build streams output continuously and a
+    // debounce would never fire.
+    const scheduleSave = () => {
+      if (saveTimer || disposed) return;
+      saveTimer = setTimeout(saveNow, 2500);
+    };
+    const unregisterFlush = registerTerminalFlush(saveNow);
+
     const start = async () => {
       try {
         // The global pty bus must listen BEFORE the shell starts: the banner
@@ -283,7 +364,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         const profiles = loadProfiles();
         const profile = params.profileId ? profiles.find((p) => p.id === params.profileId) : undefined;
         const terminalConfig = useAppStore.getState().config?.terminal;
-        const info = await ipc.ptySpawn({
+        const spawnOpts = {
           shell: profile?.shell ?? terminalConfig?.shell ?? null,
           args: profile?.args ?? terminalConfig?.shell_args ?? [],
           cwd: profile?.cwd || cwd,
@@ -294,7 +375,19 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           // action this session run their commands silently.
           autorun: gateAutorun(props.api.id, params.autorun ?? []),
           fast_powershell_startup: terminalConfig?.fast_powershell_startup ?? true,
-        });
+        };
+        // Reopen in the directory the shell was last in, when it reported one.
+        // The folder may be gone since; the backend refuses a missing cwd, so
+        // fall back to the configured one rather than failing to start.
+        let info;
+        if (liveCwd && liveCwd !== spawnOpts.cwd && !profile?.cwd) {
+          try {
+            info = await ipc.ptySpawn({ ...spawnOpts, cwd: liveCwd });
+          } catch {
+            liveCwd = null;
+          }
+        }
+        info ??= await ipc.ptySpawn(spawnOpts);
         if (disposed) {
           forgetPty(info.session_id);
           void ipc.ptyKill(info.session_id).catch(() => {});
@@ -315,6 +408,13 @@ export function TerminalPanel(props: IDockviewPanelProps) {
             onOutput: (dataB64) => {
               trackerRef.current?.output(Date.now());
               writeTerminal(ipc.b64ToBytes(dataB64));
+              scheduleSave();
+              // Put the saved input line back once the shell has gone quiet,
+              // i.e. it is sitting at its prompt.
+              if (pendingDraft) {
+                if (draftTimer) clearTimeout(draftTimer);
+                draftTimer = setTimeout(injectDraft, 450);
+              }
             },
             onExit: (exitCode) => {
               writeTerminal(`\r\n\x1b[90m[process exited ${exitCode ?? ""}]\x1b[0m\r\n`);
@@ -347,7 +447,6 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       void start();
     };
 
-    let line = emptyLine();
     // Shell integration (OSC 133): shells that emit prompt marks (fish,
     // recent PowerShell, configured zsh/bash) tell us exactly when a new
     // prompt starts — use it to clear a poisoned line so history capture
@@ -366,6 +465,13 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         if (notice) handleNoticeRef.current(notice);
       }
       return false; // let other handlers (decorations, etc.) run too
+    });
+    // OSC 7: shells that report their cwd (bash/zsh/fish with vte or the
+    // iTerm-style hook) let a restart reopen in the same directory.
+    const osc7Dispose = term.parser.registerOscHandler(7, (data) => {
+      const dir = parseOsc7Cwd(data);
+      if (dir) liveCwd = dir;
+      return false;
     });
     // Agent-idle detection: an output burst followed by silence means the
     // agent finished its answer (checked once a second, cheap).
@@ -389,10 +495,20 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       if (!sessionId) return;
       tracker.userInput(Date.now());
       void ipc.ptyWrite(sessionId, ipc.strToB64(data)).catch(() => {});
+      // A no-echo prompt ("Password:", "[sudo] password for me:") is typed blind:
+      // those keystrokes are a secret, so they are neither kept as history nor
+      // saved as the restorable input line.
+      const buf = term.buffer.active;
+      const promptText = buf.getLine(buf.baseY + buf.cursorY)?.translateToString(true) ?? "";
+      if (looksLikeSecretPrompt(promptText)) {
+        line = emptyLine();
+        return;
+      }
       // Reconstruct typed commands for the history overlay (Ctrl+Shift+R).
       const fed = feedInput(line, data);
       line = fed.state;
       if (fed.committed.length > 0) appendHistory(fed.committed);
+      scheduleSave();
     });
     term.onResize(({ cols, rows }) => {
       if (sessionId) void ipc.ptyResize(sessionId, cols, rows).catch(() => {});
@@ -462,7 +578,11 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       unsubTheme();
       fileLinkProvider.dispose();
       oscDispose.dispose();
+      osc7Dispose.dispose();
       disposable.dispose();
+      unregisterFlush();
+      if (saveTimer) clearTimeout(saveTimer);
+      if (draftTimer) clearTimeout(draftTimer);
       unlisteners.forEach((u) => u());
       if (sessionId) void ipc.ptyKill(sessionId).catch(() => {});
       searchRef.current = null;

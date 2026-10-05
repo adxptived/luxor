@@ -91,6 +91,7 @@ import { latestStartup, subscribeLogs } from "@/lib/logBuffer";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
 import * as ipcExtra from "@/lib/ipc";
 import type { UpdateInfo } from "@/lib/types";
+import { TERMINAL_RESTORE_KEY, isRestoreEnabled, purgeTerminalStates } from "@/lib/terminalState";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
 
@@ -1889,6 +1890,12 @@ export function SettingsModal() {
                     onChange={(v) => set({ terminal: { ...draft.terminal, show_stats: v } })}
                   />
                 </Row>
+                <Row
+                  label="Restore terminals on startup"
+                  help="Keep each terminal's output, unsent input line and folder across restarts. Shells themselves start fresh. Saved on this device only; turning it off deletes what was saved."
+                >
+                  <TerminalRestoreToggle />
+                </Row>
                 <Row label="WebGL renderer" help="Faster rendering; falls back automatically when unavailable.">
                   <Toggle
                     checked={draft.terminal.webgl}
@@ -2522,6 +2529,26 @@ function DeveloperSection() {
         )}
       </p>
     </>
+  );
+}
+
+/** Writes straight to localStorage (not the config draft): it is a per-device
+ *  privacy choice, and turning it off must wipe what was saved right away. */
+function TerminalRestoreToggle() {
+  const [on, setOn] = useState(() => isRestoreEnabled());
+  return (
+    <Toggle
+      checked={on}
+      onChange={(v) => {
+        setOn(v);
+        try {
+          localStorage.setItem(TERMINAL_RESTORE_KEY, v ? "1" : "0");
+        } catch {
+          /* storage unavailable */
+        }
+        if (!v) purgeTerminalStates();
+      }}
+    />
   );
 }
 

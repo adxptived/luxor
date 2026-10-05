@@ -4,6 +4,7 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { NavRail } from "@/components/NavRail";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { needsOnboarding, startOnboarding } from "@/lib/onboarding";
+import { pruneTerminalStates } from "@/lib/terminalState";
 import { Overlays } from "@/components/Overlays";
 import { RightPanel } from "@/components/RightPanel";
 import { SidePanel } from "@/components/SidePanel";
@@ -137,6 +138,8 @@ export default function App() {
       // is already mounted and subscribes to onboarding state, so it appears as
       // soon as this fires. No-op for returning users (needsOnboarding()===false).
       if (needsOnboarding()) startOnboarding();
+      // Saved terminal scrollback of tabs/projects that no longer exist.
+      return scheduleStartupIdle(() => void pruneTerminalStates(), 10_000);
     }
   }, [configReady, projectsLoaded]);
 

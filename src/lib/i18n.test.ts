@@ -25,6 +25,15 @@ describe("i18n", () => {
     await setLanguage("en");
   });
 
+  test("the russian dictionary has no corrupted (U+FFFD) characters", async () => {
+    // A byte-level truncation once left "Сохр\uFFFDнить" on the Save button.
+    const mod = await import("./i18n.ru");
+    const bad = Object.entries(mod.RU).filter(
+      ([k, v]) => k.includes("\uFFFD") || String(v).includes("\uFFFD"),
+    );
+    expect(bad.map(([k]) => k)).toEqual([]);
+  });
+
   test("unknown languages map to english", async () => {
     await setLanguage("de");
     expect(getLanguage()).toBe("en");
