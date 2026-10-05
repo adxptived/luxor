@@ -31,7 +31,7 @@ impl MetricSample {
     }
 }
 
-/// Implement to contribute metrics to dashboards and Discord presence.
+/// Implement to contribute metrics to dashboards.
 ///
 /// Providers must be cheap and non-blocking — they run on the telemetry
 /// cadence (zero-overhead budget, plan part 10).

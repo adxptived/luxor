@@ -38,7 +38,6 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.dbSqlHistory", version: 1, description: "DB panel: SQL query history" },
   { key: "luxor.httpHistory", version: 1, description: "HTTP panel: request history" },
   { key: "luxor.httpBlockPrivate", version: 1, description: "HTTP panel: SSRF guard toggle ('0'/'1')" },
-  { key: "luxor.skills.lastInstallTarget", version: 1, description: "Skills panel: last install target" },
   { key: "luxor.skills.favorites", version: 1, description: "Skills panel: favorite skill ids" },
   { key: "luxor.rightPanel.notes", version: 1, description: "Right panel: scratch notes text" },
   { key: "luxor.settingsScale", version: 1, description: "Settings modal: window scale factor (number)" },
@@ -64,7 +63,7 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.statusBarAlign", version: 1, description: "Status bar alignment preference" },
 
   // Analytics / telemetry
-  { key: "luxor.discord.settings", version: 1, description: "Discord webhook settings" },
+  { key: "luxor.discord.settings", version: 1, description: "LEGACY (read once to migrate mask_projects into luxor.telemetry.prefs)" },
   { key: "luxor.telemetry.prefs", version: 1, description: "Telemetry opt-in preferences" },
 ] as const;
 

@@ -151,7 +151,7 @@ export const NAV_PANELS: NavPanel[] = [
   { id: "nav.agents", label: "AI: Agent monitor", kind: "agents" },
   { id: "nav.search", label: "Search: Find in project", kind: "search" },
   { id: "nav.tasks", label: "Tasks: Kanban board", kind: "tasks" },
-  { id: "nav.skills", label: "Skills: Manager & market", kind: "skills" },
+  { id: "nav.skills", label: "Skills: Manager", kind: "skills" },
   { id: "nav.launcher", label: "Launcher: Quick run", kind: "launcher" },
   { id: "nav.snippets", label: "Snippets: Notes & bookmarks", kind: "snippets" },
   { id: "nav.http", label: "HTTP: REST client", kind: "http" },

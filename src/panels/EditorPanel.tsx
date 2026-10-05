@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
 import { pushStructured } from "@/lib/logBuffer";
+import { reportError } from "@/lib/reportError";
 import { t } from "@/lib/i18n";
 import { registerDirtyGuard } from "@/lib/dirtyGuard";
 import { registerEditor } from "@/lib/editorBus";
@@ -256,7 +257,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       if (!text) return;
       v.dispatch(v.state.replaceSelection(text));
       v.focus();
-    }).catch(() => {});
+    }).catch(reportError(t("Paste failed")));
   };
   const selectAllEditor = () => {
     const v = editorRef.current?.view;

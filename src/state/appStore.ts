@@ -19,6 +19,17 @@ registerMigration<AppConfig>("luxor.appConfig", 1, {});
 
 export type ToastKind = "info" | "success" | "warning" | "error";
 
+export interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
+export interface ToastOptions {
+  action?: ToastAction;
+  /** Override the auto-dismiss delay (ms). */
+  ttl?: number;
+}
+
 interface ToastMessage {
   id: number;
   kind: ToastKind;
@@ -27,6 +38,8 @@ interface ToastMessage {
   key?: string;
   /** Auto-dismiss delay, retained so hover-pause can re-arm the timer. */
   ttl: number;
+  /** Optional button (e.g. "Open release") — clicking runs it and dismisses the toast. */
+  action?: ToastAction;
   /** Exit phase: the toast is animating out and will be removed shortly. */
   leaving?: boolean;
 }
@@ -48,7 +61,7 @@ interface AppStore {
 
   init: () => Promise<void>;
   saveConfig: (config: AppConfig) => Promise<void>;
-  toast: (text: string, kind?: ToastKind, key?: string) => void;
+  toast: (text: string, kind?: ToastKind, key?: string, opts?: ToastOptions) => void;
   dismissToast: (id: number) => void;
   /** Freeze all auto-dismiss timers (while the pointer is over the stack). */
   pauseToasts: () => void;
@@ -113,13 +126,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  toast: (text, kind = "info", key) => {
+  toast: (text, kind = "info", key, opts) => {
     // Everything worth telling the user is also worth remembering.
     logActivity(kind === "warning" ? "info" : kind, text);
-    const ttl = kind === "error" ? 8000 : key ? 1600 : 4000;
+    const ttl = opts?.ttl ?? (opts?.action ? 15000 : kind === "error" ? 8000 : key ? 1600 : 4000);
     // A repeating identical message (error loops, spammy listeners) refreshes
     // the existing toast instead of stacking an endless column.
-    if (!key) {
+    if (!key && !opts?.action) {
       const dup = get().toasts.find((t) => t.text === text && t.kind === kind);
       if (dup) {
         // A re-fired toast that was mid-exit snaps back to fully visible.
@@ -156,7 +169,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       // grow an endless column. The Overlays layer renders the newest 5 and a
       // "+N more" chip for anything beyond that.
       const MAX = 8;
-      const next = [...s.toasts, { id, kind, text, key, ttl }];
+      const next = [...s.toasts, { id, kind, text, key, ttl, action: opts?.action }];
       if (next.length > MAX) {
         for (const stale of next.slice(0, next.length - MAX)) {
           const timer = toastTimers.get(stale.id);

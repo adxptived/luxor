@@ -135,7 +135,7 @@ export interface UiConfig {
   editor_autosave: boolean;
   /** UI language: "en" or "ru". */
   language: string;
-  /** GitHub owner/repo used for update checks (empty = disabled). */
+  /** GitHub owner/repo used for update checks (empty = the default, adxptived/luxor). */
   update_repo: string;
   /** Check for updates once on startup. */
   update_check: boolean;
@@ -150,7 +150,7 @@ export interface UiConfig {
   glass_enabled: boolean;
   /** Glass strength in percent (0 = opaque, 100 = most transparent). 0–60. */
   glass_opacity: number;
-  /** Show the Diagnostics tab in Dev Tools (Discord RPC & subsystem health
+  /** Show the Diagnostics tab in Dev Tools (subsystem health
    *  checks). Off by default — enable it in Settings → Developer. Optional so
    *  configs saved by older builds still parse. */
   diagnostics_tab?: boolean;
@@ -282,16 +282,6 @@ export interface SkillEntry {
   enabled: boolean;
   /** FNV-1a 64 content hash of the main markdown (duplicate detection). */
   content_hash: string;
-}
-
-/** One catalog entry on skills.sh (skills market). */
-export interface MarketSkill {
-  source: string;
-  skill_id: string;
-  name: string;
-  installs: number;
-  is_official: boolean;
-  url: string;
 }
 
 export interface LayoutPreset {

@@ -8,12 +8,12 @@
  *   4. Detailed all-time totals (7d / 30d / 365d, streaks, averages, best day)
  *   5. 365-day contribution heatmap (month + weekday labels, legend, tooltips)
  *   6. Projects, languages and auto-generated insights
- *   7. Tools & settings: security audit, export/share, Discord & privacy
+ *   7. Tools & settings: security audit, export/share, privacy
  *
  * All numbers come from the local telemetry backend (`telemetry_dashboard` +
  * `telemetry_insights`); period totals, streaks and the language split are
  * derived on the client from the heatmap/project data. Charts are inline SVG —
- * no extra chart dependency. The background sampling/Discord driver runs at the
+ * no extra chart dependency. The background sampling driver runs at the
  * app root (see App.tsx), so this panel is now purely a viewer.
  */
 
@@ -29,7 +29,6 @@ import {
   FolderGit2,
   Lightbulb,
   RefreshCw,
-  Send,
   Share2,
   Shield,
   Star,
@@ -44,28 +43,18 @@ import { t, useT } from "@/lib/i18n";
 import { schedulePoll } from "@/lib/poll";
 import {
   auditRun,
-  DEFAULT_DISCORD_TEMPLATES,
-  discordApplySettings,
-  discordStatus,
   fmtDuration,
   getTelemetryPrefs,
-  loadDiscordSettings,
-  saveDiscordSettings,
   setTelemetryPrefs,
   telemetryDashboard,
   telemetryExport,
   telemetryExportCsv,
   telemetryExportWakatime,
   telemetryInsights,
-  telemetrySetMasking,
   telemetryShareableCard,
   telemetryWipe,
   telemetryYearCard,
-  webhookSendDigest,
   type DashboardSnapshot,
-  type DiscordSettings,
-  type DiscordStatus,
-  type DiscordTemplates,
   type HeatCell,
   type InsightsReport,
   type ProjectTime,
@@ -88,8 +77,6 @@ const AGENT_COLORS = [
 export function AnalyticsPanel() {
   const [data, setData] = useState<DashboardSnapshot | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [settings, setSettings] = useState<DiscordSettings>(loadDiscordSettings);
-  const [status, setStatus] = useState<DiscordStatus | null>(null);
   const [insights, setInsights] = useState<InsightsReport | null>(null);
 
   const refresh = useCallback(async () => {
@@ -101,18 +88,13 @@ export function AnalyticsPanel() {
       setError(String(e));
     }
     try {
-      setStatus(await discordStatus());
-    } catch {
-      /* discord status optional */
-    }
-    try {
       setInsights(await telemetryInsights());
     } catch {
       /* insights optional */
     }
   }, []);
 
-  // The background sampling + Discord driver now runs app-wide (App.tsx); this
+  // The background sampling driver runs app-wide (App.tsx); this
   // panel only polls the read-only dashboard so the numbers stay fresh while
   // it's open.
   useEffect(
@@ -122,19 +104,6 @@ export function AnalyticsPanel() {
     [refresh],
   );
 
-  const applySettings = useCallback(async (next: DiscordSettings) => {
-    setSettings(next);
-    // Persist first so the choice survives restarts even if the backend call
-    // below fails (it is re-applied at next driver start).
-    saveDiscordSettings(next);
-    try {
-      setStatus(await discordApplySettings(next));
-      await telemetrySetMasking(next.mask_projects);
-    } catch {
-      /* keep optimistic state */
-    }
-  }, []);
-
   if (error && !data) {
     return (
       <div className="h-full overflow-auto bg-surface text-strong">
@@ -142,8 +111,8 @@ export function AnalyticsPanel() {
           <div className="rounded-md border border-edge bg-surface/50 p-3 text-sm text-danger">
             {t("Failed to load analytics")}: {error}
           </div>
-          <Card title={t("Discord & Privacy")} icon={<Bot size={13} />}>
-            <DiscordPrivacy settings={settings} status={status} onChange={applySettings} />
+          <Card title={t("Privacy")} icon={<Shield size={13} />}>
+            <PrivacyControls />
           </Card>
         </div>
       </div>
@@ -174,8 +143,8 @@ export function AnalyticsPanel() {
           </button>
         </header>
 
-        {/* All read-only stats live in a memoized subtree so editing Discord
-            settings / typing in the blacklist below never recomputes the derived
+        {/* All read-only stats live in a memoized subtree so toggling the
+            privacy switches below never recomputes the derived
             metrics or re-renders the 365-cell heatmap. */}
         <AnalyticsDashboard data={data} insights={insights} />
 
@@ -185,8 +154,8 @@ export function AnalyticsPanel() {
           <AuditRunner onDone={() => void refresh()} />
         </Card>
 
-        <Card title={t("Discord & Privacy")} icon={<Bot size={13} />}>
-          <DiscordPrivacy settings={settings} status={status} onChange={applySettings} />
+        <Card title={t("Privacy")} icon={<Shield size={13} />}>
+          <PrivacyControls />
         </Card>
 
         <ExportShare />
@@ -977,8 +946,7 @@ function SeverityBadge({
 }
 
 /** Runs a static audit of the active project. The backend bumps the audit
- * counters and raises a critical Discord status when critical issues are found,
- * so this is the concrete producer for those features. */
+ * counters, so this is the concrete producer for those features. */
 function AuditRunner({ onDone }: { onDone: () => void }) {
   const projects = useProjectsStore((s) => s.projects);
   const activeId = useProjectsStore((s) => s.activeId);
@@ -1086,12 +1054,6 @@ function downloadBlob(name: string, content: string, mime: string) {
 }
 
 function ExportShare() {
-  const [slack, setSlack] = useState("");
-  const [tgToken, setTgToken] = useState("");
-  const [tgChat, setTgChat] = useState("");
-  const [sending, setSending] = useState(false);
-  const [sent, setSent] = useState<string | null>(null);
-
   const exportCsv = async () => {
     try {
       downloadBlob("luxor-stats.csv", await telemetryExportCsv(90), "text/csv");
@@ -1129,25 +1091,7 @@ function ExportShare() {
       /* ignore */
     }
   };
-  const sendDigest = async () => {
-    setSending(true);
-    setSent(null);
-    try {
-      await webhookSendDigest({
-        slack_url: slack || null,
-        telegram_token: tgToken || null,
-        telegram_chat: tgChat || null,
-      });
-      setSent(t("Digest sent"));
-    } catch (e) {
-      setSent(`Error: ${String(e)}`);
-    } finally {
-      setSending(false);
-    }
-  };
-
   const btn = "flex items-center gap-1.5 rounded-md border border-edge px-3 py-1.5 text-sm text-strong hover:bg-raised";
-  const statusTone = sent?.startsWith("Error:") ? "text-danger" : "text-muted";
 
   return (
     <details className="group rounded-xl border border-edge bg-bar/35 p-3 text-sm">
@@ -1182,50 +1126,12 @@ function ExportShare() {
           </button>
         </div>
 
-        <div className="flex flex-col gap-2 border-t border-edge pt-3">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
-            {t("Send weekly digest to a webhook")}
-          </span>
-          <p className="text-xs text-muted">
-            {t("Optional: provide Slack, or Telegram token plus chat ID. Leave this collapsed if you only need local exports.")}
-          </p>
-          <input
-            value={slack}
-            onChange={(e) => setSlack(e.target.value)}
-            placeholder={t("Slack incoming webhook URL")}
-            className="rounded-md border border-edge bg-surface px-2 py-1 text-sm"
-          />
-          <div className="flex flex-col gap-2 @lg:flex-row">
-            <input
-              value={tgToken}
-              onChange={(e) => setTgToken(e.target.value)}
-              placeholder={t("Telegram bot token")}
-              className="w-full rounded-md border border-edge bg-surface px-2 py-1 font-mono text-sm"
-            />
-            <input
-              value={tgChat}
-              onChange={(e) => setTgChat(e.target.value)}
-              placeholder={t("Telegram chat ID")}
-              className="w-full rounded-md border border-edge bg-surface px-2 py-1 font-mono text-sm @lg:w-40"
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => void sendDigest()}
-              disabled={sending || (!slack.trim() && !(tgToken.trim() && tgChat.trim()))}
-              className="flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm text-on-accent hover:opacity-90 disabled:opacity-40"
-            >
-              <Send size={14} /> {sending ? t("Sending…") : t("Send digest now")}
-            </button>
-            {sent && <span className={`text-xs ${statusTone}`}>{sent}</span>}
-          </div>
-        </div>
       </div>
     </details>
   );
 }
 
-// ---- discord & privacy --------------------------------------------------
+// ---- privacy --------------------------------------------------
 
 function Toggle({
   label,
@@ -1255,50 +1161,7 @@ function Toggle({
   );
 }
 
-/** Grouped text inputs for one Discord activity frame's templates. */
-function TemplateGroup({
-  title,
-  fields,
-  templates,
-  onChange,
-}: {
-  title: string;
-  fields: [keyof DiscordTemplates, string][];
-  templates: DiscordTemplates;
-  onChange: (t: DiscordTemplates) => void;
-}) {
-  return (
-    <fieldset className="flex flex-col gap-1.5 rounded-md border border-edge/60 p-2">
-      <legend className="px-1 text-xs font-medium text-strong">{title}</legend>
-      {fields.map(([key, label]) => (
-        <label key={key} className="flex flex-col gap-0.5 text-xs text-muted">
-          <span>{label}</span>
-          <input
-            type="text"
-            value={templates[key]}
-            maxLength={128}
-            placeholder={DEFAULT_DISCORD_TEMPLATES[key]}
-            onChange={(e) => onChange({ ...templates, [key]: e.target.value })}
-            className="rounded-md border border-edge bg-surface px-2 py-1 text-sm text-strong"
-          />
-        </label>
-      ))}
-    </fieldset>
-  );
-}
-
-function DiscordPrivacy({
-  settings,
-  status,
-  onChange,
-}: {
-  settings: DiscordSettings;
-  status: DiscordStatus | null;
-  onChange: (s: DiscordSettings) => void;
-}) {
-  const set = <K extends keyof DiscordSettings>(key: K, value: DiscordSettings[K]) =>
-    onChange({ ...settings, [key]: value });
-
+function PrivacyControls() {
   // Local telemetry collection switches (Paranoid Mode / collection toggle).
   const [prefs, setPrefs] = useState(getTelemetryPrefs);
   const updatePrefs = (next: typeof prefs) => {
@@ -1330,14 +1193,6 @@ function DiscordPrivacy({
     }
   };
 
-  const statusLabel = status?.connected
-    ? t("Discord activity active")
-    : status?.ipc_connected
-      ? t("Discord IPC connected — waiting for activity send")
-      : status?.enabled
-        ? t("Discord enabled — waiting for client")
-        : t("Discord Rich Presence off");
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-2 rounded-md border border-edge bg-bar/40 p-3">
@@ -1347,7 +1202,7 @@ function DiscordPrivacy({
           onChange={(v) => updatePrefs({ ...prefs, collect: v, paranoid: v ? false : prefs.paranoid })}
         />
         <Toggle
-          label={t("Paranoid Mode (stop all tracking & Discord)")}
+          label={t("Paranoid Mode (stop all tracking)")}
           checked={prefs.paranoid}
           onChange={(v) => updatePrefs({ ...prefs, paranoid: v, collect: v ? false : prefs.collect })}
         />
@@ -1356,163 +1211,11 @@ function DiscordPrivacy({
         </p>
       </div>
 
-      <div className="flex items-center gap-2 rounded-md border border-edge bg-surface/50 px-3 py-2 text-xs">
-        <span
-          className={`h-2 w-2 rounded-full ${
-            status?.connected ? "bg-success" : status?.enabled ? "bg-warning" : "bg-muted"
-          }`}
-          style={status?.ipc_connected && !status.connected ? { background: "var(--lx-info)" } : undefined}
-        />
-        <span className="text-strong">{statusLabel}</span>
-        {status?.enabled && !status.connected && (
-          <span className="ml-auto text-muted">
-            {status.ipc_connected
-              ? t("Activity will appear after the next telemetry tick.")
-              : status.reconnect_in_ms
-                ? `${t("Retrying Discord connection in")} ${Math.max(1, Math.ceil(status.reconnect_in_ms / 1000))}s`
-                : t("Is Discord, Vesktop or another RPC-compatible client running?")}
-          </span>
-        )}
-      </div>
-      {status?.enabled && !status.connected && status.last_error && (
-        <p className="rounded-md border border-edge bg-surface/50 px-3 py-2 text-xs text-danger">
-          {t("Last error")}: {status.last_error}
-        </p>
-      )}
-      {settings.enabled && (prefs.paranoid || !prefs.collect) && (
-        <p className="rounded-md border border-edge bg-surface/50 px-3 py-2 text-xs text-warning">
-          {t("Rich Presence is paused while activity collection is off or Paranoid Mode is on.")}
-        </p>
-      )}
-
       <Toggle
-        label={t("Enable Discord Rich Presence")}
-        checked={settings.enabled}
-        onChange={(v) => set("enabled", v)}
+        label={t("Mask private project names")}
+        checked={prefs.mask_projects}
+        onChange={(v) => updatePrefs({ ...prefs, mask_projects: v })}
       />
-
-      <div className="grid grid-cols-1 gap-2 @lg:grid-cols-2">
-        <Toggle label={t("Show project name")} checked={settings.show_project} onChange={(v) => set("show_project", v)} />
-        <Toggle label={t("Show git branch")} checked={settings.show_branch} onChange={(v) => set("show_branch", v)} />
-        <Toggle label={t("Show AI status")} checked={settings.show_agent} onChange={(v) => set("show_agent", v)} />
-        <Toggle label={t("Show audit results")} checked={settings.show_audit} onChange={(v) => set("show_audit", v)} />
-      </div>
-
-      <label className="flex flex-col gap-1 text-sm text-strong">
-        <span className="flex items-center justify-between">
-          <span>{t("Status rotation speed")}</span>
-          <span className="tabular-nums text-muted">{settings.rotate_seconds}s</span>
-        </span>
-        <input
-          type="range"
-          min={5}
-          max={30}
-          value={settings.rotate_seconds}
-          onChange={(e) => set("rotate_seconds", Number(e.target.value))}
-          className="accent-accent"
-        />
-      </label>
-
-      <details className="rounded-md border border-edge bg-bar/40 p-3">
-        <summary className="cursor-pointer text-sm text-strong">
-          {t("Customize status texts")}
-        </summary>
-        <div className="mt-3 flex flex-col gap-3">
-          <p className="text-xs text-muted">
-            {t(
-              "Customize the text of each Discord activity. Placeholders: {project}, {branch}, {agent}, {session}, {lines}, {issues}. Empty fields reset to defaults.",
-            )}
-          </p>
-          <TemplateGroup
-            title={t("Idle")}
-            fields={[
-              ["idle_details", t("Top line")],
-              ["idle_state", t("Bottom line")],
-            ]}
-            templates={settings.templates}
-            onChange={(tpl) => set("templates", tpl)}
-          />
-          <TemplateGroup
-            title={t("Project frame")}
-            fields={[
-              ["project_details", t("Top line")],
-              ["project_state", t("Bottom line (branch)")],
-            ]}
-            templates={settings.templates}
-            onChange={(tpl) => set("templates", tpl)}
-          />
-          <TemplateGroup
-            title={t("AI frame")}
-            fields={[
-              ["agent_details", t("Top line")],
-              ["agent_state", t("Bottom line")],
-            ]}
-            templates={settings.templates}
-            onChange={(tpl) => set("templates", tpl)}
-          />
-          <TemplateGroup
-            title={t("Audit frame")}
-            fields={[
-              ["audit_details", t("Top line")],
-              ["audit_state_ok", t("Bottom line (no issues)")],
-              ["audit_state_issues", t("Bottom line (issues found)")],
-            ]}
-            templates={settings.templates}
-            onChange={(tpl) => set("templates", tpl)}
-          />
-          <TemplateGroup
-            title={t("Fallback (nothing else to show)")}
-            fields={[
-              ["fallback_details", t("Top line")],
-              ["fallback_state", t("Bottom line")],
-            ]}
-            templates={settings.templates}
-            onChange={(tpl) => set("templates", tpl)}
-          />
-          <button
-            onClick={() => set("templates", { ...DEFAULT_DISCORD_TEMPLATES })}
-            className="self-start rounded-md border border-edge px-3 py-1.5 text-sm text-strong hover:bg-raised"
-          >
-            {t("Reset texts to defaults")}
-          </button>
-        </div>
-      </details>
-
-      <Toggle
-        label={t("Mask private project & file names")}
-        checked={settings.mask_projects}
-        onChange={(v) => set("mask_projects", v)}
-      />
-
-      <label className="flex flex-col gap-1 text-sm text-strong">
-        <span>{t("Privacy blacklist (comma-separated, e.g. *work*, *nda*)")}</span>
-        <input
-          type="text"
-          value={settings.blacklist.join(", ")}
-          onChange={(e) =>
-            set(
-              "blacklist",
-              e.target.value
-                .split(",")
-                .map((s) => s.trim())
-                .filter(Boolean),
-            )
-          }
-          placeholder="*work*, *nda*"
-          className="rounded-md border border-edge bg-surface px-2 py-1 text-sm"
-        />
-      </label>
-
-      <label className="flex flex-col gap-1 text-sm text-strong">
-        <span>{t("Discord application (client) ID")}</span>
-        <input
-          type="text"
-          value={settings.client_id}
-          onChange={(e) => set("client_id", e.target.value)}
-          placeholder="123456789012345678"
-          className="rounded-md border border-edge bg-surface px-2 py-1 font-mono text-sm"
-        />
-      </label>
 
       <p className="rounded-md border border-edge bg-bar/60 px-3 py-2 text-xs text-muted">
         🔒 {t("All statistics are stored locally in local_stats.db and are NEVER sent to any server.")}

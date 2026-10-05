@@ -1,3 +1,4 @@
+import { reportError } from "@/lib/reportError";
 import {
   AlignCenter,
   AlignLeft,
@@ -192,16 +193,28 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
   const tabEdges = useScrollEdges(tabStripRef, vertical ? "y" : "x", [vertical, projects.length]);
 
 
-  // Keep browser-style keyboard navigation visible: when Ctrl+Tab changes the
-  // active project, scroll that tab into view instead of leaving focus hidden in
-  // an overflowed strip.
+  // Keep the active tab visible: on Ctrl+Tab / a new tab, and again whenever the
+  // strip itself changes size. Shrinking the window (or growing the nav
+  // cluster) used to leave the active tab scrolled out of an overflowed strip.
   useEffect(() => {
     const strip = tabStripRef.current;
     if (!strip || !activeId) return;
-    strip
-      .querySelector<HTMLElement>(`[data-project-id="${CSS.escape(activeId)}"]`)
-      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [activeId, vertical]);
+    const reveal = () =>
+      strip
+        .querySelector<HTMLElement>(`[data-project-id="${CSS.escape(activeId)}"]`)
+        ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    reveal();
+    let raf = 0;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(reveal);
+    });
+    ro.observe(strip);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
+  }, [activeId, vertical, projects.length]);
 
   // Refresh the "Recent projects" list every time the add-menu opens.
   useEffect(() => {
@@ -732,7 +745,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
             {
               label: t("Reveal in file manager"),
               icon: FolderOpen,
-              onClick: () => void ipc.launcherOpenFileManager(project.path).catch(() => {}),
+              onClick: () => void ipc.launcherOpenFileManager(project.path).catch(reportError(t("Open in file manager"))),
             },
             {
               label: t("Copy project path"),

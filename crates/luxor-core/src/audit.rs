@@ -5,7 +5,7 @@
 //! hard-coded secrets, private-key blobs, `unsafe` Rust, panic-prone
 //! `unwrap()/expect()`, dangerous JS (`eval`, `dangerouslySetInnerHTML`) and
 //! tech-debt markers (`TODO/FIXME`). It returns severity-bucketed findings the
-//! UI and Discord presence (audit frame) consume, and feeds the audit counters
+//! UI consumes, and feeds the audit counters
 //! (`audits_run`, `issues_fixed`) and the `purity_keeper` achievement.
 //!
 //! It is intentionally heuristic and offline — no network, no LLM — so it fits

@@ -92,6 +92,7 @@ import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
 import * as ipcExtra from "@/lib/ipc";
 import type { UpdateInfo } from "@/lib/types";
 import { TERMINAL_RESTORE_KEY, isRestoreEnabled, purgeTerminalStates } from "@/lib/terminalState";
+import { DEFAULT_UPDATE_REPO, updateRepo } from "@/lib/updates";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
 
@@ -243,7 +244,7 @@ const SECTION_KEYWORDS: Record<SectionId, string> = {
   launcher: "ide editor custom default detect explorer system open with",
   statusbar: "status bar segments cpu ram network ping project order clock time zoom tasks",
   hotkeys: "keyboard shortcuts keybindings chord",
-    developer: "developer dev logs log panel frontend.log diagnostics share copy export clear startup timing performance first paint errors freeze console troubleshoot bug report diagnostics tab discord rpc health checks devtools",
+    developer: "developer dev logs log panel frontend.log diagnostics share copy export clear startup timing performance first paint errors freeze console troubleshoot bug report diagnostics tab health checks devtools",
   about: "about version author adxptived github repository update check release changelog license credits",
 };
 
@@ -1257,7 +1258,7 @@ export function SettingsModal() {
                   <input
                     value={draft.ui.update_repo ?? ""}
                     onChange={(e) => set({ ui: { ...draft.ui, update_repo: e.target.value.trim() } })}
-                    placeholder="owner/repo"
+                    placeholder={DEFAULT_UPDATE_REPO}
                     className="w-48 rounded border border-edge bg-raised px-2 py-1 text-strong outline-none focus:border-muted"
                   />
                 </Row>
@@ -2278,7 +2279,7 @@ export function SettingsModal() {
               <>
                 <Row
                   label={t("settings.diagnostics_tab", "Diagnostics tab in Dev Tools")}
-                  help={t("settings.diagnostics_tab_help", "Adds a Diagnostics tab with read-only health checks (Discord RPC, IPC, Git, Docker and more). Off by default.")}
+                  help={t("settings.diagnostics_tab_help", "Adds a Diagnostics tab with read-only health checks (IPC, Git, Docker and more). Off by default.")}
                 >
                   <Toggle
                     checked={draft.ui.diagnostics_tab ?? false}
@@ -2356,7 +2357,7 @@ export function SettingsModal() {
                       onChange={(v) => set({ ui: { ...draft.ui, update_check: v } })}
                     />
                   </div>
-                  <UpdateCheckButton repo={draft.ui.update_repo || "adxptived/luxor"} />
+                  <UpdateCheckButton repo={updateRepo(draft)} />
                 </div>
 
                 <p className="mt-4 text-center text-xs text-muted">

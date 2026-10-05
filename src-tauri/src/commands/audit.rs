@@ -2,8 +2,7 @@
 //!
 //! Runs [`luxor_core::audit::run_audit`] over a project and is the concrete
 //! *producer* for the audit telemetry counters (`audits_run`, `issues_fixed`
-//! → `purity_keeper` achievement) and the Critical Discord status (Priority 1,
-//! plan 4.2). The filesystem walk runs without holding any lock; the short
+//! → `purity_keeper` achievement). The filesystem walk runs without holding any lock; the short
 //! state updates happen afterwards.
 
 use luxor_core::audit::{self, AuditReport};
@@ -12,8 +11,7 @@ use tauri::State;
 
 use crate::state::AppState;
 
-/// Run a static audit of `project_path`, update audit counters, and raise a
-/// critical Discord status when critical issues are present.
+/// Run a static audit of `project_path` and update the audit counters.
 #[tauri::command(async)]
 pub fn audit_run(state: State<'_, AppState>, project_path: String) -> Result<AuditReport, Error> {
     // 1) Scan the tree (no locks held during IO).
@@ -41,18 +39,6 @@ pub fn audit_run(state: State<'_, AppState>, project_path: String) -> Result<Aud
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         store.bump_audit(1, fixed)?;
-    }
-
-    // 4) A critical finding interrupts the Discord carousel immediately.
-    if report.critical > 0 {
-        let mut engine = state
-            .discord
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        engine.push_critical(
-            format!("🛡️ Аудит: {} критических", report.critical),
-            Some(format!("🐞 {} проблем", actionable)),
-        );
     }
 
     Ok(report)

@@ -1,7 +1,6 @@
 /**
- * Typed bridge to the local activity-telemetry & Discord-RPC backend
- * (`luxor_core::telemetry` / `luxor_core::discord`). See
- * `plans/luxor_discord_rpc_plan.md`.
+ * Typed bridge to the local activity-telemetry backend
+ * (`luxor_core::telemetry`). Everything stays on this machine.
  *
  * Field names are snake_case to match the Rust serde payloads verbatim.
  *
@@ -76,175 +75,6 @@ export interface SampleInput {
   branch?: string | null;
   is_focused?: boolean;
   duration_seconds: number;
-}
-
-export interface PresenceButton {
-  label: string;
-  url: string;
-}
-
-/**
- * User-customizable text for every activity frame. Placeholders `{project}`,
- * `{branch}`, `{agent}`, `{session}`, `{lines}`, `{issues}` are substituted
- * by the Rust engine at render time; empty fields fall back to the defaults.
- */
-export interface DiscordTemplates {
-  idle_details: string;
-  idle_state: string;
-  fallback_details: string;
-  fallback_state: string;
-  project_details: string;
-  project_state: string;
-  agent_details: string;
-  agent_state: string;
-  audit_details: string;
-  audit_state_ok: string;
-  audit_state_issues: string;
-}
-
-export const DEFAULT_DISCORD_TEMPLATES: DiscordTemplates = {
-  idle_details: "Idle",
-  idle_state: "Taking a break",
-  fallback_details: "Working in Luxor",
-  fallback_state: "Session: {session}",
-  project_details: "Working on {project}",
-  project_state: "On branch {branch}",
-  agent_details: "Pair programming with {agent}",
-  agent_state: "Session: {session}",
-  audit_details: "Scanned {lines}",
-  audit_state_ok: "No issues found",
-  audit_state_issues: "{issues} issues found",
-};
-
-export interface DiscordSettings {
-  enabled: boolean;
-  rotate_seconds: number;
-  show_project: boolean;
-  show_branch: boolean;
-  show_agent: boolean;
-  show_audit: boolean;
-  mask_projects: boolean;
-  blacklist: string[];
-  client_id: string;
-  buttons: PresenceButton[];
-  templates: DiscordTemplates;
-}
-
-export interface DiscordStatus {
-  enabled: boolean;
-  /** True after a recent SET_ACTIVITY frame was actually sent. */
-  connected: boolean;
-  /** Raw Discord IPC socket/pipe state for diagnostics. */
-  ipc_connected?: boolean;
-  /** Most recent transport error (pipe not found, handshake rejected, …). */
-  last_error?: string | null;
-  /** Remaining reconnect backoff while the IPC transport retries. */
-  reconnect_in_ms?: number | null;
-}
-
-export interface PresenceInput {
-  project_name?: string | null;
-  branch?: string | null;
-  language?: string | null;
-  language_asset?: string | null;
-  agent?: string | null;
-  agent_asset?: string | null;
-  session_seconds: number;
-  session_start_unix?: number | null;
-  lines_scanned?: number | null;
-  open_issues?: number | null;
-  /** User is AFK/idle — the backend shows a dedicated idle frame. */
-  idle?: boolean;
-  /** Unix seconds when the idle period started (elapsed timer on the frame). */
-  idle_since_unix?: number | null;
-}
-
-export interface Presence {
-  details: string | null;
-  state: string | null;
-  start_timestamp: number | null;
-  large_image: string | null;
-  large_text: string | null;
-  small_image: string | null;
-  small_text: string | null;
-  buttons: PresenceButton[];
-}
-
-export const DEFAULT_DISCORD_SETTINGS: DiscordSettings = {
-  // Always-on out of the box: presence shows while the app is open without a
-  // trip to the Analytics panel first. Users can still turn it off there.
-  enabled: true,
-  rotate_seconds: 12,
-  show_project: true,
-  show_branch: true,
-  show_agent: true,
-  show_audit: true,
-  mask_projects: false,
-  blacklist: [],
-  client_id: "1519063576348721203",
-  buttons: [],
-  templates: { ...DEFAULT_DISCORD_TEMPLATES },
-};
-
-// ---- discord settings persistence ---------------------------------------
-//
-// Bug fix: settings previously lived only in AnalyticsPanel local state, so
-// after every app restart the Rust engine sat at its `enabled: false` default
-// until the user happened to open the Analytics panel — i.e. Discord RPC
-// "didn't work". They are now persisted here and re-applied once when the
-// background telemetry driver starts.
-const DISCORD_SETTINGS_KEY = "luxor.discord.settings";
-
-export function loadDiscordSettings(): DiscordSettings {
-  try {
-    if (typeof localStorage !== "undefined") {
-      const raw = localStorage.getItem(DISCORD_SETTINGS_KEY);
-      if (raw) {
-        const stored = JSON.parse(raw) as Partial<DiscordSettings>;
-        return {
-          ...DEFAULT_DISCORD_SETTINGS,
-          ...stored,
-          // Deep-merge templates: settings persisted before this field existed
-          // (or with a partial set) must still yield every template.
-          templates: { ...DEFAULT_DISCORD_TEMPLATES, ...(stored.templates ?? {}) },
-        };
-      }
-    }
-  } catch {
-    /* ignore malformed storage */
-  }
-  return { ...DEFAULT_DISCORD_SETTINGS, templates: { ...DEFAULT_DISCORD_TEMPLATES } };
-}
-
-export function saveDiscordSettings(settings: DiscordSettings): void {
-  try {
-    if (typeof localStorage !== "undefined") {
-      localStorage.setItem(DISCORD_SETTINGS_KEY, JSON.stringify(settings));
-    }
-  } catch {
-    /* ignore quota/private-mode errors */
-  }
-}
-
-/**
- * Push the persisted Discord settings into the backend engine. Called once at
- * driver start (App.tsx) so RPC works right after launch without opening the
- * Analytics panel.
- */
-export async function bootstrapDiscordSettings(): Promise<void> {
-  if (!isTauri) return;
-  const settings = loadDiscordSettings();
-  // Tauri setup and the webview can race during cold start. Retry briefly so
-  // RPC does not depend on the user opening the Analytics panel afterward.
-  for (const delayMs of [0, 250, 750]) {
-    if (delayMs) await new Promise((resolve) => setTimeout(resolve, delayMs));
-    try {
-      await discordApplySettings(settings);
-      return;
-    } catch {
-      /* retry while the backend finishes initializing */
-    }
-  }
 }
 
 export interface Insight {
@@ -352,7 +182,7 @@ export interface AuditReport {
 }
 
 /** Run a static audit of a project; also bumps audit counters and raises a
- * critical Discord status on critical findings (plan 1.3 / 4.2). */
+ * counters on every run (plan 1.3). */
 export const auditRun = (projectPath: string) =>
   invoke<AuditReport>("audit_run", { projectPath });
 
@@ -382,60 +212,21 @@ export function aiAgentFromTitle(title: string | null): string | null {
   ];
   return hints.find(([k]) => t.includes(k))?.[1] ?? null;
 }
-export const webhookSendDigest = (opts: {
-  slack_url?: string | null;
-  telegram_token?: string | null;
-  telegram_chat?: string | null;
-}) =>
-  invoke<void>("webhook_send_digest", {
-    slackUrl: opts.slack_url ?? null,
-    telegramToken: opts.telegram_token ?? null,
-    telegramChat: opts.telegram_chat ?? null,
-  });
-
-// ---- discord API --------------------------------------------------------
-
-export const discordStatus = () => invoke<DiscordStatus>("discord_status");
-export const discordApplySettings = (settings: DiscordSettings) =>
-  invoke<DiscordStatus>("discord_apply_settings", { settings });
-export const discordUpdate = (context: PresenceInput) =>
-  invoke<Presence | null>("discord_update", { context });
-export const discordPushEvent = (
-  details: string,
-  label?: string,
-  priority?: "critical" | "action" | "background",
-  holdSeconds?: number,
-) =>
-  invoke<void>("discord_push_event", {
-    details,
-    label: label ?? null,
-    priority: priority ?? null,
-    holdSeconds: holdSeconds ?? null,
-  });
-export const discordClear = () => invoke<void>("discord_clear");
-
 // ---- always-on background driver ---------------------------------------
 //
 // Drives sampling on a fixed cadence: reports what the user is doing (active
-// project, AI agent, focus) so the backend records an atomic interval, then
-// pushes the current activity context to Discord. Window focus gates "idle"
-// (plan part 9.2). Zero-overhead: one timer, defensive try/catch.
+// project, AI agent, focus) so the backend records an atomic interval. Window
+// focus gates "idle" (plan part 9.2). Zero-overhead: one timer, defensive
+// try/catch.
 
 let driverTimer: ReturnType<typeof setTimeout> | null = null;
 let driverRunning = false;
 let sessionSeconds = 0;
 let idleSeconds = 0;
-// Two cadences, deliberately split for cost. Discord enforces a 15 s minimum
-// between presence updates and the carousel advances one frame per push, so
-// presence is pushed every 15 s to keep the rotation smooth. But the expensive
-// work — scanning the process tree, reading the git branch, OS idle/active-
-// window probes and the SQLite write — only needs the slower telemetry cadence,
-// so it's throttled to every 2nd tick (30 s). Result: the always-on driver does
-// heavy I/O at 30 s and only a tiny cached presence push in between, instead of
-// running every sampler on every tick.
-const PRESENCE_POLL_SECONDS = 15;
+// One sampling cadence. Every tick scans the process tree, reads the git
+// branch, probes OS idle / the active window and writes SQLite, so it is kept
+// slow (30 s) and chained (a tick finishes before the next is scheduled).
 const SAMPLE_POLL_SECONDS = 30;
-const TICKS_PER_SAMPLE = Math.max(1, Math.round(SAMPLE_POLL_SECONDS / PRESENCE_POLL_SECONDS));
 /** A session is closed only after this much idle (matches the Rust
  * `SESSION_GAP_SECONDS` = 30 min) — a single idle blip must not reset it. */
 const SESSION_GAP_SECONDS = 30 * 60;
@@ -450,9 +241,7 @@ export const AFK_THRESHOLD_SECONDS = 300;
  * `CGEventSourceSecondsSinceLastEventType` on macOS) is the authority: Luxor is
  * a cockpit, so the user spends most of their time typing in an external
  * editor, a terminal or the AI agent's own window, and the app frequently sits
- * in the tray. Requiring `document.hasFocus()` classified all of that as idle,
- * which replaced the whole Discord carousel with the single "Idle" frame and
- * recorded every interval as idle time.
+ * in the tray. Requiring `document.hasFocus()` classified all of that as idle time.
  *
  * Window focus is only the fallback for platforms without an idle counter
  * (Linux returns `null`).
@@ -464,8 +253,8 @@ export function isUserActive(args: { focused: boolean; osIdleSeconds: number | n
 
 /**
  * Translate "is the user active + which AI agent is running" into the activity
- * category recorded by telemetry and rendered by Discord. An agent detected
- * just before the user walked away must never leak into an idle presence.
+ * category recorded by telemetry. An agent detected just before the user
+ * walked away must never be credited to an idle interval.
  */
 export function classifyActivity(args: {
   focused: boolean;
@@ -488,22 +277,31 @@ const TELEMETRY_PREFS_KEY = "luxor.telemetry.prefs";
 export interface TelemetryPrefs {
   /** Master switch for local activity collection (plan 5.5). */
   collect: boolean;
-  /** Paranoid / Ghost Mode — disables all collection *and* RPC (plan 5.1). */
+  /** Paranoid / Ghost Mode — disables all collection (plan 5.1). */
   paranoid: boolean;
+  /** Store project names/paths hashed instead of readable (plan 5.3). */
+  mask_projects: boolean;
 }
 
 let prefs: TelemetryPrefs = loadTelemetryPrefs();
 
 function loadTelemetryPrefs(): TelemetryPrefs {
+  const defaults: TelemetryPrefs = { collect: true, paranoid: false, mask_projects: false };
   try {
     if (typeof localStorage !== "undefined") {
       const raw = localStorage.getItem(TELEMETRY_PREFS_KEY);
-      if (raw) return { collect: true, paranoid: false, ...JSON.parse(raw) };
+      if (raw) return { ...defaults, ...JSON.parse(raw) };
+      // Masking used to live in the (removed) Discord settings; keep the choice.
+      const legacy = localStorage.getItem("luxor.discord.settings");
+      if (legacy) {
+        const old = JSON.parse(legacy) as { mask_projects?: boolean };
+        if (old.mask_projects === true) return { ...defaults, mask_projects: true };
+      }
     }
   } catch {
     /* ignore malformed storage */
   }
-  return { collect: true, paranoid: false };
+  return defaults;
 }
 
 export function getTelemetryPrefs(): TelemetryPrefs {
@@ -511,6 +309,7 @@ export function getTelemetryPrefs(): TelemetryPrefs {
 }
 
 export function setTelemetryPrefs(next: TelemetryPrefs): void {
+  const maskChanged = next.mask_projects !== prefs.mask_projects;
   prefs = { ...next };
   // Paranoid Mode is the stronger switch: enabling it must make the collection
   // toggle visibly and semantically off instead of leaving a contradictory
@@ -523,49 +322,16 @@ export function setTelemetryPrefs(next: TelemetryPrefs): void {
   } catch {
     /* ignore */
   }
-  // Turning collection off / enabling Paranoid Mode must also drop any live
-  // Discord presence immediately.
-  if (!prefs.collect || prefs.paranoid) {
-    void discordClear().catch(() => {});
-  }
-}
-
-/**
- * Pure builder for the Discord presence context pushed to the backend each
- * sample. Exported for unit tests — this is where "what the user is doing"
- * (coding / AI pair-programming / idle) is translated into presence fields.
- */
-export function buildPresenceInput(args: {
-  projectName: string | null;
-  branch: string | null;
-  agent: string | null;
-  category: SampleInput["category"];
-  sessionSeconds: number;
-  idleSeconds: number;
-  nowUnix: number;
-}): PresenceInput {
-  const idle = args.category === "idle";
-  return {
-    project_name: args.projectName,
-    branch: args.branch,
-    agent: idle ? null : args.agent,
-    session_seconds: args.sessionSeconds,
-    session_start_unix: args.nowUnix - args.sessionSeconds,
-    idle,
-    idle_since_unix: idle ? args.nowUnix - args.idleSeconds : null,
-  };
+  if (maskChanged) void telemetrySetMasking(prefs.mask_projects).catch(() => {});
 }
 
 export function startTelemetryDriver(): () => void {
   if (driverTimer || !isTauri) return () => {};
-  let tickIndex = 0;
-  // Last presence context, re-pushed on the in-between ticks so the Discord
-  // carousel keeps rotating without re-running the heavy samplers.
-  let lastPresence: PresenceInput | null = null;
+  // The backend keeps masking in memory only: re-apply the saved choice.
+  void telemetrySetMasking(prefs.mask_projects).catch(() => {});
 
-  // Heavy path (slow cadence): sample what the user is doing, record one atomic
-  // interval and refresh the cached Discord context. This is the only place that
-  // touches the process sampler, git, OS probes and the DB.
+  // Sample what the user is doing and record one atomic interval. This is the
+  // only place that touches the process sampler, git, OS probes and the DB.
   const sample = async (): Promise<void> => {
     const focused = typeof document !== "undefined" ? document.hasFocus() : true;
     const { projects, activeId } = useProjectsStore.getState();
@@ -619,7 +385,7 @@ export function startTelemetryDriver(): () => void {
     // Resolve the current git branch for the active project (plan 1.2 / 4)
     // so the branch frame and branch-based blacklist actually work. Skip the
     // git subprocess entirely while idle/AFK — the branch is unused on an idle
-    // interval and there's no presence to show, so spawning git would be pure
+    // interval and the branch is not recorded, so spawning git would be pure
     // background waste while the user is away.
     let branch: string | null = null;
     if (active?.path && category !== "idle") {
@@ -629,19 +395,6 @@ export function startTelemetryDriver(): () => void {
         /* not a git repo / status unavailable */
       }
     }
-
-    // Build the Discord context before writing telemetry. Rich Presence is an
-    // independent feature and must continue working if the analytics database
-    // is unavailable, locked, or still initializing during startup.
-    lastPresence = buildPresenceInput({
-      projectName: active?.name ?? null,
-      branch,
-      agent,
-      category,
-      sessionSeconds,
-      idleSeconds,
-      nowUnix: Math.floor(Date.now() / 1000),
-    });
 
     try {
       await telemetryRecord({
@@ -654,7 +407,7 @@ export function startTelemetryDriver(): () => void {
         duration_seconds: SAMPLE_POLL_SECONDS,
       });
     } catch {
-      /* analytics persistence must never suppress Discord Rich Presence */
+      /* analytics persistence is best effort */
     }
   };
 
@@ -662,22 +415,13 @@ export function startTelemetryDriver(): () => void {
     try {
       // Respect the privacy switches before touching any sampler or the DB.
       // Also reset session counters so turning tracking back on never bridges a
-      // private/off period into the next visible Discord timer.
+      // private/off period into the next session timer.
       if (prefs.paranoid || !prefs.collect) {
         sessionSeconds = 0;
         idleSeconds = 0;
-        lastPresence = null;
         return;
       }
-      // Heavy sample + telemetry write only on the slow cadence; the cheap
-      // presence push below runs every tick to keep the carousel rotating.
-      if (tickIndex % TICKS_PER_SAMPLE === 0) {
-        await sample();
-      }
-      tickIndex = (tickIndex + 1) % 1_000_000;
-      if (lastPresence) {
-        await discordUpdate(lastPresence).catch(() => {});
-      }
+      await sample();
     } catch {
       /* never let the driver throw into the timer */
     }
@@ -687,34 +431,15 @@ export function startTelemetryDriver(): () => void {
   // starts; overlapping invocations were a major source of avoidable CPU/I/O.
   const scheduleNext = () => {
     if (!driverRunning) return;
-    driverTimer = setTimeout(runTick, PRESENCE_POLL_SECONDS * 1000);
+    driverTimer = setTimeout(runTick, SAMPLE_POLL_SECONDS * 1000);
   };
   const runTick = async () => {
     if (!driverRunning) return;
     await tick();
     scheduleNext();
   };
-  const initialize = async () => {
-    // Apply settings before the first activity frame. Previously both operations
-    // raced, so persisted settings and the first SET_ACTIVITY could arrive in
-    // the wrong order during a Windows cold start.
-    await bootstrapDiscordSettings();
-    if (!driverRunning) return;
-    // Establish Discord IPC immediately instead of waiting for process, window,
-    // git and database samplers. The next tick replaces this fallback context
-    // with the richer project/activity presence.
-    if (prefs.collect && !prefs.paranoid) {
-      const nowUnix = Math.floor(Date.now() / 1000);
-      await discordUpdate({
-        session_seconds: 0,
-        session_start_unix: nowUnix,
-        idle: false,
-      }).catch(() => {});
-    }
-    await runTick();
-  };
   driverRunning = true;
-  void initialize();
+  void runTick();
   return stopTelemetryDriver;
 }
 
@@ -730,9 +455,6 @@ export function stopTelemetryDriver(): void {
 
 function mockInvoke<T>(cmd: string, _args?: Record<string, unknown>): Promise<T> {
   if (cmd === "telemetry_dashboard") return Promise.resolve(mockDashboard() as T);
-  if (cmd === "discord_status")
-    return Promise.resolve({ enabled: true, connected: false, ipc_connected: false } as T);
-  if (cmd === "discord_update") return Promise.resolve(null as T);
   if (cmd === "telemetry_idle_seconds" || cmd === "telemetry_active_window")
     return Promise.resolve(null as T);
   if (cmd === "telemetry_year_in_review") return Promise.resolve(mockYearInReview() as T);

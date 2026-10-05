@@ -460,7 +460,7 @@ pub fn run() {
             tracing_subscriber::EnvFilter::try_from_default_env()
                 // `luxor_core` must be listed explicitly: the `luxor` directive
                 // only matches `luxor::*` targets, not the `luxor_core` crate,
-                // so its debug logs (Discord RPC etc.) were filtered out.
+                // so its debug logs were filtered out.
                 .unwrap_or_else(|_| "info,luxor=debug,luxor_core=debug".into()),
         )
         .init();
@@ -554,7 +554,6 @@ pub fn run() {
                 stats: Mutex::new(luxor_core::stats::StatsSampler::new()),
                 agents: Mutex::new(luxor_core::agents::AgentSampler::new()),
                 telemetry: Mutex::new(open_telemetry_store()),
-                discord: Mutex::new(commands::discord::DiscordEngine::new()),
                 audit_last: Mutex::new(std::collections::HashMap::new()),
                 tray_projects: Mutex::new(Vec::new()),
                 tray_cursor: Mutex::new(None),
@@ -629,33 +628,6 @@ pub fn run() {
                 }
                 Err(e) => tracing::warn!("CLI handshake disabled: {e}"),
             });
-
-            // Discord presence heartbeat. The carousel is normally ticked by
-            // the frontend driver (analytics.ts), but WebView2 throttles JS
-            // timers once the window is hidden to the tray or minimized —
-            // presence then froze on one frame and eventually went stale (part
-            // of the "Discord RPC doesn't work" report). This backend thread
-            // replays the last received context whenever the frontend has been
-            // quiet for 15s+, keeping rotation and reconnect-with-backoff
-            // alive while the app sits in the tray. It exits with the process;
-            // the engine's own `enabled` flag gates all actual IPC work.
-            {
-                let handle = app.handle().clone();
-                std::thread::spawn(move || {
-                    let quiet_after = std::time::Duration::from_secs(15);
-                    loop {
-                        std::thread::sleep(std::time::Duration::from_secs(10));
-                        let Some(state) = handle.try_state::<AppState>() else {
-                            continue;
-                        };
-                        state
-                            .discord
-                            .lock()
-                            .unwrap_or_else(std::sync::PoisonError::into_inner)
-                            .heartbeat(quiet_after);
-                    }
-                });
-            }
 
             // System tray: left-click brings the app to the foreground,
             // right-click opens Luxor's own custom popup (see `show_tray_popup`).
@@ -830,10 +802,6 @@ pub fn run() {
             commands::skills::skills_global_root,
             commands::skills::skills_set_enabled,
             commands::skills::skills_remove,
-            // skills market
-            commands::market::market_catalog,
-            commands::market::market_search,
-            commands::market::market_skill_md,
             // terminals
             commands::pty::pty_spawn,
             commands::pty::pty_write,
@@ -908,13 +876,6 @@ pub fn run() {
             commands::telemetry::telemetry_evaluate_achievements,
             commands::telemetry::telemetry_idle_seconds,
             commands::telemetry::telemetry_active_window,
-            commands::telemetry::webhook_send_digest,
-            // discord rich presence
-            commands::discord::discord_status,
-            commands::discord::discord_apply_settings,
-            commands::discord::discord_update,
-            commands::discord::discord_push_event,
-            commands::discord::discord_clear,
             commands::audit::audit_run,
             commands::metrics::metrics_collect,
             // AI agents / process trees

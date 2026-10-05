@@ -84,7 +84,7 @@ import { EmptyDock } from "@/panels/EmptyDock";
 // hot path. Heavy panels — anything that drags in a big third-party runtime or
 // a lot of source — are lazy-loaded below so they never sit on the startup
 // critical path. (Dynamic import() chunks were once observed rendering as blank
-// tabs in some Tauri webviews; the Suspense + PanelBoundary wrapping used here
+// tabs in some Tauri webviews; the Suspense + PanelErrorBoundary wrapping used here
 // is the same pattern the editor/diff panels have shipped on reliably.)
 import { lazy, Suspense } from "react";
 import { t, useT } from "@/lib/i18n";
@@ -190,44 +190,8 @@ const HtmlPreviewPanel = lazyPanel(() =>
   import("@/panels/HtmlPreviewPanel").then((m) => ({ default: m.HtmlPreviewPanel })),
 );
 
-/** Last line of defense: a crashing panel must show an error, never a silent
- *  blank tab (debugging blanks remotely is miserable). */
-class PanelBoundary extends React.Component<
-  { children: React.ReactNode },
-  { error: Error | null }
-> {
-  state = { error: null as Error | null };
-  static getDerivedStateFromError(error: Error) {
-    return { error };
-  }
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    void import("@/lib/ipc").then(({ frontendLog }) =>
-      frontendLog(`PANEL_CRASH ${String(error)} ${info.componentStack ?? ""}`.slice(0, 1000)),
-    );
-  }
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="flex h-full w-full flex-col items-center justify-center gap-2 bg-surface p-4 text-center">
-          <div className="text-sm text-strong">{t("panel.crashed", "This panel crashed")}</div>
-          <div className="max-w-full overflow-auto rounded bg-raised px-2 py-1 font-mono text-xs text-muted">
-            {String(this.state.error)}
-          </div>
-          <button
-            className="rounded border border-edge px-3 py-1 text-xs text-muted hover:text-strong"
-            onClick={() => this.setState({ error: null })}
-          >
-            {t("common.retry", "Retry")}
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 function Wrap({ children }: { children: React.ReactNode }) {
-  return <PanelBoundary>{children}</PanelBoundary>;
+  return <PanelErrorBoundary>{children}</PanelErrorBoundary>;
 }
 
 function PanelFallback() {
@@ -254,6 +218,7 @@ import {
 } from "./dockStore";
 import { deleteTerminalState, terminalStateId } from "@/lib/terminalState";
 import { DockKeyContext } from "./DockKeyContext";
+import { PanelErrorBoundary } from "@/components/PanelErrorBoundary";
 
 /** Wrap a lazily-loaded panel in Suspense so its chunk can stream in without
  *  blanking the tab (the spinner shows for the one network round-trip). */

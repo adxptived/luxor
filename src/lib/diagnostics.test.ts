@@ -21,14 +21,14 @@ describe("developer diagnostics", () => {
       runtime: "tauri",
       project_attached: true,
       checks: [
-        { id: "discord", group: "Discord RPC", label: "Handshake & presence", state: "warn", summary: "Discord IPC is not connected", detail: "token=do-not-copy", duration_ms: 12, checked_at: "2026-07-11T00:00:00.000Z" },
+        { id: "docker", group: "Tooling", label: "Docker daemon", state: "warn", summary: "Docker is not reachable", detail: "token=do-not-copy", duration_ms: 12, checked_at: "2026-07-11T00:00:00.000Z" },
         { id: "git", group: "Tooling", label: "Git repository", state: "pass", summary: "Git repository detected", duration_ms: 3, checked_at: "2026-07-11T00:00:00.000Z" },
       ],
     };
 
     const text = diagnosticReportText(report);
     expect(text).toContain("1 passed, 1 warnings, 0 failed, 0 skipped");
-    expect(text).toContain("[WARN] Discord RPC / Handshake & presence");
+    expect(text).toContain("[WARN] Tooling / Docker daemon");
     expect(text).not.toContain("do-not-copy");
   });
 });

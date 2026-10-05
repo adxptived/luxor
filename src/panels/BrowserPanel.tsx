@@ -39,6 +39,7 @@ import {
 
 import * as ipc from "@/lib/ipc";
 import { isTauri } from "@/lib/ipc";
+import { reportError } from "@/lib/reportError";
 import { t } from "@/lib/i18n";
 import { errorMessage } from "@/lib/types";
 import { useAppStore } from "@/state/appStore";
@@ -457,7 +458,7 @@ function NativeBrowser() {
           className={iconBtn}
           title={t("Back")}
           disabled={!currentUrl}
-          onClick={() => ipc.browserEmbedBack().catch(() => {})}
+          onClick={() => ipc.browserEmbedBack().catch(reportError(t("Browser")))}
           data-testid="browser-back"
         >
           <ChevronLeft size={16} />
@@ -466,7 +467,7 @@ function NativeBrowser() {
           className={iconBtn}
           title={t("Forward")}
           disabled={!currentUrl}
-          onClick={() => ipc.browserEmbedForward().catch(() => {})}
+          onClick={() => ipc.browserEmbedForward().catch(reportError(t("Browser")))}
           data-testid="browser-forward"
         >
           <ChevronRight size={16} />
@@ -475,7 +476,7 @@ function NativeBrowser() {
           className={iconBtn}
           title={t("Reload")}
           disabled={!currentUrl}
-          onClick={() => ipc.browserEmbedReload().catch(() => {})}
+          onClick={() => ipc.browserEmbedReload().catch(reportError(t("Browser")))}
         >
           <RotateCw size={14} />
         </button>

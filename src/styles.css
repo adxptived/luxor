@@ -1865,9 +1865,24 @@ textarea {
 }
 
 /* Settings modal */
+/* The backdrop only fades; the card inside scales. Scaling the full-screen
+ * backdrop (the old behaviour) shrank it by ~2% per edge for the first 240 ms,
+ * so a click near the window edge missed it and neither dismissed the modal nor
+ * was blocked from the app underneath. */
 .lx-settings-modal {
+  animation: lx-backdrop-in 0.24s ease-out;
+}
+.lx-settings-modal > div {
   animation: lx-modal-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
 }
+.lx-settings-modal.lx-modal-leaving {
+  animation: lx-backdrop-out 0.18s ease-in forwards;
+}
+.lx-settings-modal.lx-modal-leaving > div {
+  animation: lx-modal-exit 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes lx-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lx-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 
 /* Command palette */
 .lx-command-palette {

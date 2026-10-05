@@ -4,7 +4,7 @@ import { AFK_THRESHOLD_SECONDS, classifyActivity, isUserActive } from "./analyti
 
 describe("isUserActive — OS input counter is the authority, focus is the fallback", () => {
   test("an unfocused Luxor window with recent OS input is still active work", () => {
-    // The root cause of "Discord RPC doesn't work": Luxor is a cockpit, so the
+    // The root cause of "everything counted as idle": Luxor is a cockpit, so the
     // user types in an external editor/terminal (or the app sits in the tray)
     // while actively working. Gating on `document.hasFocus()` classified that
     // as idle, and an idle context replaces the whole carousel with the single
@@ -31,7 +31,7 @@ describe("isUserActive — OS input counter is the authority, focus is the fallb
   });
 });
 
-describe("classifyActivity — activity category pushed to telemetry & Discord", () => {
+describe("classifyActivity — activity category pushed to telemetry", () => {
   test("active without an agent is plain coding", () => {
     expect(classifyActivity({ focused: false, osIdleSeconds: 10, agent: null })).toEqual({
       category: "coding",
