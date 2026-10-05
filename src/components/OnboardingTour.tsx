@@ -11,7 +11,9 @@
 import { ChevronRight, SkipForward } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
+import { hintFor } from "@/lib/hotkeys";
 import { t } from "@/lib/i18n";
+import { useAppStore } from "@/state/appStore";
 import {
   ONBOARDING_STEPS,
   completeStep,
@@ -29,8 +31,8 @@ function stepTitle(step: (typeof ONBOARDING_STEPS)[number]): string {
   return t(`onboarding.${step.id}`, step.title);
 }
 /** Localized description: `onboarding.<id>.desc` keyed entry, English fallback. */
-function stepDesc(step: (typeof ONBOARDING_STEPS)[number]): string {
-  return t(`onboarding.${step.id}.desc`, step.description);
+function stepDesc(step: (typeof ONBOARDING_STEPS)[number], key: string): string {
+  return t(`onboarding.${step.id}.desc`, step.description).replace("{key}", key);
 }
 
 export function OnboardingTour() {
@@ -41,7 +43,7 @@ export function OnboardingTour() {
   // On "Try it now" (hotkey) steps the user must be able to Tab/type into the
   // app underneath, so the trap is disabled there; on all other steps it keeps
   // focus inside the card.
-  const trapActive = active && !ONBOARDING_STEPS[stepIdx]?.hotkey;
+  const trapActive = active && !ONBOARDING_STEPS[stepIdx]?.action;
   useFocusTrap(containerRef, trapActive);
 
   // Subscribe so the tour reacts to `startOnboarding()` firing AFTER mount
@@ -56,10 +58,13 @@ export function OnboardingTour() {
     return subscribeOnboarding(sync);
   }, []);
 
+  const config = useAppStore((s) => s.config);
   if (!active) return null;
 
   const step = ONBOARDING_STEPS[stepIdx];
   if (!step) return null;
+  // The live binding (remapped / ⌘ on macOS), never a hardcoded chord.
+  const chord = step.action ? hintFor(step.action, config) : "";
 
   const next = () => {
     completeStep(step.id);
@@ -86,7 +91,7 @@ export function OnboardingTour() {
   // *behind* this overlay's dark scrim. So for hotkey steps we drop the scrim,
   // let clicks/keys pass through to the app underneath, and dock the card at the
   // bottom — keeping the centered palette result fully visible and usable.
-  const passthrough = Boolean(step.hotkey);
+  const passthrough = Boolean(step.action);
 
   return (
     <div
@@ -115,12 +120,12 @@ export function OnboardingTour() {
         </div>
 
         <h2 className="mt-3 text-lg font-semibold text-strong">{stepTitle(step)}</h2>
-        <p className="mt-2 text-sm leading-5 text-muted">{stepDesc(step)}</p>
+        <p className="mt-2 text-sm leading-5 text-muted">{stepDesc(step, chord)}</p>
 
-        {step.hotkey && (
+        {chord && (
           <div className="mt-4 flex items-center gap-2">
             <kbd className="rounded-lg border border-edge bg-raised px-3 py-1.5 font-mono text-sm text-accent">
-              {step.hotkey}
+              {chord}
             </kbd>
             <span className="text-xs text-muted">{t("Try it now", "Try it now")}</span>
           </div>

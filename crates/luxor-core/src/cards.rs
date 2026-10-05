@@ -3,7 +3,7 @@
 //! Renders self-contained SVG cards from telemetry summaries — no external
 //! rendering dependency. The frontend can download or share the SVG directly.
 
-use crate::discord::fmt_duration;
+use crate::insights::fmt_duration;
 use crate::insights::WeeklyDigest;
 use crate::telemetry::YearInReview;
 

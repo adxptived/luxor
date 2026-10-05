@@ -2,15 +2,12 @@ import type { IDockviewPanelProps } from "dockview";
 import {
   Bot,
   ChevronRight,
-  CheckCircle2,
-  Circle,
   FolderGit2,
   FolderOpen,
   FolderPlus,
   History,
   LayoutGrid,
   Lightbulb,
-  Rocket,
   Search,
   Sparkles,
   SquareTerminal,
@@ -19,6 +16,7 @@ import {
 import React, { useEffect, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
+import { hintFor } from "@/lib/hotkeys";
 import { t } from "@/lib/i18n";
 import type { RecentProject } from "@/lib/types";
 import { useDockStore } from "@/layout/dockStore";
@@ -44,14 +42,6 @@ const BLANK_TIPS = [
   "Add favorite commands from the quick-actions menu to re-run them in one click.",
 ];
 
-/** Onboarding checklist steps shown for first-time users. */
-const ONBOARDING_STEPS = [
-  { id: "open_folder", label: "Open a project folder", icon: FolderPlus },
-  { id: "open_terminal", label: "Open a terminal", icon: SquareTerminal },
-  { id: "open_ai", label: "Explore the AI center", icon: Bot },
-  { id: "open_settings", label: "Customize settings", icon: LayoutGrid },
-];
-
 /**
  * Welcome / launcher screen.
  *
@@ -68,12 +58,8 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
   const addBlank = useProjectsStore((s) => s.addBlank);
   const addTerminal = useDockStore((s) => s.addTerminal);
   const openPanel = useDockStore((s) => s.openPanel);
-  const setSettingsOpen = useAppStore((s) => s.setSettingsOpen);
+  const config = useAppStore((s) => s.config);
   const [recents, setRecents] = useState<RecentProject[]>([]);
-  const [onboardingDone, setOnboardingDone] = useState<Record<string, boolean>>(() => {
-    try { return JSON.parse(localStorage.getItem("luxor.onboarding") || "{}"); } catch { return {}; }
-  });
-
   useEffect(() => {
     ipc.recentList(5).then(setRecents, () => {});
   }, []);
@@ -82,14 +68,6 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
     const p = await useProjectsStore.getState().addProjectPath(r.path, r.name);
     if (p) useProjectsStore.getState().setActive(p.id);
   };
-
-  const markOnboardingStep = (id: string) => {
-    const next = { ...onboardingDone, [id]: true };
-    setOnboardingDone(next);
-    try { localStorage.setItem("luxor.onboarding", JSON.stringify(next)); } catch { /* ignore */ }
-  };
-
-  const onboardingComplete = ONBOARDING_STEPS.every((s) => onboardingDone[s.id]);
 
   const tips = blank ? BLANK_TIPS : WELCOME_TIPS;
 
@@ -127,7 +105,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
                 <WelcomeAction
                   icon={SquareTerminal}
                   label={t("New terminal")}
-                  hint="Ctrl+`"
+                  hint={hintFor("terminal.new", config)}
                   primary
                   onClick={() => addTerminal()}
                 />
@@ -161,7 +139,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
               </div>
 
               <div className="mt-5 grid grid-cols-1 gap-2 text-xs text-muted sm:grid-cols-3">
-                <FeaturePill icon={Search} label={t("Command-first")} value="Ctrl+Shift+P" />
+                <FeaturePill icon={Search} label={t("Command-first")} value={hintFor("palette", config)} />
                 <FeaturePill icon={FolderGit2} label={t("Git + GitHub")} value={t("inside app")} />
                 <FeaturePill icon={Sparkles} label={t("Adaptive UI")} value={t("small windows") } />
               </div>
@@ -169,41 +147,6 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
           </section>
 
           <aside className="grid grid-cols-1 gap-4">
-            {/* Onboarding checklist */}
-            {!blank && !onboardingComplete && (
-              <section className="rounded-lg border border-edge bg-surface/40 p-3">
-                <div className="mb-2 flex items-center gap-1.5 px-1 text-2xs font-semibold uppercase tracking-wide text-accent">
-                  <Rocket size={12} /> {t("welcome.get_started", "Get started")}
-                </div>
-                <div className="space-y-1">
-                  {ONBOARDING_STEPS.map((step) => {
-                    const done = onboardingDone[step.id];
-                    return (
-                      <button
-                        key={step.id}
-                        onClick={() => {
-                          markOnboardingStep(step.id);
-                          if (step.id === "open_folder") void addProject();
-                          else if (step.id === "open_terminal") addTerminal();
-                          else if (step.id === "open_ai") openPanel("agents");
-                          else if (step.id === "open_settings") setSettingsOpen(true);
-                        }}
-                        className="group flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-sm hover:bg-raised"
-                      >
-                        {done ? (
-                          <CheckCircle2 size={15} className="shrink-0 text-success" />
-                        ) : (
-                          <Circle size={15} className="shrink-0 text-muted" />
-                        )}
-                        <span className={`flex-1 ${done ? "text-muted line-through" : "text-strong"}`}>{t(step.label)}</span>
-                        <step.icon size={13} className="shrink-0 text-muted opacity-0 group-hover:opacity-100 group-focus-within:opacity-100" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
             <section className="rounded-lg border border-edge bg-bar/80 p-3">
               <div className="mb-2 flex items-center justify-between gap-2 px-1">
                 <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
@@ -254,9 +197,6 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
               </ul>
             </section>
 
-            <p className="text-center text-xs text-muted">
-              {t("Press")} <Kbd>Ctrl</Kbd>+<Kbd>Shift</Kbd>+<Kbd>P</Kbd> {t("for the command palette.")}
-            </p>
           </aside>
         </div>
       </div>
@@ -267,10 +207,6 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
 /** Memoized: dockview re-creates props objects on layout changes; the welcome
  *  screen has no meaningful props, so skip those re-renders entirely. */
 export const WelcomePanel = React.memo(WelcomePanelImpl);
-
-function Kbd({ children }: { children: React.ReactNode }) {
-  return <kbd className="rounded border border-edge bg-raised px-1 font-mono text-2xs">{children}</kbd>;
-}
 
 function FeaturePill(props: { icon: React.ComponentType<{ size?: number; className?: string }>; label: string; value: string }) {
   return (

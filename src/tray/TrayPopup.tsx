@@ -310,7 +310,7 @@ export function TrayPopup() {
   };
 
   const handleQuit = () => {
-    if (isTauri) void invoke("quit_app").catch(() => {});
+    if (isTauri) void invoke("request_quit").catch(() => {});
   };
 
   return (

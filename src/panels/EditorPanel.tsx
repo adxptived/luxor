@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
 import { pushStructured } from "@/lib/logBuffer";
+import { reportError } from "@/lib/reportError";
 import { t } from "@/lib/i18n";
 import { registerDirtyGuard } from "@/lib/dirtyGuard";
 import { registerEditor } from "@/lib/editorBus";
@@ -256,7 +257,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       if (!text) return;
       v.dispatch(v.state.replaceSelection(text));
       v.focus();
-    }).catch(() => {});
+    }).catch(reportError(t("Paste failed")));
   };
   const selectAllEditor = () => {
     const v = editorRef.current?.view;
@@ -420,12 +421,15 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
                   );
                 return;
               }
-              const overwrite = window.confirm(
-                t(
+              const overwrite = await useUiStore.getState().confirm({
+                title: t("editor.conflict_title", "File changed on disk"),
+                message: t(
                   "editor.conflict_prompt",
-                  "This file was modified on disk since you opened it.\n\nOK — overwrite with your version\nCancel — keep the file on disk (reopen the file to reload)",
+                  "This file was modified on disk since you opened it. Overwrite it with your version? Cancel keeps the file on disk (reopen the file to reload).",
                 ),
-              );
+                confirmLabel: t("editor.conflict_overwrite", "Overwrite"),
+                danger: true,
+              });
               if (!overwrite) return;
               newMtimeMs = await ipc.fsWriteText(path, content, null);
             }

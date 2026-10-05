@@ -13,7 +13,6 @@ import { logsAsText } from "./logBuffer";
 import type {
   AppConfig,
   LayoutPreset,
-  MarketSkill,
   Project,
   SkillEntry,
   Task,
@@ -77,25 +76,6 @@ let MOCK_SKILLS: SkillEntry[] = [
     size: 1240,
     enabled: false,
     content_hash: "aaaaaaaaaaaaaaaa",
-  },
-];
-
-const MOCK_MARKET: MarketSkill[] = [
-  {
-    source: "vercel-labs/skills",
-    skill_id: "find-skills",
-    name: "find-skills",
-    installs: 1967841,
-    is_official: true,
-    url: "https://skills.sh/vercel-labs/skills/find-skills",
-  },
-  {
-    source: "anthropics/skills",
-    skill_id: "frontend-design",
-    name: "frontend-design",
-    installs: 530372,
-    is_official: true,
-    url: "https://skills.sh/anthropics/skills/frontend-design",
   },
 ];
 
@@ -374,17 +354,6 @@ export async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>)
         { command: "gnome-terminal", label: "GNOME Terminal" },
         { command: "alacritty", label: "Alacritty" },
       ] as T;
-    case "market_catalog":
-      return MOCK_MARKET as T;
-    case "market_search": {
-      const q = String(a["query"] ?? "").toLowerCase().trim();
-      if (!q) return [] as T;
-      return MOCK_MARKET.filter(
-        (s) => s.name.toLowerCase().includes(q) || s.source.toLowerCase().includes(q),
-      ) as T;
-    }
-    case "market_skill_md":
-      return `# ${a["skillId"]}\n\nMock SKILL.md fetched from ${a["source"]}.` as T;
     case "layout_list":
       return mockState.presets as T;
     case "layout_save": {

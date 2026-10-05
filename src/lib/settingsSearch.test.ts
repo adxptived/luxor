@@ -22,7 +22,7 @@ describe("searchSettings", () => {
 
   test("multi-word queries require every word", () => {
     const r = searchSettings("editor theme");
-    expect(r.matches.appearance).toContain("Code editor theme");
+    expect(r.matches.editor).toContain("Code editor theme");
     expect(searchSettings("editor zzz").sections).toEqual([]);
   });
 

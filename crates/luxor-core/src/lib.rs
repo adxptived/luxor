@@ -24,7 +24,6 @@ pub mod config;
 pub mod crashlog;
 pub mod devtools;
 pub mod diag;
-pub mod discord;
 pub mod dockerx;
 pub mod error;
 pub mod fsx;
@@ -34,7 +33,6 @@ pub mod httpx;
 pub mod insights;
 pub mod launcher;
 pub mod layout;
-pub mod market;
 pub mod metricprovider;
 pub mod notes;
 pub mod procs;
@@ -47,7 +45,6 @@ pub mod skills;
 pub mod stats;
 pub mod telemetry;
 pub mod updatex;
-pub mod webhook;
 
 pub use error::{Error, Result};
 

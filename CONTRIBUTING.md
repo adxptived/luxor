@@ -33,16 +33,6 @@ via `React.lazy()` with `Suspense` fallbacks. The CodeMirror runtime (~770 KB)
 is split into per-language chunks so it only loads when a file of that language
 is opened. See `vite.config.ts` for the manual chunk configuration.
 
-### Virtual scrolling
-Long lists (Files, Git, Search, Activity) use the `useVirtualList` hook
-(`src/lib/useVirtualList.ts`) to render only visible rows plus an overscan
-buffer, keeping the DOM light even with thousands of entries.
-
-### Debounced operations
-Expensive operations (search, layout persistence, config saves) use the
-`useDebouncedCallback` and `useThrottledCallback` hooks
-(`src/lib/useDebounce.ts`) to avoid excessive recomputation or IPC calls.
-
 ### Accessibility
 - Focus traps on all modal dialogs (`useFocusTrap`).
 - ARIA roles and labels on interactive elements.
@@ -56,35 +46,31 @@ function in `appStore.ts` applies the theme with a smooth crossfade animation
 
 ### Error handling
 - `AppErrorBoundary` wraps the entire app — fatal errors show a recovery UI.
-- `PanelBoundary` wraps each dock panel — a crashing panel shows an error
+- `PanelErrorBoundary` wraps each dock panel — a crashing panel shows an error
   instead of a blank tab.
-- `retryable()` wraps IPC calls with exponential backoff.
+- Failed user actions surface as toasts: `.catch(reportError("What failed"))`.
 - `backendStatus.ts` tracks backend availability and degrades gracefully.
 
 ### Security
 - Secrets (git tokens, AI provider keys) are stored only in the OS keychain.
 - CSP is configured in `tauri.conf.json` — `default-src 'self'` with
   carefully scoped exceptions for styles, images, fonts, workers, and frames.
-- Input validation utilities in `src/lib/validation.ts` sanitize all
-  user-provided paths, names, and commands.
-
-### Plugin architecture
-Plugins are defined via manifests (`src/lib/plugins.ts`) that declare panels,
-commands, and status bar items. Plugin content is verified via FNV-1a hash
-(`skillsHash.ts`) before loading. Untrusted plugins are rejected.
+- Mutating filesystem/database commands are confined to project roots by PathGuard.
 
 ### Internationalization
 - `src/lib/i18n.ts` — lightweight i18n with inline English fallbacks.
 - `src/lib/localeDetect.ts` — auto-detects locale from `navigator.language`.
-- Supported languages: English (`en`), Russian (`ru`).
+- Supported languages: English (`en`), Russian (`ru`). Every static `t("…")` string needs a
+  Russian entry in `i18n.ru.ts` — `src/lib/i18nCoverage.test.ts` fails otherwise.
 
 ## Checks (CI runs these)
 
 ```bash
 cargo fmt --all --check
-cargo clippy -p luxor-core --all-targets -- -D warnings
-cargo test -p luxor-core
-bunx tsc --noEmit
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+bun run typecheck
+bun run lint
 bun test src          # unit tests
 bun run build         # production build
 bun run e2e           # Playwright E2E tests
@@ -99,8 +85,8 @@ node shot.mjs         # visual regression snapshots
 - **Visual Regression** (`.github/workflows/visual-regression.yml`): Runs
   `shot.mjs` and Playwright E2E tests on PRs that touch UI files.
 - **Release** (`.github/workflows/release.yml`): Triggered by `v*` tags.
-  Builds signed installers for Windows, Linux, and macOS. Publishes the
-  auto-updater JSON manifest to the GitHub release.
+  Builds installers for Windows, Linux, and macOS and attaches them to the
+  GitHub release (Apple signing only when a certificate is configured).
 
 ### Code signing
 Set these GitHub secrets for signed releases:
@@ -110,9 +96,10 @@ Set these GitHub secrets for signed releases:
 - `APPLE_ID` / `APPLE_PASSWORD` / `APPLE_TEAM_ID` — Apple notarization.
 
 ### Auto-updater
-The Tauri updater is configured in `tauri.conf.json` under `plugins.updater`.
-It checks `releases/latest/download/latest.json` for new versions. The
-`tauri-action` generates this manifest automatically on release.
+The Tauri updater is **disabled** in `tauri.conf.json` (`plugins.updater.active = false`)
+until signing keys exist (`tauri signer generate`; keep the private key in CI secrets and never
+ship an active updater with an empty `pubkey`). The in-app update check only compares versions
+and links to the release page.
 
 ## Ground rules
 

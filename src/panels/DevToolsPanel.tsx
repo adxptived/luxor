@@ -139,7 +139,7 @@ export function DevToolsPanel() {
   );
 }
 
-const DIAGNOSTIC_GROUPS: DiagnosticGroup[] = ["Runtime", "Discord RPC", "Tooling", "Services", "App features"];
+const DIAGNOSTIC_GROUPS: DiagnosticGroup[] = ["Runtime", "Tooling", "Services", "App features"];
 
 const diagnosticStateUi: Record<DiagnosticState, { label: string; icon: LucideIcon; className: string }> = {
   pass: { label: "Passed", icon: CheckCircle2, className: "text-success" },
@@ -152,7 +152,7 @@ function DiagnosticsTab({ root }: { root: string }) {
   const toast = useAppStore((s) => s.toast);
   const [report, setReport] = useState<DiagnosticReport | null>(null);
   const [running, setRunning] = useState(false);
-  const [expanded, setExpanded] = useState<Set<string>>(new Set(["discord"]));
+  const [expanded, setExpanded] = useState<Set<string>>(new Set(["runtime"]));
 
   const run = useCallback(async () => {
     setRunning(true);
@@ -195,7 +195,7 @@ function DiagnosticsTab({ root }: { root: string }) {
           <div className="rounded-lg border border-accent/30 bg-accent/10 p-2 text-accent"><Activity size={17} /></div>
           <div className="min-w-0">
             <div className="font-semibold text-strong">Developer diagnostics</div>
-            <p className="mt-0.5 max-w-xl text-xs leading-5 text-muted">Read-only health checks for Discord RPC, native IPC, project tooling and desktop integrations. Checks never send notifications or modify your project.</p>
+            <p className="mt-0.5 max-w-xl text-xs leading-5 text-muted">Read-only health checks for native IPC, project tooling and desktop integrations. Checks never send notifications or modify your project.</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">

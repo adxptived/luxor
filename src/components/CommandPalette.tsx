@@ -2,6 +2,7 @@ import { Command as CommandIcon, CornerDownLeft, FileSearch, Hash, PanelRight, S
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { t } from "@/lib/i18n";
+import { updateRepo, updateToast } from "@/lib/updates";
 import * as ipc from "@/lib/ipc";
 import { useDelayedUnmount } from "@/lib/dismiss";
 import { errorMessage, type SessionSnapshot } from "@/lib/types";
@@ -182,7 +183,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       },
       { id: "launcher.open", label: t("cmd.launcher.open", "Launcher: Open launcher panel"), run: close(() => dock.openPanel("launcher")) },
       { id: "tasks.open", label: t("cmd.tasks.open", "Tasks: Open kanban board"), run: close(() => dock.openPanel("tasks")) },
-      { id: "skills.open", label: t("cmd.skills.open", "Skills: Open manager & market"), run: close(() => dock.openPanel("skills")) },
+      { id: "skills.open", label: t("cmd.skills.open", "Skills: Open manager"), run: close(() => dock.openPanel("skills")) },
       { id: "activity.open", label: t("cmd.activity.open", "Activity: Open activity log"), run: close(() => dock.openPanel("activity")) },
       { id: "search.open", label: t("cmd.search.open", "Search: Find in project…"), hint: "Ctrl+Shift+F", run: close(() => dock.openPanel("search")) },
       {
@@ -208,17 +209,16 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
         id: "update.check",
         label: t("cmd.update.check", "Updates: Check for a new version"),
         run: close(() => {
-          const repo = appStore.config?.ui.update_repo ?? "";
           void ipc
-            .updateCheck(repo)
-            .then((info) =>
-              appStore.toast(
-                info.update_available
-                  ? `${t("update.available", "Luxor update available")}: ${info.latest}`
-                  : t("settings.updates.latest", "You are on the latest version"),
-                info.update_available ? "info" : "success",
-              ),
-            )
+            .updateCheck(updateRepo(appStore.config))
+            .then((info) => {
+              if (!info.update_available) {
+                appStore.toast(t("settings.updates.latest", "You are on the latest version"), "success");
+                return;
+              }
+              const n = updateToast(info, t("update.available", "Luxor update available"), t("update.open", "Open release"), (u) => void ipc.openUrl(u));
+              appStore.toast(n.text, "info", undefined, { action: n.action });
+            })
             .catch((e) => appStore.toast(errorMessage(e), "error"));
         }),
       },

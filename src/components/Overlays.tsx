@@ -394,6 +394,17 @@ function Toasts() {
             >
               <Icon size={15} className="mt-0.5 shrink-0" />
               <span className="min-w-0 flex-1 break-words leading-5">{toast.text}</span>
+              {toast.action && (
+                <button
+                  onClick={() => {
+                    toast.action?.run();
+                    dismiss(toast.id);
+                  }}
+                  className="shrink-0 rounded border border-current px-2 py-0.5 text-xs font-medium hover:bg-raised"
+                >
+                  {toast.action.label}
+                </button>
+              )}
               <button
                 onClick={() => dismiss(toast.id)}
                 className="shrink-0 rounded p-0.5 text-muted hover:bg-raised hover:text-strong"

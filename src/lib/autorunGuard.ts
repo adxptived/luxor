@@ -16,6 +16,9 @@
  * smuggled in via serialized layout JSON.
  */
 
+import { t } from "@/lib/i18n";
+import { useUiStore } from "@/state/uiStore";
+
 const approvedPanels = new Set<string>();
 
 /** Mark a panel id as user-initiated (call at creation time, same tick). */
@@ -28,22 +31,34 @@ export function isAutorunApproved(panelId: string): boolean {
   return approvedPanels.has(panelId);
 }
 
+// The app's confirm dialog is a single slot: a second `confirm()` while one is
+// open would orphan the first promise. A preset with several autorun terminals
+// asks for each, so the prompts are serialised.
+let askQueue: Promise<unknown> = Promise.resolve();
+
 /**
- * Gate autorun commands for a terminal panel. Returns the commands to run:
+ * Gate autorun commands for a terminal panel. Resolves to the commands to run:
  * the original list when trusted/confirmed, or `[]` when the user declined.
  */
-export function gateAutorun(panelId: string, commands: string[]): string[] {
-  if (commands.length === 0) return commands;
-  if (isAutorunApproved(panelId)) return commands;
-  const ok = window.confirm(
-    `This terminal wants to auto-run the following command(s):\n\n${commands
-      .map((c) => `  ${c}`)
-      .join("\n")}\n\nRun them? (They come from a saved layout/preset, not a direct action.)`,
-  );
-  if (ok) {
+export function gateAutorun(panelId: string, commands: string[]): Promise<string[]> {
+  if (commands.length === 0 || isAutorunApproved(panelId)) return Promise.resolve(commands);
+  const ask = async (): Promise<string[]> => {
+    if (isAutorunApproved(panelId)) return commands; // approved while queued
+    const ok = await useUiStore.getState().confirm({
+      title: t("autorun.title", "Run saved commands in this terminal?"),
+      message: `${commands.map((c) => `  ${c}`).join("\n")}\n\n${t(
+        "autorun.note",
+        "They come from a saved layout or preset, not a direct action.",
+      )}`,
+      confirmLabel: t("autorun.run", "Run"),
+      danger: true,
+    });
+    if (!ok) return [];
     // Remember the consent so a manual "restart shell" doesn't re-ask.
     approveAutorun(panelId);
     return commands;
-  }
-  return [];
+  };
+  const result = askQueue.then(ask, ask);
+  askQueue = result.catch(() => undefined);
+  return result;
 }

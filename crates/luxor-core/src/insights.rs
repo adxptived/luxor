@@ -121,7 +121,7 @@ pub fn generate_insights(
             title: "Возможное выгорание".into(),
             message: format!(
                 "Самая длинная сессия — {}. Стоит делать перерывы.",
-                crate::discord::fmt_duration(longest_session_seconds)
+                fmt_duration(longest_session_seconds)
             ),
         });
     }
@@ -206,8 +206,25 @@ pub fn evaluate_achievements(
     ]
 }
 
+/// Human "2h 10m" style duration.
+pub fn fmt_duration(seconds: i64) -> String {
+    let h = seconds / 3600;
+    let m = (seconds % 3600) / 60;
+    if h > 0 {
+        format!("{h}h {m}m")
+    } else {
+        format!("{m}m")
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn fmt_duration_formats_hours_and_minutes() {
+        assert_eq!(super::fmt_duration(7800), "2h 10m");
+        assert_eq!(super::fmt_duration(600), "10m");
+    }
+
     use super::*;
 
     fn bucket(date: &str, c: i64, a: i64) -> DayBucket {

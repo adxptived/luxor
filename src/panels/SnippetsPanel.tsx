@@ -1,5 +1,7 @@
 /** Personal library: code snippets, per-project scratch notes and bookmarks. */
 
+import { t } from "@/lib/i18n";
+import { reportError } from "@/lib/reportError";
 import { Bookmark as BookmarkIcon, Copy, NotebookPen, Plus, Scissors, Search, Trash2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 
@@ -211,7 +213,7 @@ function NotesTab() {
   const onChange = (text: string) => {
     setBody(text);
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
-    saveTimer.current = window.setTimeout(() => void ipc.noteSet(projectId, text).catch(() => {}), 600);
+    saveTimer.current = window.setTimeout(() => void ipc.noteSet(projectId, text).catch(reportError(t("Could not save notes"), "notes-save")), 600);
   };
 
   return (
@@ -239,7 +241,7 @@ function BookmarksTab() {
   const openFile = useDockStore((s) => s.openFile);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
 
-  const load = () => void ipc.bookmarkList(project?.id).then(setBookmarks).catch(() => {});
+  const load = () => void ipc.bookmarkList(project?.id).then(setBookmarks).catch(reportError(t("Could not load bookmarks"), "bookmarks-load"));
   useEffect(load, [project?.id]);  
 
   return (

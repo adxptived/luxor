@@ -1,5 +1,5 @@
 //! Local-first activity telemetry — a WakaTime/RescueTime-class tracker built
-//! straight into Luxor (see `plans/luxor_discord_rpc_plan.md`, parts 1, 2, 7, 11).
+//! straight into Luxor (parts 1, 2, 7, 11 of the original design).
 //!
 //! Design goals:
 //! - **Zero-overhead:** the heavy lifting (sampling, git inspection) happens in
@@ -1045,7 +1045,7 @@ impl TelemetryStore {
                     "range": { "date": d.date },
                     "grand_total": {
                         "total_seconds": total,
-                        "text": super::discord::fmt_duration(total),
+                        "text": super::insights::fmt_duration(total),
                     },
                     "categories": [
                         { "name": "Coding", "total_seconds": d.coding_seconds },
@@ -1096,8 +1096,8 @@ fn basename(path: &str) -> Option<String> {
         .map(str::to_string)
 }
 
-/// Map a file extension to a human language label / Discord asset hint.
-/// Returns `(label, discord_asset_key)`.
+/// Map a file extension to a human language label / asset hint.
+/// Returns `(label, asset_key)`.
 pub fn lang_from_ext(ext: &str) -> Option<(&'static str, &'static str)> {
     let e = ext.trim_start_matches('.').to_ascii_lowercase();
     Some(match e.as_str() {

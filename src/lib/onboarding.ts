@@ -18,8 +18,8 @@ export interface OnboardingStep {
   id: string;
   title: string;
   description: string;
-  /** Optional hotkey hint to display. */
-  hotkey?: string;
+  /** Remappable hotkey action id (see `HOTKEY_ACTIONS`); the chord shown is the live binding. */
+  action?: string;
   /** Whether this step has been completed. */
   done: boolean;
 }
@@ -34,15 +34,15 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "open-folder",
     title: "Open a project folder",
-    description: "Click 'Open folder' on the welcome screen, or press Ctrl+O to attach a project directory. This enables Files, Git, Search and Launcher panels.",
-    hotkey: "Ctrl+O",
+    description: "Click 'Open folder' on the welcome screen, or press {key} to attach a project directory. This enables Files, Git, Search and Launcher panels.",
+    action: "project.open",
     done: false,
   },
   {
     id: "terminal",
     title: "Open a terminal",
-    description: "Press Ctrl+` to open a new terminal. You can split terminals side-by-side and save the arrangement as a layout preset.",
-    hotkey: "Ctrl+`",
+    description: "Press {key} to open a new terminal. You can split terminals side-by-side and save the arrangement as a layout preset.",
+    action: "terminal.new",
     done: false,
   },
   {
@@ -54,15 +54,15 @@ export const ONBOARDING_STEPS: OnboardingStep[] = [
   {
     id: "command-palette",
     title: "Command palette",
-    description: "Press Ctrl+Shift+P to open the command palette. Search and run any action without leaving the keyboard.",
-    hotkey: "Ctrl+Shift+P",
+    description: "Press {key} to open the command palette. Search and run any action without leaving the keyboard.",
+    action: "palette",
     done: false,
   },
   {
     id: "git",
     title: "Git explorer",
-    description: "Press Ctrl+Shift+G to open the Git explorer. View changes, stage files, commit, and browse history — all powered by libgit2.",
-    hotkey: "Ctrl+Shift+G",
+    description: "Press {key} to open the Git explorer. View changes, stage files, commit, and browse history — all powered by libgit2.",
+    action: "git.open",
     done: false,
   },
 ];

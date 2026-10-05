@@ -11,8 +11,6 @@ use luxor_core::pty::PtyManager;
 use luxor_core::stats::StatsSampler;
 use luxor_core::telemetry::TelemetryStore;
 
-use crate::commands::discord::DiscordEngine;
-
 pub struct AppState {
     pub config: RwLock<AppConfig>,
     pub config_path: PathBuf,
@@ -24,8 +22,6 @@ pub struct AppState {
     /// Local-first activity telemetry store (`local_stats.db`). See
     /// [`luxor_core::telemetry`].
     pub telemetry: Mutex<TelemetryStore>,
-    /// Discord Rich Presence engine (carousel + priority queue + IPC).
-    pub discord: Mutex<DiscordEngine>,
     /// Last audit "actionable" issue count (critical+high) per project path, so
     /// a re-run can credit how many were *fixed* since last time (plan 1.3).
     pub audit_last: Mutex<std::collections::HashMap<String, i64>>,
@@ -52,4 +48,8 @@ pub struct AppState {
     /// non-annoying notification per app run so first-time users learn where
     /// the window went without being nagged on every close.
     pub tray_hint_shown: AtomicBool,
+    /// True while the frontend is running its quit guard (unsaved files /
+    /// busy terminals). Only then does closing the main window hand the
+    /// decision to the UI; a crashed or not-yet-loaded UI never blocks exit.
+    pub close_guard_ready: AtomicBool,
 }

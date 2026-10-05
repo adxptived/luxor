@@ -4,6 +4,9 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { NavRail } from "@/components/NavRail";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { needsOnboarding, startOnboarding } from "@/lib/onboarding";
+import { installQuitGuard } from "@/lib/quitGuard";
+import { updateRepo, updateToast } from "@/lib/updates";
+import { pruneTerminalStates } from "@/lib/terminalState";
 import { Overlays } from "@/components/Overlays";
 import { RightPanel } from "@/components/RightPanel";
 import { SidePanel } from "@/components/SidePanel";
@@ -137,6 +140,8 @@ export default function App() {
       // is already mounted and subscribes to onboarding state, so it appears as
       // soon as this fires. No-op for returning users (needsOnboarding()===false).
       if (needsOnboarding()) startOnboarding();
+      // Saved terminal scrollback of tabs/projects that no longer exist.
+      return scheduleStartupIdle(() => void pruneTerminalStates(), 10_000);
     }
   }, [configReady, projectsLoaded]);
 
@@ -242,11 +247,10 @@ export default function App() {
     };
   }, [init, loadProjects, loadPresets]);
 
-  // Always-on activity telemetry + Discord Rich Presence driver. It lives at the
-  // app root — NOT inside the Analytics panel — so stats keep accruing and the
-  // Discord status keeps updating no matter which panel is focused (previously
-  // presence froze the moment you left the Analytics tab). The driver is an
-  // internal singleton and a no-op outside Tauri / when tracking is disabled.
+  // Always-on local activity telemetry driver. It lives at the app root — NOT
+  // inside the Analytics panel — so stats keep accruing no matter which panel is
+  // focused. The driver is an internal singleton and a no-op outside Tauri /
+  // when tracking is disabled.
   useEffect(() => {
     let stop: (() => void) | undefined;
     let disposed = false;
@@ -312,6 +316,20 @@ export default function App() {
       cancel();
       unschedule();
       unlistenOpen?.();
+    };
+  }, []);
+
+  // Ask before quitting when that would lose unsaved edits or a running job.
+  useEffect(() => {
+    let dispose: (() => void) | undefined;
+    let cancelled = false;
+    void installQuitGuard().then((d) => {
+      if (cancelled) d();
+      else dispose = d;
+    });
+    return () => {
+      cancelled = true;
+      dispose?.();
     };
   }, []);
 
@@ -392,8 +410,8 @@ export default function App() {
   // One update check on startup (when enabled and a repo is configured).
   useEffect(() => {
     const config = useAppStore.getState().config;
-    const repo = config?.ui.update_repo ?? "";
-    if (!config || !config.ui.update_check || !repo) return;
+    if (!config || !config.ui.update_check) return;
+    const repo = updateRepo(config);
     const KEY = "luxor.updateCheckDone";
     // sessionStorage can throw (privacy mode / disabled WebView storage);
     // an unavailable dedupe latch must not break the check itself.
@@ -410,7 +428,8 @@ export default function App() {
         .updateCheck(repo)
         .then((info) => {
           if (info.update_available) {
-            useAppStore.getState().toast(`${t("update.available", "Luxor update available")}: ${info.latest}`, "info");
+            const n = updateToast(info, t("update.available", "Luxor update available"), t("update.open", "Open release"), (u) => void ipc.openUrl(u));
+            useAppStore.getState().toast(n.text, "info", undefined, { action: n.action });
           }
         })
         .catch(() => {});

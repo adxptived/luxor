@@ -185,7 +185,7 @@ pub struct UiConfig {
     /// Keep Luxor running in the tray when the window is closed (agents and
     /// terminals keep working; reopen from the tray icon).
     pub close_to_tray: bool,
-    /// Monaco color theme for editors and diffs (e.g. "luxor-dark").
+    /// Editor color theme for editors and diffs (e.g. "luxor-dark").
     pub editor_theme: String,
     /// Show the customizable left sidebar.
     pub side_panel_enabled: bool,
@@ -212,15 +212,15 @@ pub struct UiConfig {
     pub mono_font: String,
     /// UI text scale in percent (root font-size; 100 = default). Clamped 80–130.
     pub ui_font_scale: u16,
-    /// Show the Monaco minimap in editor panels.
+    /// Show the minimap in editor panels.
     pub editor_minimap: bool,
     /// Autosave editor panels shortly after the last change.
     pub editor_autosave: bool,
     /// UI language: "en" or "ru".
     pub language: String,
-    /// GitHub `owner/repo` used for update checks (empty = checks disabled).
+    /// GitHub `owner/repo` used for update checks (empty = the default repo).
     pub update_repo: String,
-    /// Check for updates once on startup (only when `update_repo` is set).
+    /// Check for updates once on startup.
     pub update_check: bool,
     /// Panel ids hidden from the tab-strip "+" menu (empty = show everything).
     pub plus_menu_hidden: Vec<String>,
@@ -236,7 +236,7 @@ pub struct UiConfig {
     /// Glass strength in percent (0 = opaque, 100 = most transparent). 0–60.
     pub glass_opacity: u16,
     /// Show the Diagnostics tab in Dev Tools (subsystem health checks:
-    /// Discord RPC, IPC, tooling). Off by default — it is a developer aid,
+    /// IPC, tooling). Off by default — it is a developer aid,
     /// not something every user needs in their tab strip.
     #[serde(default)]
     pub diagnostics_tab: bool,
@@ -298,7 +298,7 @@ impl Default for UiConfig {
             editor_minimap: false,
             editor_autosave: false,
             language: "en".into(),
-            update_repo: String::new(),
+            update_repo: "adxptived/luxor".into(),
             update_check: true,
             plus_menu_hidden: Vec::new(),
             allow_second_window: false,

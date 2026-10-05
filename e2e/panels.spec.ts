@@ -67,28 +67,14 @@ test.describe("kanban task board", () => {
 });
 
 test.describe("skills panel", () => {
-  test("opens from the sidebar with manager and market tabs", async ({ page }) => {
+  test("opens from the sidebar with project and global tabs", async ({ page }) => {
     await openApp(page);
     await clickNav(page, "skills");
     await expect(dockTab(page, "Skills")).toBeVisible();
     const panel = page.getByTestId("skills-panel");
     // No project in mock mode -> manager shows a hint.
     await expect(panel.getByText("Open a project folder", { exact: false })).toBeVisible();
-    // Market tab lists the catalog from the mock IPC.
-    await panel.getByRole("button", { name: "Market" }).click();
-    await expect(panel.getByTestId("skills-market")).toBeVisible();
-    await expect(panel.getByText("find-skills")).toBeVisible();
-    await expect(panel.getByText("frontend-design")).toBeVisible();
-    await expect(panel.getByText("vercel-labs/skills", { exact: false }).first()).toBeVisible();
-  });
-
-  test("market catalog can be filtered", async ({ page }) => {
-    await openApp(page);
-    await clickNav(page, "skills");
-    const panel = page.getByTestId("skills-panel");
-    await panel.getByRole("button", { name: "Market" }).click();
-    await panel.getByPlaceholder("Search all of skills.sh…").fill("frontend");
-    await expect(panel.getByText("frontend-design")).toBeVisible();
-    await expect(panel.getByText("find-skills")).toHaveCount(0);
+    await expect(panel.getByRole("button", { name: "Global skills" })).toBeVisible();
+    await expect(panel.getByRole("button", { name: "Market" })).toHaveCount(0);
   });
 });

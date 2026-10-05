@@ -91,13 +91,16 @@ import { latestStartup, subscribeLogs } from "@/lib/logBuffer";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
 import * as ipcExtra from "@/lib/ipc";
 import type { UpdateInfo } from "@/lib/types";
+import { TERMINAL_RESTORE_KEY, isRestoreEnabled, purgeTerminalStates } from "@/lib/terminalState";
+import { DEFAULT_UPDATE_REPO, updateRepo } from "@/lib/updates";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
 
-type SectionId = "appearance" | "interface" | "notifications" | "terminal" | "git" | "launcher" | "statusbar" | "hotkeys" | "developer" | "about";
+type SectionId = "appearance" | "editor" | "interface" | "notifications" | "terminal" | "git" | "launcher" | "statusbar" | "hotkeys" | "developer" | "about";
 
 const SECTIONS: { id: SectionId; label: string; icon: LucideIcon }[] = [
   { id: "appearance", label: "Appearance", icon: Palette },
+  { id: "editor", label: "Editor", icon: Code2 },
   { id: "interface", label: "Interface", icon: PanelTop },
   { id: "notifications", label: "Notifications", icon: Bell },
   { id: "terminal", label: "Terminal", icon: SquareTerminal },
@@ -112,7 +115,8 @@ const SECTIONS: { id: SectionId; label: string; icon: LucideIcon }[] = [
 /** Short blurb under each section title. */
 const SECTION_DESCRIPTIONS: Record<SectionId, string> = {
   appearance: "Themes, colors and how Luxor looks.",
-  interface: "Tab bar, side panel, browser, tray and zoom.",
+  editor: "Code editor theme, minimap and autosave.",
+  interface: "Project tabs, side panel, browser, tray and zoom.",
   notifications: "When Luxor alerts you: finished commands, AI agents.",
   terminal: "Shell, font and terminal behavior.",
   git: "Diff view and refresh cadence.",
@@ -235,6 +239,7 @@ function FontPicker({
 /** Extra keywords per section so the settings search finds them. */
 const SECTION_KEYWORDS: Record<SectionId, string> = {
   appearance: "theme accent color dark light tabs confirm editor monaco syntax monokai dracula nord transparent transparency glass blur opacity translucent acrylic vibrancy see-through",
+  editor: "code editor theme syntax highlighting minimap autosave save automatically font",
   interface: "sidebar nav buttons zoom scale quick actions width height order hide browser web youtube tray background close quit startup autostart login boot side panel widgets second window multi",
   notifications: "notify toast os native windows command done finished agent claude codex gemini duration alert",
   terminal: "shell args arguments font scrollback cursor webgl copy emulator external powershell bash zsh ghostty alacritty fast startup nologo noprofile profile loading",
@@ -242,7 +247,7 @@ const SECTION_KEYWORDS: Record<SectionId, string> = {
   launcher: "ide editor custom default detect explorer system open with",
   statusbar: "status bar segments cpu ram network ping project order clock time zoom tasks",
   hotkeys: "keyboard shortcuts keybindings chord",
-    developer: "developer dev logs log panel frontend.log diagnostics share copy export clear startup timing performance first paint errors freeze console troubleshoot bug report diagnostics tab discord rpc health checks devtools",
+    developer: "developer dev logs log panel frontend.log diagnostics share copy export clear startup timing performance first paint errors freeze console troubleshoot bug report diagnostics tab health checks devtools",
   about: "about version author adxptived github repository update check release changelog license credits",
 };
 
@@ -768,8 +773,8 @@ export function SettingsModal() {
       >
         {/* Section nav */}
         <nav className="flex w-48 min-h-0 shrink-0 flex-col border-r border-edge bg-surface/35 p-2">
-          <div className="px-2 pb-1 pt-1 text-lg font-semibold text-strong">Settings</div>
-          <div className="px-2 pb-2 text-2xs leading-4 text-muted">Search, tune and export your Luxor workspace.</div>
+          <div className="px-2 pb-1 pt-1 text-lg font-semibold text-strong">{t("Settings")}</div>
+          <div className="px-2 pb-2 text-2xs leading-4 text-muted">{t("Search, tune and export your Luxor workspace.")}</div>
           <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-edge bg-raised px-2 py-1.5 transition-colors focus-within:border-transparent">
             <Search size={12} className="shrink-0 text-muted" />
             <input
@@ -892,7 +897,7 @@ export function SettingsModal() {
                 {(() => {
                   const active = SECTIONS.find((s) => s.id === section);
                   const Icon = active?.icon;
-                  return <>{Icon && <Icon size={16} className="text-accent" />} {active?.label}</>;
+                  return <>{Icon && <Icon size={16} className="text-accent" />} {active ? t(`settings.section.${active.id}`, active.label) : null}</>;
                 })()}
               </div>
               <div className="mt-0.5 text-xs leading-5 text-muted">{t(`settings.desc.${section}`, SECTION_DESCRIPTIONS[section])}</div>
@@ -923,45 +928,6 @@ export function SettingsModal() {
                   </div>
                   <p className="mt-1 text-xs text-muted">System follows the OS light/dark preference.</p>
                 </div>
-                <Row label="Code editor theme" help="Syntax colors for the editor and diff views.">
-                  <select
-                    value={draft.ui.editor_theme ?? "luxor-dark"}
-                    onChange={(e) => set({ ui: { ...draft.ui, editor_theme: e.target.value } })}
-                    className="rounded border border-edge bg-raised px-2 py-1 text-xs text-strong outline-none focus:border-muted"
-                  >
-                    {EDITOR_THEMES.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.label}
-                        {t.light ? " (light)" : ""}
-                      </option>
-                    ))}
-                  </select>
-                </Row>
-                <Row label="Editor minimap" help="Code overview strip on the right edge of editor panels.">
-                  <Toggle
-                    checked={draft.ui.editor_minimap}
-                    onChange={(v) => set({ ui: { ...draft.ui, editor_minimap: v } })}
-                  />
-                </Row>
-                <Row
-                  label={t("settings.editor_autosave", "Editor autosave")}
-                  help={t(
-                    "settings.editor_autosave.hint",
-                    "Save edited files automatically ~1 second after the last change.",
-                  )}
-                >
-                  <Toggle
-                    checked={draft.ui.editor_autosave}
-                    onChange={(v) => set({ ui: { ...draft.ui, editor_autosave: v } })}
-                  />
-                </Row>
-                <Row label="Project tabs">
-                  <Select
-                    value={draft.tab_bar_position}
-                    options={["top", "side"]}
-                    onChange={(pos) => set({ tab_bar_position: pos as AppConfig["tab_bar_position"] })}
-                  />
-                </Row>
                 <Row
                   label="Accent color"
                   help="The highlight color used across the app: primary buttons, toggles, links, the active sidebar tab, focus rings, selections and more."
@@ -1236,6 +1202,43 @@ export function SettingsModal() {
               </>
             )}
 
+            {section === "editor" && (
+              <>
+                <Row label="Code editor theme" help="Syntax colors for the editor and diff views.">
+                  <select
+                    value={draft.ui.editor_theme ?? "luxor-dark"}
+                    onChange={(e) => set({ ui: { ...draft.ui, editor_theme: e.target.value } })}
+                    className="rounded border border-edge bg-raised px-2 py-1 text-xs text-strong outline-none focus:border-muted"
+                  >
+                    {EDITOR_THEMES.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.label}
+                        {t.light ? " (light)" : ""}
+                      </option>
+                    ))}
+                  </select>
+                </Row>
+                <Row label="Editor minimap" help="Code overview strip on the right edge of editor panels.">
+                  <Toggle
+                    checked={draft.ui.editor_minimap}
+                    onChange={(v) => set({ ui: { ...draft.ui, editor_minimap: v } })}
+                  />
+                </Row>
+                <Row
+                  label={t("settings.editor_autosave", "Editor autosave")}
+                  help={t(
+                    "settings.editor_autosave.hint",
+                    "Save edited files automatically ~1 second after the last change.",
+                  )}
+                >
+                  <Toggle
+                    checked={draft.ui.editor_autosave}
+                    onChange={(v) => set({ ui: { ...draft.ui, editor_autosave: v } })}
+                  />
+                </Row>
+              </>
+            )}
+
             {section === "interface" && (
               <>
                 <Row
@@ -1249,6 +1252,13 @@ export function SettingsModal() {
                     onChange={(v) => set({ ui: { ...draft.ui, language: v } })}
                   />
                 </Row>
+                <Row label="Project tabs">
+                  <Select
+                    value={draft.tab_bar_position}
+                    options={["top", "side"]}
+                    onChange={(pos) => set({ tab_bar_position: pos as AppConfig["tab_bar_position"] })}
+                  />
+                </Row>
                 <Row
                   label={t("settings.updates.repo", "Update repo (owner/repo)")}
                   help={t("settings.updates.repo.hint", "GitHub repository that publishes Luxor releases.")}
@@ -1256,7 +1266,7 @@ export function SettingsModal() {
                   <input
                     value={draft.ui.update_repo ?? ""}
                     onChange={(e) => set({ ui: { ...draft.ui, update_repo: e.target.value.trim() } })}
-                    placeholder="owner/repo"
+                    placeholder={DEFAULT_UPDATE_REPO}
                     className="w-48 rounded border border-edge bg-raised px-2 py-1 text-strong outline-none focus:border-muted"
                   />
                 </Row>
@@ -1889,6 +1899,12 @@ export function SettingsModal() {
                     onChange={(v) => set({ terminal: { ...draft.terminal, show_stats: v } })}
                   />
                 </Row>
+                <Row
+                  label="Restore terminals on startup"
+                  help="Keep each terminal's output, unsent input line and folder across restarts. Shells themselves start fresh. Saved on this device only; turning it off deletes what was saved."
+                >
+                  <TerminalRestoreToggle />
+                </Row>
                 <Row label="WebGL renderer" help="Faster rendering; falls back automatically when unavailable.">
                   <Toggle
                     checked={draft.terminal.webgl}
@@ -2271,7 +2287,7 @@ export function SettingsModal() {
               <>
                 <Row
                   label={t("settings.diagnostics_tab", "Diagnostics tab in Dev Tools")}
-                  help={t("settings.diagnostics_tab_help", "Adds a Diagnostics tab with read-only health checks (Discord RPC, IPC, Git, Docker and more). Off by default.")}
+                  help={t("settings.diagnostics_tab_help", "Adds a Diagnostics tab with read-only health checks (IPC, Git, Docker and more). Off by default.")}
                 >
                   <Toggle
                     checked={draft.ui.diagnostics_tab ?? false}
@@ -2349,7 +2365,7 @@ export function SettingsModal() {
                       onChange={(v) => set({ ui: { ...draft.ui, update_check: v } })}
                     />
                   </div>
-                  <UpdateCheckButton repo={draft.ui.update_repo || "adxptived/luxor"} />
+                  <UpdateCheckButton repo={updateRepo(draft)} />
                 </div>
 
                 <p className="mt-4 text-center text-xs text-muted">
@@ -2522,6 +2538,26 @@ function DeveloperSection() {
         )}
       </p>
     </>
+  );
+}
+
+/** Writes straight to localStorage (not the config draft): it is a per-device
+ *  privacy choice, and turning it off must wipe what was saved right away. */
+function TerminalRestoreToggle() {
+  const [on, setOn] = useState(() => isRestoreEnabled());
+  return (
+    <Toggle
+      checked={on}
+      onChange={(v) => {
+        setOn(v);
+        try {
+          localStorage.setItem(TERMINAL_RESTORE_KEY, v ? "1" : "0");
+        } catch {
+          /* storage unavailable */
+        }
+        if (!v) purgeTerminalStates();
+      }}
+    />
   );
 }
 

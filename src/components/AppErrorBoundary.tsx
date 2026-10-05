@@ -8,7 +8,7 @@ import { WindowControls } from "./WindowChrome";
 /**
  * Top-level error boundary for the entire Luxor app.
  *
- * The per-panel `PanelBoundary` in DockLayout catches crashes inside
+ * The per-panel `PanelErrorBoundary` in DockLayout catches crashes inside
  * individual dock panels, but anything thrown *outside* the dock (TopBar,
  * NavRail, StatusBar, RightPanel, overlays, lazy Suspense fallbacks) would
  * propagate to the root and blank the entire window with no recovery UI.

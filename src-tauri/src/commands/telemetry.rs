@@ -11,7 +11,6 @@ use luxor_core::insights::{self, Insight, WeeklyDigest};
 use luxor_core::telemetry::{
     Achievement, Category, DashboardSnapshot, GitEvent, Sample, TelemetryStore, YearInReview,
 };
-use luxor_core::webhook;
 use luxor_core::Error;
 use serde::{Deserialize, Serialize};
 use tauri::State;
@@ -246,43 +245,6 @@ pub fn telemetry_evaluate_achievements(
         store.set_achievement(&key, progress, unlocked)?;
     }
     store.achievements()
-}
-
-/// Push the weekly digest to Slack and/or Telegram (plan part 13.2).
-#[tauri::command]
-pub async fn webhook_send_digest(
-    state: State<'_, AppState>,
-    slack_url: Option<String>,
-    telegram_token: Option<String>,
-    telegram_chat: Option<String>,
-) -> Result<(), Error> {
-    // Build the message while holding the lock, then drop it before awaiting.
-    let message = {
-        let store = lock(&state);
-        let (digest, _, _, _) = gather_digest(&store)?;
-        webhook::digest_message(&digest)
-    };
-    let slack_url = slack_url
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty());
-    let telegram_token = telegram_token
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty());
-    let telegram_chat = telegram_chat
-        .map(|s| s.trim().to_string())
-        .filter(|s| !s.is_empty());
-    if slack_url.is_none() && !(telegram_token.is_some() && telegram_chat.is_some()) {
-        return Err(Error::InvalidInput(
-            "provide a Slack webhook URL or Telegram bot token + chat ID".into(),
-        ));
-    }
-    if let Some(url) = slack_url {
-        webhook::send_slack(&url, &message).await?;
-    }
-    if let (Some(token), Some(chat)) = (telegram_token, telegram_chat) {
-        webhook::send_telegram(&token, &chat, &message).await?;
-    }
-    Ok(())
 }
 
 /// OS idle time in seconds (plan part 9.3); `None` when unsupported.

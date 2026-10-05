@@ -18,7 +18,6 @@ import type {
   ExternalTerminal,
   FileDiff,
   LayoutPreset,
-  MarketSkill,
   Project,
   RecentProject,
   DetectedProgram,
@@ -241,7 +240,7 @@ export const taskMove = (id: string, status: string, position: number) =>
 export const taskDelete = (id: string) => invoke<void>("task_delete", { id });
 
 // ---------------------------------------------------------------------------
-// Agent skills (manager + skills.sh market)
+// Agent skills (manager)
 // ---------------------------------------------------------------------------
 
 export const skillsScan = (root: string) => invoke<SkillEntry[]>("skills_scan", { root });
@@ -254,12 +253,6 @@ export const skillsSetEnabled = (skillPath: string, enabled: boolean) =>
   invoke<string>("skills_set_enabled", { skillPath, enabled });
 export const skillsRemove = (skillPath: string) =>
   invoke<void>("skills_remove", { skillPath });
-export const marketCatalog = (force = false) =>
-  invoke<MarketSkill[]>("market_catalog", { force });
-export const marketSearch = (query: string) =>
-  invoke<MarketSkill[]>("market_search", { query });
-export const marketSkillMd = (source: string, skillId: string) =>
-  invoke<string>("market_skill_md", { source, skillId });
 
 /** Open the native folder picker; returns the chosen directory or null. */
 export async function pickDirectory(): Promise<string | null> {
@@ -563,6 +556,8 @@ export const statsPing = (host: string, timeoutMs?: number) =>
 
 /** Reveal the (initially hidden) main window once the UI has mounted. */
 export const windowReady = () => invoke<void>("window_ready");
+export const closeGuardSet = (ready: boolean) => invoke<void>("close_guard_set", { ready });
+export const quitApp = () => invoke<void>("quit_app");
 
 /** Open another full Luxor window (requires `ui.allow_second_window`). */
 export const windowOpenNew = () => invoke<void>("window_open_new");

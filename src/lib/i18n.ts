@@ -9,7 +9,7 @@
  * switched to `ru`. English users never fetch or parse it, so it stays off the
  * startup critical path. `t()` remains synchronous — it reads whatever is in
  * `dict`, and `subscribeLanguage()` lets the UI re-render once the RU chunk
- * finishes loading (App also keys its subtree on `getLanguage()`).
+ * finishes loading.
  */
 
 import { useSyncExternalStore } from "react";

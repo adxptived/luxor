@@ -26,6 +26,11 @@ export function isPanelDirty(id: string): boolean {
   }
 }
 
+/** Ids of every registered panel that currently holds unsaved changes. */
+export function dirtyPanelIds(): string[] {
+  return [...guards.keys()].filter(isPanelDirty);
+}
+
 /** Number of registered probes (diagnostics/tests). */
 export function dirtyGuardCount(): number {
   return guards.size;

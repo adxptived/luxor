@@ -1,9 +1,9 @@
-import { discordStatus, metricsCollect, telemetryDashboard, type DiscordStatus } from "./analytics";
+import { metricsCollect, telemetryDashboard } from "./analytics";
 import { getBackendStatus } from "./backendStatus";
 import * as ipc from "./ipc";
 
 export type DiagnosticState = "pass" | "warn" | "fail" | "skip";
-export type DiagnosticGroup = "Runtime" | "Discord RPC" | "Tooling" | "Services" | "App features";
+export type DiagnosticGroup = "Runtime" | "Tooling" | "Services" | "App features";
 
 export interface DiagnosticCheck {
   id: string;
@@ -37,14 +37,6 @@ export function redactDiagnosticText(value: string): string {
     .replace(/\b(?:ghp|github_pat|sk|xox[baprs]|AIza)[-_A-Za-z0-9]{12,}\b/g, "[redacted]")
     .replace(/\b(Bearer\s+)[A-Za-z0-9._~+/-]+=*/gi, "$1[redacted]")
     .replace(/\b(client[_ -]?secret|api[_ -]?key|password|token)\s*[:=]\s*[^\s,;]+/gi, "$1=[redacted]");
-}
-
-function discordResult(status: DiscordStatus): ProbeResult {
-  if (!status.enabled) return skip("Disabled in Analytics settings", "Enable Discord Rich Presence to exercise the IPC handshake.");
-  if (status.connected) return ok("Presence frame sent successfully", status.ipc_connected ? "IPC handshake accepted; recent SET_ACTIVITY succeeded." : "Recent activity succeeded.");
-  if (status.ipc_connected) return warn("IPC connected, but no recent activity", "The handshake works. Wait for the presence driver or inspect rate limiting and payload generation.");
-  const retry = status.reconnect_in_ms ? ` Retry in ${Math.ceil(status.reconnect_in_ms / 1000)}s.` : "";
-  return warn("Discord IPC is not connected", `${status.last_error ?? "No Discord socket was found. Make sure the desktop Discord client is running."}${retry}`);
 }
 
 async function timed(probe: Probe): Promise<DiagnosticCheck> {
@@ -83,9 +75,6 @@ export async function runDiagnostics(projectRoot = ""): Promise<DiagnosticReport
         const entries = await ipc.fsListDir(projectRoot);
         return ok(`Project directory readable · ${entries.length} entries`);
       },
-    },
-    {
-      id: "discord", group: "Discord RPC", label: "Handshake & presence", run: async () => discordResult(await discordStatus()),
     },
     {
       id: "shells", group: "Tooling", label: "Shell / PTY", run: async () => {

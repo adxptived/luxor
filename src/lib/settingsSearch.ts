@@ -9,6 +9,7 @@
 
 export type SettingsSectionId =
   | "appearance"
+  | "editor"
   | "interface"
   | "notifications"
   | "terminal"
@@ -29,14 +30,15 @@ export interface SettingsItem {
 export const SETTINGS_ITEMS: SettingsItem[] = [
   // Appearance
   { section: "appearance", title: "Theme", keywords: "dark light system tokyo catppuccin dracula nord gruvbox one dark solarized rose pine everforest ayu github color scheme" },
-  { section: "appearance", title: "Code editor theme", keywords: "monaco syntax monokai highlighting colors" },
+  { section: "editor", title: "Code editor theme", keywords: "monaco syntax monokai highlighting colors" },
   { section: "appearance", title: "Accent color", keywords: "highlight hex custom color" },
-  { section: "appearance", title: "Editor minimap", keywords: "monaco overview map code preview scrollbar" },
-  { section: "appearance", title: "Editor autosave", keywords: "save automatically auto write file monaco автосохранение" },
+  { section: "editor", title: "Editor minimap", keywords: "monaco overview map code preview scrollbar" },
+  { section: "editor", title: "Editor autosave", keywords: "save automatically auto write file monaco автосохранение" },
   { section: "appearance", title: "Confirm before closing tabs", keywords: "dialog warn project close" },
   { section: "appearance", title: "Export settings", keywords: "config json share backup save file" },
   { section: "appearance", title: "Import settings", keywords: "config json restore load file apply" },
   // Interface
+  { section: "interface", title: "Project tabs", keywords: "tab bar position top side vertical" },
   { section: "interface", title: "Tab bar position", keywords: "top side vertical projects" },
   { section: "interface", title: "Tab bar size", keywords: "height width topbar compact" },
   { section: "interface", title: "Quick actions", keywords: "launcher buttons placement top side hidden" },

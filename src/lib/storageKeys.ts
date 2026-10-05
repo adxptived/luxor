@@ -6,7 +6,7 @@
  *  - Bump `version` when the stored shape changes, and register a migrator
  *    in `stateMigration.ts` for the old→new step.
  *  - New code should read/write via `loadState`/`saveState` (versioned
- *    envelope + migrations) or, for trivial scalar flags, `safeParse`.
+ *    envelope + migrations) or plain `JSON.parse` in a try/catch for scalar flags.
  *
  * The unit test in `storageKeys.test.ts` greps the source tree and fails when
  * a key is used in code but missing here — keeping this list honest.
@@ -38,7 +38,6 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.dbSqlHistory", version: 1, description: "DB panel: SQL query history" },
   { key: "luxor.httpHistory", version: 1, description: "HTTP panel: request history" },
   { key: "luxor.httpBlockPrivate", version: 1, description: "HTTP panel: SSRF guard toggle ('0'/'1')" },
-  { key: "luxor.skills.lastInstallTarget", version: 1, description: "Skills panel: last install target" },
   { key: "luxor.skills.favorites", version: 1, description: "Skills panel: favorite skill ids" },
   { key: "luxor.rightPanel.notes", version: 1, description: "Right panel: scratch notes text" },
   { key: "luxor.settingsScale", version: 1, description: "Settings modal: window scale factor (number)" },
@@ -48,11 +47,11 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.tabGroups.v1", version: 1, description: "Tab groups store state" },
   { key: "luxor.focusTimer.v1", version: 1, description: "Focus timer store state" },
   { key: "luxor.searchHistory.v1", version: 1, description: "Search panel query history" },
-  { key: "luxor.terminalSessions", version: 1, description: "Terminal session restore data" },
+  { key: "luxor.terminalRestore", version: 1, description: "Terminal restore on/off ('0' = off; default on)" },
+  { key: "luxor.term.", version: 1, description: "PREFIX luxor.term.<dockKey>:<panelId> — saved terminal scrollback, unsent input and cwd" },
   { key: "luxor.cmdHistory", version: 1, description: "Terminal command history" },
   { key: "luxor.paletteRecents", version: 1, description: "Command palette recent actions" },
   { key: "luxor.activity-log", version: 1, description: "Activity log entries" },
-  { key: "luxor.modelRoutes", version: 1, description: "Agent router model routes" },
   { key: "luxor.settingsProfiles", version: 1, description: "Saved settings profiles" },
   { key: "luxor.shellProfiles", version: 1, description: "Saved shell profiles" },
 
@@ -64,7 +63,7 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.statusBarAlign", version: 1, description: "Status bar alignment preference" },
 
   // Analytics / telemetry
-  { key: "luxor.discord.settings", version: 1, description: "Discord webhook settings" },
+  { key: "luxor.discord.settings", version: 1, description: "LEGACY (read once to migrate mask_projects into luxor.telemetry.prefs)" },
   { key: "luxor.telemetry.prefs", version: 1, description: "Telemetry opt-in preferences" },
 ] as const;
 
