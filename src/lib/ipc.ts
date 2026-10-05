@@ -556,6 +556,8 @@ export const statsPing = (host: string, timeoutMs?: number) =>
 
 /** Reveal the (initially hidden) main window once the UI has mounted. */
 export const windowReady = () => invoke<void>("window_ready");
+export const closeGuardSet = (ready: boolean) => invoke<void>("close_guard_set", { ready });
+export const quitApp = () => invoke<void>("quit_app");
 
 /** Open another full Luxor window (requires `ui.allow_second_window`). */
 export const windowOpenNew = () => invoke<void>("window_open_new");

@@ -373,7 +373,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           // Audit fix 2.3: autorun from restored layouts/presets must be
           // confirmed by the user; only terminals spawned by a direct user
           // action this session run their commands silently.
-          autorun: gateAutorun(props.api.id, params.autorun ?? []),
+          autorun: await gateAutorun(props.api.id, params.autorun ?? []),
           fast_powershell_startup: terminalConfig?.fast_powershell_startup ?? true,
         };
         // Reopen in the directory the shell was last in, when it reported one.

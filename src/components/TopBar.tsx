@@ -199,21 +199,17 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
   useEffect(() => {
     const strip = tabStripRef.current;
     if (!strip || !activeId) return;
-    const reveal = () =>
+    const reveal = (behavior: ScrollBehavior) =>
       strip
         .querySelector<HTMLElement>(`[data-project-id="${CSS.escape(activeId)}"]`)
-        ?.scrollIntoView({ block: "nearest", inline: "nearest" });
-    reveal();
-    let raf = 0;
-    const ro = new ResizeObserver(() => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(reveal);
-    });
+        ?.scrollIntoView({ block: "nearest", inline: "nearest", behavior });
+    // Switching tabs glides (the strip is smooth-scrolling); a resize snaps, so
+    // the active tab is never caught half-hidden mid-animation.
+    reveal("auto");
+    // Scrolling does not change the strip's size, so this cannot re-trigger itself.
+    const ro = new ResizeObserver(() => reveal("instant"));
     ro.observe(strip);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-    };
+    return () => ro.disconnect();
   }, [activeId, vertical, projects.length]);
 
   // Refresh the "Recent projects" list every time the add-menu opens.

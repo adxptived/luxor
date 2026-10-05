@@ -560,6 +560,7 @@ pub fn run() {
                 tray_popup_gen: AtomicU64::new(0),
                 tray_popup_shown_at: Mutex::new(None),
                 tray_hint_shown: std::sync::atomic::AtomicBool::new(false),
+                close_guard_ready: std::sync::atomic::AtomicBool::new(false),
             });
             // Background telemetry retention (plan part 7.2). Off the UI thread.
             commands::telemetry::spawn_background(app.handle().clone());
@@ -750,6 +751,10 @@ pub fn run() {
                         let _ = window.hide();
                         // Tell the user where the window went — once per run.
                         notify_hidden_to_tray(window.app_handle());
+                    } else if commands::window::ask_frontend_to_quit(window.app_handle()) {
+                        // The UI decides (unsaved files / busy terminals) and
+                        // calls `quit_app` itself.
+                        api.prevent_close();
                     }
                 }
             }
@@ -900,6 +905,8 @@ pub fn run() {
             commands::window::tray_popup_fit,
             commands::window::tray_popup_hide_if_cursor_outside,
             commands::window::quit_app,
+            commands::window::request_quit,
+            commands::window::close_guard_set,
             // launcher
             commands::launcher::launcher_open_terminal,
             commands::launcher::launcher_open_file_manager,

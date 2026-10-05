@@ -48,4 +48,8 @@ pub struct AppState {
     /// non-annoying notification per app run so first-time users learn where
     /// the window went without being nagged on every close.
     pub tray_hint_shown: AtomicBool,
+    /// True while the frontend is running its quit guard (unsaved files /
+    /// busy terminals). Only then does closing the main window hand the
+    /// decision to the UI; a crashed or not-yet-loaded UI never blocks exit.
+    pub close_guard_ready: AtomicBool,
 }

@@ -118,6 +118,49 @@ pub fn quit_app(app: tauri::AppHandle) -> Result<(), Error> {
     Ok(())
 }
 
+/// Name of the event asking the main window's UI to run its quit guard.
+pub const EVENT_CLOSE_REQUESTED: &str = "app:close-requested";
+
+/// The frontend announces whether its quit guard is installed.
+#[tauri::command]
+pub fn close_guard_set(state: tauri::State<'_, AppState>, ready: bool) {
+    state
+        .close_guard_ready
+        .store(ready, std::sync::atomic::Ordering::SeqCst);
+}
+
+/// If the UI's quit guard is active, show the main window and ask it to decide
+/// (it will call [`quit_app`] once the user agrees). Returns whether the
+/// request was handed over; `false` means the caller should just quit.
+pub fn ask_frontend_to_quit(app: &tauri::AppHandle) -> bool {
+    use std::sync::atomic::Ordering;
+    use tauri::Emitter;
+    let ready = app
+        .try_state::<AppState>()
+        .is_some_and(|s| s.close_guard_ready.load(Ordering::SeqCst));
+    if !ready {
+        return false;
+    }
+    let Some(win) = app.get_webview_window("main") else {
+        return false;
+    };
+    let _ = win.show();
+    let _ = win.unminimize();
+    let _ = win.set_focus();
+    win.emit(EVENT_CLOSE_REQUESTED, ()).is_ok()
+}
+
+/// Quit requested by the user (tray menu): runs the UI's quit guard when there
+/// is one, otherwise exits immediately like [`quit_app`].
+#[tauri::command]
+pub fn request_quit(app: tauri::AppHandle) -> Result<(), Error> {
+    if !ask_frontend_to_quit(&app) {
+        crate::cleanup_before_exit(&app);
+        app.exit(0);
+    }
+    Ok(())
+}
+
 /// Resize the tray popup to fit its measured content and re-anchor it near the
 /// last tray click. Called by the popup frontend once it knows the menu's real
 /// height (which depends on the user's tray config and project count), so the

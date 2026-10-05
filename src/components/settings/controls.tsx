@@ -11,6 +11,7 @@
 
 import { type LucideIcon } from "lucide-react";
 
+import { t } from "@/lib/i18n";
 import type { DetectedProgram } from "@/lib/types";
 
 export function AboutLink(props: {
@@ -55,8 +56,8 @@ export function Row({
     return (
       <div className="group flex flex-col gap-2 border-b border-edge/50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-raised/40">
         <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="text-pretty leading-snug text-strong">{label}</span>
-          {help && <span className="text-pretty text-2xs leading-4 text-muted">{help}</span>}
+          <span className="text-pretty leading-snug text-strong">{t(label)}</span>
+          {help && <span className="text-pretty text-2xs leading-4 text-muted">{t(help)}</span>}
         </span>
         <div className="min-w-0">{children}</div>
       </div>
@@ -65,8 +66,8 @@ export function Row({
   return (
     <div className="group grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-center gap-x-4 border-b border-edge/50 px-2 py-2 transition-colors last:border-b-0 hover:bg-raised/40">
       <span className="flex min-w-0 flex-col gap-0.5">
-        <span className="text-pretty leading-snug text-strong">{label}</span>
-        {help && <span className="text-pretty text-2xs leading-4 text-muted">{help}</span>}
+        <span className="text-pretty leading-snug text-strong">{t(label)}</span>
+        {help && <span className="text-pretty text-2xs leading-4 text-muted">{t(help)}</span>}
       </span>
       <div className="flex min-w-0 items-center justify-end">{children}</div>
     </div>

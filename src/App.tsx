@@ -4,6 +4,7 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { NavRail } from "@/components/NavRail";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { needsOnboarding, startOnboarding } from "@/lib/onboarding";
+import { installQuitGuard } from "@/lib/quitGuard";
 import { updateRepo, updateToast } from "@/lib/updates";
 import { pruneTerminalStates } from "@/lib/terminalState";
 import { Overlays } from "@/components/Overlays";
@@ -315,6 +316,20 @@ export default function App() {
       cancel();
       unschedule();
       unlistenOpen?.();
+    };
+  }, []);
+
+  // Ask before quitting when that would lose unsaved edits or a running job.
+  useEffect(() => {
+    let dispose: (() => void) | undefined;
+    let cancelled = false;
+    void installQuitGuard().then((d) => {
+      if (cancelled) d();
+      else dispose = d;
+    });
+    return () => {
+      cancelled = true;
+      dispose?.();
     };
   }, []);
 

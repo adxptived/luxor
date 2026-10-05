@@ -421,12 +421,15 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
                   );
                 return;
               }
-              const overwrite = window.confirm(
-                t(
+              const overwrite = await useUiStore.getState().confirm({
+                title: t("editor.conflict_title", "File changed on disk"),
+                message: t(
                   "editor.conflict_prompt",
-                  "This file was modified on disk since you opened it.\n\nOK — overwrite with your version\nCancel — keep the file on disk (reopen the file to reload)",
+                  "This file was modified on disk since you opened it. Overwrite it with your version? Cancel keeps the file on disk (reopen the file to reload).",
                 ),
-              );
+                confirmLabel: t("editor.conflict_overwrite", "Overwrite"),
+                danger: true,
+              });
               if (!overwrite) return;
               newMtimeMs = await ipc.fsWriteText(path, content, null);
             }

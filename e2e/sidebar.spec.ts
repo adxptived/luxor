@@ -72,7 +72,7 @@ test.describe("nav buttons", () => {
 
     await clickNav(page, "settings");
     const modal = page.getByTestId("settings-modal");
-    await modal.getByRole("button", { name: /^Appearance$/ }).click();
+    await modal.getByRole("button", { name: /^Interface$/ }).click();
     // The "Project tabs" position select — the only top/side one without a
     // "hidden" option (that one is the quick-actions placement).
     await modal
@@ -115,7 +115,7 @@ test.describe("nav buttons", () => {
 
     await clickNav(page, "settings");
     const modal = page.getByTestId("settings-modal");
-    await modal.getByRole("button", { name: /^Appearance$/ }).click();
+    await modal.getByRole("button", { name: /^Interface$/ }).click();
     await modal
       .locator('select:has(option[value="side"]):not(:has(option[value="hidden"]))')
       .selectOption("side");
