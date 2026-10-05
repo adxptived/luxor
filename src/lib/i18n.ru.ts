@@ -229,6 +229,8 @@ export const RU: Record<string, string> = {
   "settings.desc.git": "Вид диффов и частота обновления.",
   "settings.desc.launcher": "Внешние редакторы, IDE и открытие проектов.",
   "settings.desc.statusbar": "Выбор и порядок сегментов нижней строки.",
+  "settings.desc.developer": "Живой журнал, время запуска и диагностика для обращений.",
+  "settings.desc.about": "Версия, автор и проверка обновлений.",
   "settings.desc.hotkeys": "Переназначение клавиатурных сокращений.",
   // Git tabs
   "git.tab.changes": "изменения",
@@ -1492,6 +1494,9 @@ export const RU: Record<string, string> = {
   "host:port — measured as a TCP connect round-trip.": "host:port — измеряется как время TCP-соединения.",
   "‘Keep running’ toggle": "Переключатель «Работать в фоне»",
   "settings.section.editor": "Редактор",
+  "settings.section.developer": "Разработчик",
+  "settings.section.about": "О программе",
+  "Search, tune and export your Luxor workspace.": "Настраивайте, ищите и экспортируйте рабочее пространство Luxor.",
   "Editor": "Редактор",
   "Code editor theme, minimap and autosave.": "Тема редактора кода, миникарта и автосохранение.",
   "Project tabs, side panel, browser, tray and zoom.": "Вкладки проектов, боковая панель, браузер, трей и масштаб.",

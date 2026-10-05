@@ -185,7 +185,7 @@ pub struct UiConfig {
     /// Keep Luxor running in the tray when the window is closed (agents and
     /// terminals keep working; reopen from the tray icon).
     pub close_to_tray: bool,
-    /// Monaco color theme for editors and diffs (e.g. "luxor-dark").
+    /// Editor color theme for editors and diffs (e.g. "luxor-dark").
     pub editor_theme: String,
     /// Show the customizable left sidebar.
     pub side_panel_enabled: bool,
@@ -212,7 +212,7 @@ pub struct UiConfig {
     pub mono_font: String,
     /// UI text scale in percent (root font-size; 100 = default). Clamped 80–130.
     pub ui_font_scale: u16,
-    /// Show the Monaco minimap in editor panels.
+    /// Show the minimap in editor panels.
     pub editor_minimap: bool,
     /// Autosave editor panels shortly after the last change.
     pub editor_autosave: bool,

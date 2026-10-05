@@ -773,8 +773,8 @@ export function SettingsModal() {
       >
         {/* Section nav */}
         <nav className="flex w-48 min-h-0 shrink-0 flex-col border-r border-edge bg-surface/35 p-2">
-          <div className="px-2 pb-1 pt-1 text-lg font-semibold text-strong">Settings</div>
-          <div className="px-2 pb-2 text-2xs leading-4 text-muted">Search, tune and export your Luxor workspace.</div>
+          <div className="px-2 pb-1 pt-1 text-lg font-semibold text-strong">{t("Settings")}</div>
+          <div className="px-2 pb-2 text-2xs leading-4 text-muted">{t("Search, tune and export your Luxor workspace.")}</div>
           <div className="mb-2 flex items-center gap-1.5 rounded-lg border border-edge bg-raised px-2 py-1.5 transition-colors focus-within:border-transparent">
             <Search size={12} className="shrink-0 text-muted" />
             <input
@@ -897,7 +897,7 @@ export function SettingsModal() {
                 {(() => {
                   const active = SECTIONS.find((s) => s.id === section);
                   const Icon = active?.icon;
-                  return <>{Icon && <Icon size={16} className="text-accent" />} {active?.label}</>;
+                  return <>{Icon && <Icon size={16} className="text-accent" />} {active ? t(`settings.section.${active.id}`, active.label) : null}</>;
                 })()}
               </div>
               <div className="mt-0.5 text-xs leading-5 text-muted">{t(`settings.desc.${section}`, SECTION_DESCRIPTIONS[section])}</div>
