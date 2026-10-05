@@ -3,7 +3,7 @@
 //!
 //! Background: a command can compile fine yet be unreachable from the frontend
 //! if it is missing from the handler list (this exact bug shipped once — see
-//! `docs/CODE_REVIEW-0.4.1.md`, "project_add_blank not found"). This test makes
+//! the 0.4.1 code review, "project_add_blank not found"). This test makes
 //! that failure mode impossible to miss.
 
 use std::fs;

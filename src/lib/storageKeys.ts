@@ -6,7 +6,7 @@
  *  - Bump `version` when the stored shape changes, and register a migrator
  *    in `stateMigration.ts` for the old→new step.
  *  - New code should read/write via `loadState`/`saveState` (versioned
- *    envelope + migrations) or, for trivial scalar flags, `safeParse`.
+ *    envelope + migrations) or plain `JSON.parse` in a try/catch for scalar flags.
  *
  * The unit test in `storageKeys.test.ts` greps the source tree and fails when
  * a key is used in code but missing here — keeping this list honest.
@@ -53,7 +53,6 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.cmdHistory", version: 1, description: "Terminal command history" },
   { key: "luxor.paletteRecents", version: 1, description: "Command palette recent actions" },
   { key: "luxor.activity-log", version: 1, description: "Activity log entries" },
-  { key: "luxor.modelRoutes", version: 1, description: "Agent router model routes" },
   { key: "luxor.settingsProfiles", version: 1, description: "Saved settings profiles" },
   { key: "luxor.shellProfiles", version: 1, description: "Saved shell profiles" },
 
