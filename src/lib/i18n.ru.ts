@@ -954,6 +954,9 @@ export const RU: Record<string, string> = {
   "Delete ALL local activity history?": "Удалить ВСЮ локальную историю активности?",
   // Layout presets menu (v0.6.9)
   "Layout presets": "Пресеты раскладки",
+  "Can't move a folder into itself": "Нельзя переместить папку саму в себя",
+  "Move failed:": "Не удалось переместить:",
+  "Changed in git": "Изменено в git",
   "Ready-made layouts": "Готовые раскладки",
   "Everything": "Всё",
   "Terminals": "Терминалы",
