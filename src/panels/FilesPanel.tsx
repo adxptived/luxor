@@ -8,16 +8,10 @@ import {
   ClipboardCopy,
   CopyPlus,
   ExternalLink,
-  Database,
-  File,
-  FileCode,
   FilePen,
   FilePlus,
-  FileText,
-  Folder,
   FolderOpen,
   FolderPlus,
-  Image as ImageIcon,
   Bot,
   CopyMinus,
   Eye,
@@ -40,6 +34,8 @@ import { errorMessage } from "@/lib/types";
 import { isFileManagerIde, isSystemDefaultIde, mergeIdeActions, resolveDefaultIde } from "@/lib/ideActions";
 import { fileExt, useDockStore } from "@/layout/dockStore";
 import { NoFolderCta } from "@/components/NoFolderCta";
+import { FileIcon } from "@/components/FileIcon";
+import { isDimmedFolder } from "@/lib/fileIcons";
 import { lazy, Suspense } from "react";
 import { useAppStore } from "@/state/appStore";
 
@@ -63,7 +59,6 @@ function FileEditorSurfaceFallback({ height = 360 }: { height?: number }) {
 import { confirmDestructive, openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
 import { useActiveProject } from "@/state/projectsStore";
 
-const CODE_EXTS = new Set(["ts", "tsx", "js", "jsx", "rs", "py", "go", "java", "c", "h", "cpp", "css", "html", "sh", "toml", "yml", "yaml", "json", "sql"]);
 const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"]);
 const DB_EXTS = new Set(["db", "sqlite", "sqlite3", "db3"]);
 type FilterType = "all" | "code" | "image" | "config" | "doc";
@@ -74,16 +69,6 @@ const FILTER_TYPE_EXTS: Record<Exclude<FilterType, "all">, Set<string>> = {
   doc: new Set(["md", "txt", "rst", "pdf", "docx", "readme"]),
 };
 const NON_TEXT_EXTS = new Set([...IMAGE_EXTS, ...DB_EXTS, "pdf"]);
-
-function entryIcon(entry: FsEntry, expanded: boolean) {
-  if (entry.is_dir) return expanded ? FolderOpen : Folder;
-  const ext = fileExt(entry.name);
-  if (IMAGE_EXTS.has(ext)) return ImageIcon;
-  if (DB_EXTS.has(ext)) return Database;
-  if (CODE_EXTS.has(ext)) return FileCode;
-  if (ext === "md" || ext === "txt") return FileText;
-  return File;
-}
 
 const HIDDEN_KEY = "luxor.files.showHidden";
 
@@ -863,7 +848,6 @@ export function FilesPanel() {
 
   const renderRow = (entry: FsEntry, depth: number): React.ReactNode => {
     {
-      const Icon = entryIcon(entry, !!expanded[entry.path]);
       const isSearchMatch = searchTerms.length > 0 && matchesSearch(entry);
       return (
         <div
@@ -907,8 +891,18 @@ export function FilesPanel() {
             ) : (
               <span className="w-3 shrink-0" />
             )}
-            <Icon size={14} className={`shrink-0 ${entry.is_dir ? "text-strong" : "text-muted"}`} />
-            <span className={`min-w-0 flex-1 truncate ${entry.is_dir ? "font-medium text-strong" : "text-strong/90 group-hover:text-strong"}`}>{entry.name}</span>
+            <FileIcon name={entry.name} isDir={entry.is_dir} expanded={!!expanded[entry.path]} size={16} />
+            <span
+              className={`min-w-0 flex-1 truncate ${
+                entry.is_dir
+                  ? isDimmedFolder(entry.name)
+                    ? "font-medium text-muted"
+                    : "font-medium text-strong"
+                  : "text-strong/90 group-hover:text-strong"
+              }`}
+            >
+              {entry.name}
+            </span>
             {!entry.is_dir && !embeddedPath && entry.size > 0 && (
               <span className="shrink-0 pl-2 text-3xs tabular-nums text-transparent transition-colors group-hover:text-muted/70">
                 {formatSize(entry.size)}
