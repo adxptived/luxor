@@ -30,6 +30,8 @@ import {
   terminalStateId,
 } from "@/lib/terminalState";
 import { formatDateTime } from "@/lib/format";
+import { probeRunGroups, topCommands } from "@/lib/projectRun";
+import type { RunCommand } from "@/lib/runDetect";
 import { t } from "@/lib/i18n";
 import { notifyDone, osNotifyIfAway } from "@/lib/notify";
 import { schedulePoll } from "@/lib/poll";
@@ -40,7 +42,7 @@ import { useProjectsStore } from "@/state/projectsStore";
 import type { TerminalPanelParams } from "@/layout/dockStore";
 import { useDockStore } from "@/layout/dockStore";
 import { useDockKey } from "@/layout/DockKeyContext";
-import { ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
+import { ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, Play, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
 import { loadProfiles } from "@/lib/shellProfiles";
 
 /** "1h 4m" / "2m 5s" / "42s" for notification bodies. */
@@ -67,6 +69,24 @@ export function TerminalPanel(props: IDockviewPanelProps) {
   const params = (props.params ?? {}) as TerminalPanelParams;
   const dockKey = useDockKey();
   const [exited, setExited] = useState<number | null>(null);
+  // Run/build/test commands detected in the terminal's folder (context menu).
+  const [runCommands, setRunCommands] = useState<RunCommand[]>([]);
+  const runRoot = params.cwd ?? useProjectsStore.getState().projects.find(
+    (p) => p.id === useProjectsStore.getState().activeId,
+  )?.path ?? null;
+  useEffect(() => {
+    if (!runRoot) {
+      setRunCommands([]);
+      return;
+    }
+    let cancelled = false;
+    probeRunGroups(runRoot)
+      .then((groups) => !cancelled && setRunCommands(topCommands(groups)))
+      .catch(() => !cancelled && setRunCommands([]));
+    return () => {
+      cancelled = true;
+    };
+  }, [runRoot]);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -739,6 +759,16 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         onClick: () => void navigator.clipboard.readText().then((t) => t && term?.paste(t)).catch(() => {}),
       },
       { label: t("Select all"), icon: MousePointerSquareDashed, onClick: () => term?.selectAll() },
+      ...(runCommands.length > 0 && exited === null
+        ? [
+            { separator: true as const },
+            ...runCommands.map((c) => ({
+              label: `${t("Run")}: ${c.label}`,
+              icon: Play,
+              onClick: () => runFromHistory(c.cmd, true),
+            })),
+          ]
+        : []),
       { separator: true },
       { label: t("Find…"), icon: Search, hint: "Ctrl+F", onClick: () => setSearchOpen(true) },
       { label: t("Command history…"), icon: History, hint: "Ctrl+Shift+R", onClick: openHistory },
