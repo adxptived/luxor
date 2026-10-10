@@ -3,6 +3,7 @@ import { FolderGit2, FolderPlus, FolderTree, LayoutGrid, Plus, SquareTerminal } 
 import { t } from "@/lib/i18n";
 import { hintFor } from "@/lib/hotkeys";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
+import { BUILTIN_LAYOUTS } from "@/layout/builtinLayouts";
 import { useDockStore } from "@/layout/dockStore";
 import { openContextMenu, type MenuItem } from "@/state/uiStore";
 import { useAppStore } from "@/state/appStore";
@@ -16,6 +17,11 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
   const addTerminal = useDockStore((s) => s.addTerminal);
   const openPanel = useDockStore((s) => s.openPanel);
   const addProject = useProjectsStore((s) => s.addProject);
+  const applyBuiltinLayout = useDockStore((s) => s.applyBuiltinLayout);
+  const projectPath = useProjectsStore((s) => {
+    const p = s.projects.find((x) => x.id === dockKey);
+    return p && p.path !== "" ? p.path : null;
+  });
   const hasFolder = useProjectsStore((s) => {
     const p = s.projects.find((x) => x.id === dockKey);
     return Boolean(p) && p?.path !== "";
@@ -62,7 +68,20 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
           ) : (
             <EmptyAction icon={FolderPlus} label={t("Open folder…")} hint={t("Attach project")} onClick={() => void addProject()} />
           )}
-                  </div>
+        </div>
+
+        <div className="mt-4 text-2xs font-semibold uppercase tracking-wide text-muted">{t("Ready-made layouts")}</div>
+        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+          {BUILTIN_LAYOUTS.map((l) => (
+            <EmptyAction
+              key={l.id}
+              icon={LayoutGrid}
+              label={t(l.label)}
+              hint={t(l.description)}
+              onClick={() => void applyBuiltinLayout(l.id, projectPath)}
+            />
+          ))}
+        </div>
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <button
