@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "bun:test";
 
-import { forgetDock, pickGroup, placementKindOf, rememberGroup, rememberedGroup, type GroupInfo } from "./placement";
+import { forgetDock, neighbourGroup, pickGroup, placementKindOf, rememberGroup, rememberedGroup, type GroupInfo } from "./placement";
 
 const groups: GroupInfo[] = [
   { id: "side", components: ["files", "git"] },
@@ -71,5 +71,19 @@ describe("group memory", () => {
     rememberGroup("p1", "editor", "a");
     rememberGroup("p1", "pdf", "b");
     expect(rememberedGroup("p1", "file")).toBe("b");
+  });
+});
+
+describe("neighbourGroup", () => {
+  const ids = ["a", "b", "c"];
+  it("steps forward and back with wrap-around", () => {
+    expect(neighbourGroup(ids, "a", 1)).toBe("b");
+    expect(neighbourGroup(ids, "c", 1)).toBe("a");
+    expect(neighbourGroup(ids, "a", -1)).toBe("c");
+  });
+  it("starts from an end when nothing is active and refuses a single group", () => {
+    expect(neighbourGroup(ids, null, 1)).toBe("a");
+    expect(neighbourGroup(ids, "gone", -1)).toBe("c");
+    expect(neighbourGroup(["a"], "a", 1)).toBeNull();
   });
 });

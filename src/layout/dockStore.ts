@@ -10,7 +10,7 @@ import { pushClosedTab, type ReopenInfo } from "@/lib/closedTabs";
 import { revealInEditor } from "@/lib/editorBus";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
-import { pickGroup, rememberedGroup, type PlacementKind } from "./placement";
+import { neighbourGroup, pickGroup, rememberedGroup, type PlacementKind } from "./placement";
 import { buildLayout, pickStartFile, type BuiltinLayoutId } from "./builtinLayouts";
 
 export type PanelKind =
@@ -507,6 +507,37 @@ export async function closePanelsGuarded(panels: ClosablePanel[]): Promise<void>
   for (const p of panels) {
     // Sequential on purpose: parallel confirms would stack dialogs.
     await closePanelGuarded(p);
+  }
+}
+
+/** Focus the next/previous group of the active dock (keyboard alternative to clicking). */
+export function focusNeighbourGroup(delta: 1 | -1): void {
+  const api = activeApi();
+  if (!api) return;
+  try {
+    const target = neighbourGroup(api.groups.map((g) => g.id), api.activeGroup?.id ?? null, delta);
+    const group = api.groups.find((g) => g.id === target);
+    if (!group) return;
+    group.api.setActive();
+    (group.activePanel ?? group.panels[0])?.focus();
+  } catch (err) {
+    console.warn("focus group failed", err);
+  }
+}
+
+/** Move the active tab into the next/previous group, keeping it active. */
+export function moveTabToNeighbourGroup(delta: 1 | -1): void {
+  const api = activeApi();
+  const panel = api?.activePanel;
+  if (!api || !panel) return;
+  try {
+    const target = neighbourGroup(api.groups.map((g) => g.id), panel.group.id, delta);
+    const group = api.groups.find((g) => g.id === target);
+    if (!group) return;
+    panel.api.moveTo({ group });
+    panel.api.setActive();
+  } catch (err) {
+    console.warn("move tab to group failed", err);
   }
 }
 

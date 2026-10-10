@@ -12,7 +12,7 @@ import { applyRecents, loadRecents, recordRecent } from "@/lib/paletteRecents";
 import { THEMES } from "@/lib/themes";
 import { ZOOM_STEP } from "@/lib/zoom";
 import { useFocusTrap } from "@/lib/useFocusTrap";
-import { useDockStore } from "@/layout/dockStore";
+import { focusNeighbourGroup, moveTabToNeighbourGroup, useDockStore } from "@/layout/dockStore";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
@@ -182,6 +182,10 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
           ),
         ),
       })),
+      { id: "layout.focusNext", label: "Layout: Focus next group", run: close(() => focusNeighbourGroup(1)) },
+      { id: "layout.focusPrev", label: "Layout: Focus previous group", run: close(() => focusNeighbourGroup(-1)) },
+      { id: "layout.moveNext", label: "Layout: Move tab to next group", run: close(() => moveTabToNeighbourGroup(1)) },
+      { id: "layout.movePrev", label: "Layout: Move tab to previous group", run: close(() => moveTabToNeighbourGroup(-1)) },
       {
         id: "layout.splitRight",
         label: "Layout: Split right with new terminal",
