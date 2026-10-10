@@ -10,6 +10,7 @@ import { pushClosedTab, type ReopenInfo } from "@/lib/closedTabs";
 import { revealInEditor } from "@/lib/editorBus";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
+import { pickGroup, rememberedGroup, type PlacementKind } from "./placement";
 
 export type PanelKind =
   | "terminal"
@@ -189,7 +190,7 @@ export const useDockStore = create<DockStore>((set, get) => ({
   addTerminal: (params = {}) => {
     const api = activeApi();
     if (!api) return;
-    addTerminalPanel(api, params);
+    addTerminalPanel(api, params, targetPosition(api, get().activeKey, "terminal"));
   },
 
   splitWithTerminal: (direction, referencePanel) => {
@@ -260,12 +261,16 @@ export const useDockStore = create<DockStore>((set, get) => ({
       if (kind === "editor" && opts.line) revealInEditor(id, opts.line);
       return;
     }
+    const position = kind === "editor" || kind === "image" || kind === "db" || kind === "pdf" || kind === "html"
+      ? targetPosition(api, get().activeKey, "file")
+      : undefined;
     try {
       api.addPanel({
         id,
         component: kind,
         title: fileName(path),
         params: opts.line ? { path, gotoLine: opts.line } : { path },
+        ...(position ? { position } : {}),
       });
     } catch (e) {
       // Dockview can throw while restoring/adding custom preview panels in some
@@ -468,6 +473,25 @@ export function cycleTab(delta: 1 | -1): void {
 function activeApi(): DockviewApi | null {
   const { apis, activeKey } = useDockStore.getState();
   return apis[activeKey] ?? null;
+}
+
+/**
+ * Where a new file / terminal should open: the group that already holds that
+ * kind of panel (see `placement.ts`), or undefined to keep dockview's default
+ * of "the active group".
+ */
+function targetPosition(
+  api: DockviewApi,
+  dockKey: string,
+  wanted: PlacementKind,
+): AddPanelPositionOptions | undefined {
+  try {
+    const groups = api.groups.map((g) => ({ id: g.id, components: g.panels.map((p) => panelComponent(p)) }));
+    const id = pickGroup(groups, api.activeGroup?.id ?? null, wanted, rememberedGroup(dockKey, wanted));
+    return id ? { referenceGroup: id, direction: "within" } : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Add a terminal panel to a specific dock, optionally at a split position. */
