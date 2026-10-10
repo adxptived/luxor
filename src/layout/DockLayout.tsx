@@ -212,12 +212,15 @@ import {
   closePanelGuarded,
   closePanelsGuarded,
   dropDockLayout,
+  panelComponent,
   restoreDockLayout,
   saveDockLayout,
   useDockStore,
 } from "./dockStore";
 import { deleteTerminalState, terminalStateId } from "@/lib/terminalState";
 import { DockKeyContext } from "./DockKeyContext";
+import { forgetDock, rememberGroup } from "./placement";
+import { FileIcon } from "@/components/FileIcon";
 import { PanelErrorBoundary } from "@/components/PanelErrorBoundary";
 
 /** Wrap a lazily-loaded panel in Suspense so its chunk can stream in without
@@ -269,6 +272,9 @@ function DockTab(props: IDockviewPanelHeaderProps) {
     );
   };
 
+  const filePath = (props.params as { path?: unknown } | undefined)?.path;
+  const tabFile = typeof filePath === "string" && /^(editor|image|pdf|db|html)$/.test(props.api.component) ? filePath : null;
+
   const moveToSplit = (direction: "right" | "below") => {
     try {
       const panel = props.containerApi.getPanel(props.api.id);
@@ -296,6 +302,20 @@ function DockTab(props: IDockviewPanelHeaderProps) {
       },
       { label: t("Move panel to split right"), icon: SquareSplitHorizontal, onClick: () => moveToSplit("right") },
       { label: t("Move panel to split down"), icon: SquareSplitVertical, onClick: () => moveToSplit("below") },
+      ...(tabFile
+        ? [
+            {
+              label: t("Copy path"),
+              icon: Copy,
+              onClick: () => {
+                void navigator.clipboard
+                  ?.writeText(tabFile)
+                  .then(() => useAppStore.getState().toast(t("Path copied"), "success"))
+                  .catch(() => useAppStore.getState().toast(t("Copy failed"), "error"));
+              },
+            },
+          ]
+        : []),
       { separator: true },
       {
         label: t("Float panel"),
@@ -380,7 +400,11 @@ function DockTab(props: IDockviewPanelHeaderProps) {
       }}
       onContextMenu={onContextMenu}
     >
-      <Icon size={13} className="shrink-0 opacity-60 transition-opacity [.dv-active-tab_&]:opacity-95" />
+      {tabFile ? (
+        <FileIcon name={tabFile.split(/[\\/]/).pop() ?? tabFile} isDir={false} size={14} className="shrink-0" />
+      ) : (
+        <Icon size={13} className="shrink-0 opacity-60 transition-opacity [.dv-active-tab_&]:opacity-95" />
+      )}
       <span className="min-w-0 flex-1 truncate [.dv-active-tab_&]:font-medium">{title}</span>
       <button
         className="shrink-0 rounded-full p-1 opacity-55 transition-[opacity,background-color] hover:bg-edge hover:opacity-100 [.dv-active-tab_&]:opacity-75 [.dv-active-tab_&]:hover:opacity-100"
@@ -548,10 +572,17 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
     const removeSub = event.api.onDidRemovePanel((panel) => {
       deleteTerminalState(terminalStateId(dockKey, panel.id));
     });
+    // Remember which group last held a file / terminal so the next "open file"
+    // or "new terminal" lands there instead of in whichever group is active.
+    const activeSub = event.api.onDidActivePanelChange((panel) => {
+      if (panel) rememberGroup(dockKey, panelComponent(panel), panel.group.id);
+    });
     cleanupRef.current = () => {
       if (timer) clearTimeout(timer);
       disposable.dispose();
       removeSub.dispose();
+      activeSub.dispose();
+      forgetDock(dockKey);
       saveDockLayout(dockKey, event.api);
     };
   };

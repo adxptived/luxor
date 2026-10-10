@@ -3,6 +3,7 @@ import { SearchAddon } from "@xterm/addon-search";
 import { SerializeAddon } from "@xterm/addon-serialize";
 import { WebLinksAddon } from "@xterm/addon-web-links";
 import { Terminal } from "@xterm/xterm";
+import { isWindows } from "@/lib/platform";
 import type { IDockviewPanelProps } from "dockview";
 import { useEffect, useRef, useState } from "react";
 
@@ -128,6 +129,9 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       cursorBlink: cfg?.cursor_blink ?? true,
       allowProposedApi: true,
       theme: xtermTheme(),
+      // ConPTY reflows the screen itself on resize; letting xterm reflow too
+      // is what made prompt/output lines get duplicated on Windows.
+      ...(isWindows ? { windowsPty: { backend: "conpty" as const } } : {}),
     });
     termRef.current = term;
     const fit = new FitAddon();
@@ -228,10 +232,19 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     // xterm's renderer initializes asynchronously; calling fit() before
     // open() or while the container has no size makes Viewport.syncScrollArea
     // crash with "Cannot read properties of undefined (reading 'dimensions')".
+    // Resolves after the first successful fit (or a timeout), so the shell is
+    // spawned at the real size. Starting at the default 80×24 and resizing a
+    // moment later made prompts redraw over the banner (duplicated lines).
+    let markSized: () => void = () => {};
+    const sized = new Promise<void>((resolve) => {
+      markSized = resolve;
+      setTimeout(resolve, 1500);
+    });
     const safeFit = () => {
       if (disposed || !opened || !el.isConnected || el.clientWidth === 0 || el.clientHeight === 0) return;
       try {
         fit.fit();
+        markSized();
       } catch {
         /* renderer not ready yet — the next resize/visibility event retries */
       }
@@ -413,6 +426,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               // i.e. it is sitting at its prompt.
               if (pendingDraft) {
                 if (draftTimer) clearTimeout(draftTimer);
+      if (resizeTimer) clearTimeout(resizeTimer);
                 draftTimer = setTimeout(injectDraft, 450);
               }
             },
@@ -510,10 +524,19 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       if (fed.committed.length > 0) appendHistory(fed.committed);
       scheduleSave();
     });
+    // Dragging a splitter fires a resize per frame; every one makes the shell
+    // redraw its prompt. Only the settled size is sent.
+    let resizeTimer: ReturnType<typeof setTimeout> | null = null;
     term.onResize(({ cols, rows }) => {
-      if (sessionId) void ipc.ptyResize(sessionId, cols, rows).catch(() => {});
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        resizeTimer = null;
+        if (sessionId && !disposed) void ipc.ptyResize(sessionId, cols, rows).catch(() => {});
+      }, 60);
     });
-    void start();
+    void sized.then(() => {
+      if (!disposed) void start();
+    });
 
     // Follow app theme changes live.
     const unsubTheme = useAppStore.subscribe((state, prev) => {

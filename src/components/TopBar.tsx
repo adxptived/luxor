@@ -63,6 +63,7 @@ import { DEFAULT_NAV_HIDDEN, localizedNavButton, navButtonDef, visibleNavButtons
 import type { LayoutPreset, RecentProject } from "@/lib/types";
 import { buildTabLayout, GROUP_COLORS, type TabGroup } from "@/lib/tabGroups";
 import { useDockStore } from "@/layout/dockStore";
+import { BUILTIN_LAYOUTS, type BuiltinLayoutId } from "@/layout/builtinLayouts";
 import { useAppStore } from "@/state/appStore";
 import { confirmDestructive, openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
@@ -156,6 +157,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
   const presets = useDockStore((s) => s.presets);
   const savePreset = useDockStore((s) => s.savePreset);
   const applyPreset = useDockStore((s) => s.applyPreset);
+  const applyBuiltinLayout = useDockStore((s) => s.applyBuiltinLayout);
   const deletePreset = useDockStore((s) => s.deletePreset);
   const [presetMenu, setPresetMenu] = useState(false);
   const [addMenu, setAddMenu] = useState(false);
@@ -493,6 +495,10 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           <PresetMenu
             presets={presets}
             vertical={vertical}
+            onApplyBuiltin={(id) => {
+              void applyBuiltinLayout(id, projects.find((p) => p.id === activeId)?.path ?? null);
+              setPresetMenu(false);
+            }}
             onApply={(p) => {
               applyPreset(p);
               setPresetMenu(false);
@@ -1388,6 +1394,7 @@ function NavBtn(props: {
 function PresetMenu(props: {
   presets: LayoutPreset[];
   vertical: boolean;
+  onApplyBuiltin: (id: BuiltinLayoutId) => void;
   onApply: (p: LayoutPreset) => void;
   onSave: (name: string) => void;
   onDelete: (id: string) => void;
@@ -1400,6 +1407,19 @@ function PresetMenu(props: {
       }`}
     >
       <div className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+        {t("Ready-made layouts")}
+      </div>
+      {BUILTIN_LAYOUTS.map((l) => (
+        <button
+          key={l.id}
+          className="flex w-full flex-col rounded px-1 py-1 text-left hover:bg-raised"
+          onClick={() => props.onApplyBuiltin(l.id)}
+        >
+          <span className="text-strong">{t(l.label)}</span>
+          <span className="text-xs text-muted">{t(l.description)}</span>
+        </button>
+      ))}
+      <div className="mb-1 mt-2 border-t border-edge px-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
         {t("Layout presets")}
       </div>
       {props.presets.length === 0 && (
