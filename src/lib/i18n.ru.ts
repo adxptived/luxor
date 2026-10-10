@@ -957,6 +957,7 @@ export const RU: Record<string, string> = {
   "Can't move a folder into itself": "Нельзя переместить папку саму в себя",
   "Move failed:": "Не удалось переместить:",
   "Changed in git": "Изменено в git",
+  "Paste failed:": "Не удалось вставить:",
   "Ready-made layouts": "Готовые раскладки",
   "Everything": "Всё",
   "Terminals": "Терминалы",

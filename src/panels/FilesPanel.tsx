@@ -6,6 +6,8 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardCopy,
+  ClipboardPaste,
+  Scissors,
   CopyPlus,
   ExternalLink,
   FilePen,
@@ -34,6 +36,7 @@ import { errorMessage } from "@/lib/types";
 import { isFileManagerIde, isSystemDefaultIde, mergeIdeActions, resolveDefaultIde } from "@/lib/ideActions";
 import { fileExt, useDockStore } from "@/layout/dockStore";
 import { NoFolderCta } from "@/components/NoFolderCta";
+import { pasteName } from "@/lib/pasteNames";
 import { buildMarks, MARK_CLASS, type GitMark } from "@/lib/gitMarks";
 import { FileIcon } from "@/components/FileIcon";
 import { isDimmedFolder } from "@/lib/fileIcons";
@@ -132,6 +135,8 @@ export function FilesPanel() {
     }
   });
   const [focusedPath, setFocusedPath] = useState<string | null>(null);
+  // Cut/copy clipboard for the tree (paste via menu or Ctrl+V).
+  const [clip, setClip] = useState<{ mode: "cut" | "copy"; items: { path: string; name: string; isDir: boolean }[] } | null>(null);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   // Git status marks (M/A/U/D) per path; empty outside a repository.
   const [marks, setMarks] = useState<Map<string, GitMark>>(new Map());
@@ -688,6 +693,50 @@ export function FilesPanel() {
     }
   };
 
+  /** Put the entry (or the whole selection it belongs to) on the tree clipboard. */
+  const takeToClip = (entry: FsEntry, mode: "cut" | "copy") => {
+    const all = Object.values(children).flat();
+    const picked = selected.has(entry.path) && selected.size > 1 ? all.filter((e) => selected.has(e.path)) : [entry];
+    setClip({ mode, items: picked.map((e) => ({ path: e.path, name: e.name, isDir: e.is_dir })) });
+    toast(`${mode === "cut" ? t("Cut") : t("Copied")}: ${picked.length}`, "info");
+  };
+
+  const pasteInto = async (dir: string) => {
+    if (!clip) return;
+    let taken: Set<string>;
+    try {
+      taken = new Set((await ipc.fsListDir(dir)).map((e) => e.name));
+    } catch (e) {
+      toast(`${t("Paste failed:")} ${errorMessage(e)}`, "error");
+      return;
+    }
+    let failed = 0;
+    for (const item of clip.items) {
+      try {
+        if (clip.mode === "cut") {
+          if (parentOf(item.path) === dir) continue;
+          if (dir.startsWith(`${item.path}${sep(item.path)}`) || taken.has(item.name)) {
+            failed++;
+            continue;
+          }
+          await ipc.fsRename(item.path, `${dir}${sep(dir)}${item.name}`);
+          taken.add(item.name);
+          void load(parentOf(item.path));
+        } else {
+          const name = pasteName(item.name, item.isDir, taken);
+          await ipc.fsCopy(item.path, `${dir}${sep(dir)}${name}`);
+          taken.add(name);
+        }
+      } catch {
+        failed++;
+      }
+    }
+    if (clip.mode === "cut") setClip(null);
+    setExpanded((x) => ({ ...x, [dir]: true }));
+    void load(dir);
+    if (failed > 0) toast(`${t("Paste failed:")} ${failed}`, "error");
+  };
+
   const deleteEntry = async (entry: FsEntry) => {
     const ok = await confirmDestructive({
       title: `${entry.is_dir ? t("Delete folder") : t("Delete file")} “${entry.name}”?`,
@@ -759,6 +808,15 @@ export function FilesPanel() {
         e.preventDefault();
         if (entry) void deleteEntry(entry);
         break;
+      case "x":
+      case "c":
+      case "v":
+        if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) break;
+        e.preventDefault();
+        if (e.key === "v") {
+          if (root) void pasteInto(entry ? (entry.is_dir ? entry.path : parentOf(entry.path)) : root);
+        } else if (entry) takeToClip(entry, e.key === "x" ? "cut" : "copy");
+        break;
       case "Home":
         e.preventDefault();
         focusRow(0);
@@ -821,6 +879,9 @@ export function FilesPanel() {
       { label: t("New file…"), icon: FilePlus, onClick: () => void newEntry(dir, false) },
       { label: t("New folder…"), icon: FolderPlus, onClick: () => void newEntry(dir, true) },
       { label: t("Rename…"), icon: FilePen, hint: "F2", onClick: () => void renameEntry(entry) },
+      { label: t("Cut"), icon: Scissors, hint: "Ctrl+X", onClick: () => takeToClip(entry, "cut") },
+      { label: t("Copy"), icon: ClipboardCopy, hint: "Ctrl+C", onClick: () => takeToClip(entry, "copy") },
+      { label: t("Paste"), icon: ClipboardPaste, hint: "Ctrl+V", disabled: !clip, onClick: () => void pasteInto(dir) },
       {
         label: t("Duplicate"),
         icon: CopyPlus,
