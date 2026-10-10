@@ -11,6 +11,7 @@ import { revealInEditor } from "@/lib/editorBus";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
 import { pickGroup, rememberedGroup, type PlacementKind } from "./placement";
+import { buildLayout, pickStartFile, type BuiltinLayoutId } from "./builtinLayouts";
 
 export type PanelKind =
   | "terminal"
@@ -85,6 +86,8 @@ interface DockStore {
 
   savePreset: (name: string) => Promise<LayoutPreset | null>;
   applyPreset: (preset: LayoutPreset) => void;
+  /** Rebuild the active dock as one of the built-in layouts (asks before discarding unsaved files). */
+  applyBuiltinLayout: (id: BuiltinLayoutId, cwd: string | null) => Promise<void>;
   deletePreset: (id: string) => Promise<void>;
 }
 
@@ -356,6 +359,59 @@ export const useDockStore = create<DockStore>((set, get) => ({
     } catch (e) {
       console.warn("preset restore failed", e);
       useAppStore.getState().toast(`Preset "${preset.name}" could not be applied`, "error");
+    }
+  },
+
+  applyBuiltinLayout: async (id, cwd) => {
+    const api = activeApi();
+    if (!api) return;
+    let file: string | null = null;
+    if (cwd) {
+      try {
+        file = pickStartFile(await ipc.fsListDir(cwd));
+      } catch {
+        file = null;
+      }
+    }
+    await closePanelsGuarded(api.panels.map(closableFromPanel));
+    if (api.panels.length > 0) {
+      useAppStore.getState().toast(t("layout.builtin.kept", "Layout not changed: some tabs were kept open"), "info");
+      return;
+    }
+    const ids = new Map<string, string>();
+    try {
+      for (const step of buildLayout(id, { cwd, file })) {
+        const panelId =
+          step.component === "terminal"
+            ? nextId("terminal")
+            : step.component === "editor" && typeof step.params?.path === "string"
+              ? panelIdFromPath("editor", step.params.path)
+              : `panel-${step.component}`;
+        const kind = step.component as PanelKind;
+        const ref = step.ref ? ids.get(step.ref) : undefined;
+        const panel = api.addPanel({
+          id: panelId,
+          component: step.component,
+          title: t(`panel.${kind}`, PANEL_TITLES[kind] ?? kind),
+          params: step.params,
+          ...(ref && step.direction ? { position: { referencePanel: ref, direction: step.direction } } : {}),
+        });
+        ids.set(step.key, panelId);
+        if (step.size && step.direction) {
+          try {
+            if (step.direction === "left" || step.direction === "right") {
+              panel.group.api.setSize({ width: Math.round(api.width * step.size) });
+            } else {
+              panel.group.api.setSize({ height: Math.round(api.height * step.size) });
+            }
+          } catch {
+            /* sizing is cosmetic */
+          }
+        }
+      }
+    } catch (e) {
+      console.warn("builtin layout failed", e);
+      useAppStore.getState().toast(t("layout.builtin.failed", "Could not build the layout"), "error");
     }
   },
 

@@ -19,6 +19,7 @@ import { useProjectsStore } from "@/state/projectsStore";
 import { categoryOf, groupByCategory } from "@/lib/paletteCategories";
 import { hintFor } from "@/lib/hotkeys";
 import { filterFiles, filterPanels, filterSymbols, listProjectFiles, listProjectSymbols, NAV_PANELS, type NavFile, type NavPanel, type NavSymbol } from "@/lib/globalNav";
+import { BUILTIN_LAYOUTS } from "@/layout/builtinLayouts";
 
 type PaletteMode = "commands" | "files" | "symbols" | "panels";
 
@@ -171,6 +172,16 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       { id: "layout.reset", label: "Layout: Reset to default", run: close(() => dock.resetLayout(
         projectsStore.projects.find((p) => p.id === projectsStore.activeId)?.path ?? null,
       )) },
+      ...BUILTIN_LAYOUTS.map((l) => ({
+        id: `layout.builtin.${l.id}`,
+        label: `Layout: ${l.label}`,
+        run: close(() =>
+          void dock.applyBuiltinLayout(
+            l.id,
+            projectsStore.projects.find((p) => p.id === projectsStore.activeId)?.path ?? null,
+          ),
+        ),
+      })),
       {
         id: "layout.splitRight",
         label: "Layout: Split right with new terminal",
