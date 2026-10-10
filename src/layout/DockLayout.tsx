@@ -220,6 +220,7 @@ import {
 import { deleteTerminalState, terminalStateId } from "@/lib/terminalState";
 import { DockKeyContext } from "./DockKeyContext";
 import { forgetDock, rememberGroup } from "./placement";
+import { useTerminalStatus } from "@/state/terminalStatus";
 import { FileIcon } from "@/components/FileIcon";
 import { PanelErrorBoundary } from "@/components/PanelErrorBoundary";
 
@@ -388,6 +389,15 @@ function DockTab(props: IDockviewPanelHeaderProps) {
   };
 
   const Icon = tabIcon(props.api.component);
+  const activity = useTerminalStatus((s) => (props.api.component === "terminal" ? s.byPanel[props.api.id] : undefined));
+  const dot =
+    activity === "running"
+      ? { cls: "bg-accent animate-pulse", label: t("Running") }
+      : activity === "failed"
+        ? { cls: "bg-danger", label: t("Process exited with an error") }
+        : activity === "exited"
+          ? { cls: "bg-muted/60", label: t("Process exited") }
+          : null;
 
   return (
     <div
@@ -406,6 +416,7 @@ function DockTab(props: IDockviewPanelHeaderProps) {
         <Icon size={13} className="shrink-0 opacity-60 transition-opacity [.dv-active-tab_&]:opacity-95" />
       )}
       <span className="min-w-0 flex-1 truncate [.dv-active-tab_&]:font-medium">{title}</span>
+      {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot.cls}`} title={dot.label} aria-label={dot.label} />}
       <button
         className="shrink-0 rounded-full p-1 opacity-55 transition-[opacity,background-color] hover:bg-edge hover:opacity-100 [.dv-active-tab_&]:opacity-75 [.dv-active-tab_&]:hover:opacity-100"
         onMouseDown={(e) => e.stopPropagation()}

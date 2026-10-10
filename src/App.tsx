@@ -29,7 +29,7 @@ import { TopBar } from "@/components/TopBar";
 import { WindowChrome } from "@/components/WindowChrome";
 import { QuickActions } from "@/components/QuickActions";
 import { DockLayout } from "@/layout/DockLayout";
-import { cycleTab, useDockStore } from "@/layout/dockStore";
+import { cycleTab, focusNeighbourGroup, moveTabToNeighbourGroup, useDockStore } from "@/layout/dockStore";
 import * as ipc from "@/lib/ipc";
 import { frontendLog } from "@/lib/ipc";
 import { schedulePoll } from "@/lib/poll";
@@ -543,6 +543,14 @@ export default function App() {
           return fire(() => cycleTab(1));
         case "tab.prev":
           return fire(() => cycleTab(-1));
+        case "group.focusNext":
+          return fire(() => focusNeighbourGroup(1));
+        case "group.focusPrev":
+          return fire(() => focusNeighbourGroup(-1));
+        case "group.moveNext":
+          return fire(() => moveTabToNeighbourGroup(1));
+        case "group.movePrev":
+          return fire(() => moveTabToNeighbourGroup(-1));
         case "tab.reopen":
           return fire(() => {
             void useProjectsStore

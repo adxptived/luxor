@@ -364,6 +364,10 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       "tab.close": "tab.close",
       "search.open": "search.open",
       "file.saveAll": "file.saveAll",
+      "layout.focusNext": "group.focusNext",
+      "layout.focusPrev": "group.focusPrev",
+      "layout.moveNext": "group.moveNext",
+      "layout.movePrev": "group.movePrev",
       "zen.toggle": "zen.toggle",
     };
     for (const cmd of cmds) {

@@ -22,6 +22,10 @@ export const HOTKEY_ACTIONS: HotkeyAction[] = [
   { id: "tab.prev", label: "Previous tab", default: "Ctrl+PageUp" },
   { id: "tab.close", label: "Close tab", default: "Ctrl+W" },
   { id: "tab.reopen", label: "Reopen closed tab", default: "Ctrl+Shift+T" },
+  { id: "group.focusNext", label: "Focus next group", default: "Ctrl+Alt+PageDown" },
+  { id: "group.focusPrev", label: "Focus previous group", default: "Ctrl+Alt+PageUp" },
+  { id: "group.moveNext", label: "Move tab to next group", default: "Ctrl+Alt+Shift+PageDown" },
+  { id: "group.movePrev", label: "Move tab to previous group", default: "Ctrl+Alt+Shift+PageUp" },
   { id: "file.saveAll", label: "Save all files", default: "Ctrl+Alt+S" },
 ];
 
