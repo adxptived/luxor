@@ -137,6 +137,7 @@ export function FilesPanel() {
   const [focusedPath, setFocusedPath] = useState<string | null>(null);
   // Cut/copy clipboard for the tree (paste via menu or Ctrl+V).
   const [clip, setClip] = useState<{ mode: "cut" | "copy"; items: { path: string; name: string; isDir: boolean }[] } | null>(null);
+  const expandedRef = useRef<Record<string, boolean>>({});
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   // Git status marks (M/A/U/D) per path; empty outside a repository.
   const [marks, setMarks] = useState<Map<string, GitMark>>(new Map());
@@ -156,16 +157,21 @@ export function FilesPanel() {
   const defaultIdeLabel = defaultIde ? t(defaultIde.label) : t("IDE");
 
   const load = useCallback(
-    async (dir: string) => {
+    async (dir: string, quiet = false) => {
       const version = (loadVersionsRef.current.get(dir) ?? 0) + 1;
       loadVersionsRef.current.set(dir, version);
       const requestedRoot = rootRef.current;
       try {
         const entries = await ipc.fsListDir(dir);
         if (loadVersionsRef.current.get(dir) !== version || rootRef.current !== requestedRoot) return;
-        setChildren((c) => ({ ...c, [dir]: entries }));
+        setChildren((c) => {
+          const prev = c[dir];
+          // Background refreshes must not re-render the tree when nothing changed.
+          if (prev && prev.length === entries.length && prev.every((p, i) => p.path === entries[i].path && p.size === entries[i].size && p.is_dir === entries[i].is_dir)) return c;
+          return { ...c, [dir]: entries };
+        });
       } catch (e) {
-        if (loadVersionsRef.current.get(dir) !== version || rootRef.current !== requestedRoot) return;
+        if (quiet || loadVersionsRef.current.get(dir) !== version || rootRef.current !== requestedRoot) return;
         toast(`${t("Cannot read folder:")} ${errorMessage(e)}`, "error");
       }
     },
@@ -198,6 +204,8 @@ export function FilesPanel() {
     };
   }, []);
 
+  expandedRef.current = expanded;
+
   useEffect(() => {
     if (!root) {
       setMarks(new Map());
@@ -215,13 +223,23 @@ export function FilesPanel() {
           if (!cancelled) setMarks((prev) => (prev.size ? new Map() : prev));
         });
     };
+    // Pick up changes made outside Luxor (terminal, other tools): re-list the
+    // root and every expanded folder, quietly.
+    const refreshTree = () => {
+      if (document.visibilityState !== "visible") return;
+      const dirs = [root, ...Object.keys(expandedRef.current).filter((d) => expandedRef.current[d])];
+      for (const d of dirs) void load(d, true);
+    };
     refresh();
-    const id = window.setInterval(refresh, 5000);
+    const id = window.setInterval(() => {
+      refresh();
+      refreshTree();
+    }, 5000);
     return () => {
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [root]);
+  }, [root, load]);
 
   useEffect(() => {
     loadVersionsRef.current.clear();

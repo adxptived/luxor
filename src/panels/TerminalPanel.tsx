@@ -30,6 +30,8 @@ import {
   terminalStateId,
 } from "@/lib/terminalState";
 import { formatDateTime } from "@/lib/format";
+import { activityOf } from "@/lib/terminalActivity";
+import { useTerminalStatus } from "@/state/terminalStatus";
 import { probeRunGroups, topCommands } from "@/lib/projectRun";
 import type { RunCommand } from "@/lib/runDetect";
 import { t } from "@/lib/i18n";
@@ -100,6 +102,13 @@ export function TerminalPanel(props: IDockviewPanelProps) {
   const sessionRef = useRef<string | null>(null);
   const [pid, setPid] = useState<number | null>(null);
   const [treeStats, setTreeStats] = useState<import("@/lib/types").TreeStats | null>(null);
+  // Mirror what the shell is doing onto the tab (dot next to the title).
+  const panelStatusId = props.api.id;
+  const activity = activityOf(exited, treeStats?.processes ?? null);
+  useEffect(() => {
+    useTerminalStatus.getState().set(panelStatusId, activity);
+  }, [panelStatusId, activity]);
+  useEffect(() => () => useTerminalStatus.getState().clear(panelStatusId), [panelStatusId]);
   const showStats = useAppStore((s) => s.config?.terminal.show_stats ?? true);
   const notifyEnabled = useAppStore((s) => s.config?.notifications.enabled ?? true);
   const trackerRef = useRef<CommandTracker | null>(null);
