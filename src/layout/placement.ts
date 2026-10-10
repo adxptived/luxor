@@ -66,3 +66,11 @@ export function rememberedGroup(dockKey: string, kind: PlacementKind): string | 
 export function forgetDock(dockKey: string): void {
   lastGroup.delete(dockKey);
 }
+
+/** Id of the group `delta` steps away from `activeId`, wrapping around; null when there is nowhere to go. */
+export function neighbourGroup(ids: readonly string[], activeId: string | null, delta: 1 | -1): string | null {
+  if (ids.length < 2) return null;
+  const idx = activeId ? ids.indexOf(activeId) : -1;
+  const from = idx < 0 ? (delta === 1 ? -1 : 0) : idx;
+  return ids[(from + delta + ids.length) % ids.length] ?? null;
+}
