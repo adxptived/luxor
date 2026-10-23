@@ -434,7 +434,7 @@ function BlameView({ repo }: { repo: string }) {
         )}
         {blame?.truncated && (
           <div className="border-b border-warning-soft-strong bg-warning-soft px-3 py-1 text-warning">
-            {t("File is large — blame is limited to the first")} {blame.lines.length} lines.
+            {tr("File is large — blame is limited to the first")} {blame.lines.length} lines.
           </div>
         )}
         {blame?.lines.map((text, i) => {
