@@ -652,9 +652,10 @@ mod tests {
         let bytes = base64::engine::general_purpose::STANDARD
             .decode(hook)
             .unwrap();
-        let units: Vec<u16> = bytes
-            .chunks_exact(2)
-            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+        assert_eq!(bytes.len() % 2, 0);
+        let units: Vec<u16> = (0..bytes.len())
+            .step_by(2)
+            .map(|i| u16::from_le_bytes([bytes[i], bytes[i + 1]]))
             .collect();
         let decoded = String::from_utf16(&units).unwrap();
         assert_eq!(decoded, POWERSHELL_OSC7_HOOK);
