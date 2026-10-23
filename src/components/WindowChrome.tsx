@@ -7,6 +7,7 @@ import {
   PanelLeft,
   PanelRight,
   RotateCcw,
+  Search,
   Settings,
   SlidersHorizontal,
   Square,
@@ -20,6 +21,7 @@ import { memo, type MouseEvent, useEffect, useState } from "react";
 import { useDockStore, type PanelKind } from "@/layout/dockStore";
 import { isTauri } from "@/lib/ipc";
 import { t, useT } from "@/lib/i18n";
+import { hintFor } from "@/lib/hotkeys";
 import { setDragGhost } from "@/lib/dragGhost";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
 import type { AppConfig } from "@/lib/types";
@@ -214,6 +216,31 @@ export function ChromeQuickActions({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/** Command bar in the title bar: a search-field-looking button that opens the
+ *  command palette, so commands, files and panels are discoverable without
+ *  knowing the shortcut. `className` decides when it is shown (the horizontal
+ *  top bar only shows it on wide windows so project tabs keep their room). */
+export function CommandBarButton({ className = "" }: { className?: string }) {
+  const config = useAppStore((s) => s.config);
+  const setPaletteOpen = useAppStore((s) => s.setPaletteOpen);
+  const hint = hintFor("palette", config);
+  const label = t("Search commands, files and panels");
+  return (
+    <button
+      type="button"
+      className={`lx-command-bar ${className}`}
+      onClick={() => setPaletteOpen(true)}
+      aria-label={hint ? `${label} (${hint})` : label}
+      aria-keyshortcuts={hint || undefined}
+      data-testid="command-bar"
+    >
+      <Search size={13} aria-hidden className="shrink-0" />
+      <span className="min-w-0 flex-1 truncate text-left">{t("Search or run a command…")}</span>
+      {hint && <kbd className="lx-command-bar-kbd">{hint}</kbd>}
+    </button>
+  );
+}
+
 export function WindowControls() {
   const [maxed, setMaxed] = useState(false);
   // When "Keep running in the background" is on, the close button hides Luxor to
@@ -313,10 +340,12 @@ function WindowChromeImpl() {
     <div className="lx-titlebar" data-testid="window-chrome">
       <ChromeQuickActions compact={compact} />
       <div
-        className="lx-drag flex-1 self-stretch"
+        className="lx-drag flex min-w-0 flex-1 items-center justify-center self-stretch px-3"
         data-tauri-drag-region
         onDoubleClick={onDblClick}
-      />
+      >
+        <CommandBarButton className="hidden md:flex" />
+      </div>
       <ChromeNavButtons config={config} />
       <WindowControls />
     </div>

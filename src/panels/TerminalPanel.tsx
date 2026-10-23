@@ -29,6 +29,7 @@ import {
   saveTerminalState,
   terminalStateId,
 } from "@/lib/terminalState";
+import { resolveCssColor } from "@/lib/cssColor";
 import { formatDateTime } from "@/lib/format";
 import { activityOf } from "@/lib/terminalActivity";
 import { useTerminalStatus } from "@/state/terminalStatus";
@@ -44,7 +45,7 @@ import { useProjectsStore } from "@/state/projectsStore";
 import type { TerminalPanelParams } from "@/layout/dockStore";
 import { useDockStore } from "@/layout/dockStore";
 import { useDockKey } from "@/layout/DockKeyContext";
-import { ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, Play, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
+import { Bot, ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, Play, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
 import { loadProfiles } from "@/lib/shellProfiles";
 
 /** "1h 4m" / "2m 5s" / "42s" for notification bodies. */
@@ -54,12 +55,14 @@ function formatDuration(secs: number): string {
   return `${Math.max(1, Math.floor(secs))}s`;
 }
 
-/** Build the xterm theme from the live CSS variables of the active app theme. */
-function xtermTheme() {
+/** Build the xterm theme from the live CSS variables of the active app theme.
+ *  The background is resolved from inside the panel (`scope`), so it follows
+ *  the layered dock surface instead of the root surface colour. */
+function xtermTheme(scope: Element | null = null) {
   const css = getComputedStyle(document.documentElement);
   const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
   return {
-    background: v("--lx-surface", "#101014"),
+    background: resolveCssColor(scope, "var(--lx-surface)", v("--lx-surface", "#101014")),
     foreground: v("--lx-strong", "#d6d6dd"),
     cursor: v("--lx-strong", "#d6d6dd"),
     selectionBackground: `${v("--lx-accent", "#e8b059")}55`,
@@ -157,7 +160,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       cursorStyle: cfg?.cursor_style === "underline" ? "underline" : cfg?.cursor_style === "bar" ? "bar" : "block",
       cursorBlink: cfg?.cursor_blink ?? true,
       allowProposedApi: true,
-      theme: xtermTheme(),
+      theme: xtermTheme(el),
       // ConPTY reflows the screen itself on resize; letting xterm reflow too
       // is what made prompt/output lines get duplicated on Windows.
       ...(isWindows ? { windowsPty: { backend: "conpty" as const } } : {}),
@@ -385,11 +388,33 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         /* persistence is best effort */
       }
     };
+    // cwd fallback for shells that never emit OSC 7 (cmd.exe, PowerShell with
+    // custom launch args, …): ask the backend for the shell's OS-reported
+    // working directory right before each throttled save. The flush-on-unload
+    // path stays synchronous and simply uses the last value fetched here.
+    let shellPid: number | null = null;
+    let osc7Seen = false;
+    const refreshCwdThenSave = () => {
+      saveTimer = null;
+      if (disposed) return;
+      if (osc7Seen || shellPid === null || !isRestoreEnabled()) {
+        saveNow();
+        return;
+      }
+      const pidAtCall = shellPid;
+      void ipc
+        .ptyCwd(pidAtCall)
+        .then((dir) => {
+          if (dir && !osc7Seen && shellPid === pidAtCall) liveCwd = dir;
+        })
+        .catch(() => {})
+        .finally(saveNow);
+    };
     // Throttle, not debounce: a long build streams output continuously and a
     // debounce would never fire.
     const scheduleSave = () => {
       if (saveTimer || disposed) return;
-      saveTimer = setTimeout(saveNow, 2500);
+      saveTimer = setTimeout(refreshCwdThenSave, 2500);
     };
     const unregisterFlush = registerTerminalFlush(saveNow);
 
@@ -438,6 +463,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         sessionId = info.session_id;
         sessionRef.current = sessionId;
         setPid(info.pid ?? null);
+        shellPid = info.pid ?? null;
         setExited(null);
 
         // Check if this is a restored session (pty bus had buffered output)
@@ -468,6 +494,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               logActivity("terminal", `Shell exited (code ${exitCode ?? 0})`);
               if (!disposed) {
                 setPid(null);
+                shellPid = null;
                 setExited(exitCode ?? 0);
               }
             },
@@ -513,7 +540,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     // iTerm-style hook) let a restart reopen in the same directory.
     const osc7Dispose = term.parser.registerOscHandler(7, (data) => {
       const dir = parseOsc7Cwd(data);
-      if (dir) liveCwd = dir;
+      if (dir) {
+        liveCwd = dir;
+        osc7Seen = true; // the shell reports its own cwd; skip the OS fallback
+      }
       return false;
     });
     // Agent-idle detection: an output burst followed by silence means the
@@ -572,7 +602,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       if (state.config?.theme !== prev.config?.theme || state.config?.accent_color !== prev.config?.accent_color) {
         // Wait a tick so the DOM data-theme attribute is updated first.
         setTimeout(() => {
-          term.options.theme = xtermTheme();
+          term.options.theme = xtermTheme(containerRef.current);
         }, 0);
       }
     });
@@ -804,7 +834,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
       {/* Session restore indicator */}
       {sessionRestored && exited === null && (
-        <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-edge bg-bar/90 px-3 py-1 shadow-sm backdrop-blur animate-session-fade">
+        <div className="pointer-events-none absolute bottom-4 right-4 z-[var(--lx-z-local)] flex items-center gap-1.5 rounded-full border border-edge bg-bar/90 px-3 py-1 shadow-sm backdrop-blur animate-session-fade">
           <History size={12} className="text-accent" />
           <span className="text-2xs font-medium text-strong">{t("term.session_restored", "Session restored")}</span>
         </div>
@@ -812,7 +842,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
       {/* Split terminal button */}
       <button
-        className="absolute right-2 top-1 z-10 flex items-center justify-center rounded border border-edge bg-bar/80 p-1 text-muted transition-colors hover:bg-raised hover:text-strong"
+        className="absolute right-2 top-1 z-[var(--lx-z-local)] flex items-center justify-center rounded border border-edge bg-bar/80 p-1 text-muted transition-colors hover:bg-raised hover:text-strong"
         title={t("term.split", "Split terminal")}
         aria-label={t("term.split", "Split terminal")}
         onClick={() => {
@@ -828,7 +858,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           (shell tree has children). Sends Ctrl+C. */}
       {treeStats !== null && treeStats.processes > 1 && exited === null && (
         <button
-          className="absolute right-9 top-1 z-10 flex items-center justify-center rounded border border-danger-soft-strong bg-danger-soft p-1 text-danger transition-colors hover:bg-danger-soft-strong"
+          className="absolute right-9 top-1 z-[var(--lx-z-local)] flex items-center justify-center rounded border border-danger-soft-strong bg-danger-soft p-1 text-danger transition-colors hover:bg-danger-soft-strong"
           title={t("Stop process (Ctrl+C)")}
           aria-label={t("Stop process (Ctrl+C)")}
           onClick={interruptProcess}
@@ -840,16 +870,16 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       {treeStats && exited === null && (showStats || treeStats.agents.length > 0) && (
         <div
           data-testid="terminal-stats"
-          className="pointer-events-none absolute bottom-1 right-3 z-10 flex items-center gap-1.5 rounded bg-bar/80 px-1.5 py-0.5 font-mono text-3xs text-muted"
+          className="pointer-events-none absolute bottom-1 right-3 z-[var(--lx-z-local)] flex items-center gap-1.5 rounded bg-bar/80 px-1.5 py-0.5 font-mono text-3xs text-muted"
           title={`${t("Shell process tree — processes:")} ${treeStats.processes}`}
         >
           {treeStats.agents.length > 0 && (
             <span
               data-testid="terminal-agent-badge"
-              className="text-accent"
+              className="inline-flex items-center gap-1 text-accent"
               title={t("term.agent_running", "AI agent running in this terminal")}
             >
-              ⚡ {treeStats.agents.join(", ")}
+              <Bot size={11} aria-hidden /> {treeStats.agents.join(", ")}
             </span>
           )}
           {showStats && (
@@ -861,7 +891,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       )}
 
       {searchOpen && (
-        <div className="absolute right-2 top-1 z-10 flex items-center gap-1 rounded border border-edge bg-bar px-2 py-1 shadow-lg">
+        <div className="absolute right-2 top-1 z-[var(--lx-z-local)] flex items-center gap-1 rounded border border-edge bg-bar px-2 py-1 shadow-lg">
           <input
             autoFocus
             value={query}
@@ -902,7 +932,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
       {historyOpen && (
         <div
-          className="absolute inset-0 z-20 flex items-start justify-center bg-black/40 pt-8"
+          className="absolute inset-0 z-[var(--lx-z-local-overlay)] flex items-start justify-center bg-black/40 pt-8"
           onClick={() => setHistoryOpen(false)}
         >
           <div
@@ -946,7 +976,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
                 ))}
               {history.filter((c) => c.toLowerCase().includes(historyFilter.toLowerCase())).length === 0 && (
                 <div className="px-2 py-2 text-xs text-muted">
-                  No commands recorded yet — type something in a terminal first.
+                  {t("No commands recorded yet — type something in a terminal first.")}
                 </div>
               )}
             </div>
@@ -955,15 +985,15 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       )}
 
       {exited !== null && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/50">
+        <div className="absolute inset-0 z-[var(--lx-z-local)] flex flex-col items-center justify-center gap-3 bg-black/50">
           <div className="text-sm text-strong">
-            Shell exited{exited >= 0 ? ` (code ${exited})` : ""}.
+            {t("Shell exited")}{exited >= 0 ? ` (code ${exited})` : ""}.
           </div>
           <button
             className="rounded bg-accent px-4 py-1.5 text-sm text-black hover:opacity-90"
             onClick={() => restartRef.current?.()}
           >
-            Restart shell
+            {t("Restart shell")}
           </button>
         </div>
       )}

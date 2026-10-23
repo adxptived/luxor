@@ -456,7 +456,7 @@ function NativeBrowser() {
       <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-edge px-2 py-1.5">
         <button
           className={iconBtn}
-          title={t("Back")}
+          title={t("Back")} aria-label={t("Back")}
           disabled={!currentUrl}
           onClick={() => ipc.browserEmbedBack().catch(reportError(t("Browser")))}
           data-testid="browser-back"
@@ -465,7 +465,7 @@ function NativeBrowser() {
         </button>
         <button
           className={iconBtn}
-          title={t("Forward")}
+          title={t("Forward")} aria-label={t("Forward")}
           disabled={!currentUrl}
           onClick={() => ipc.browserEmbedForward().catch(reportError(t("Browser")))}
           data-testid="browser-forward"
@@ -474,7 +474,7 @@ function NativeBrowser() {
         </button>
         <button
           className={iconBtn}
-          title={t("Reload")}
+          title={t("Reload")} aria-label={t("Reload")}
           disabled={!currentUrl}
           onClick={() => ipc.browserEmbedReload().catch(reportError(t("Browser")))}
         >
@@ -511,12 +511,12 @@ function NativeBrowser() {
           }}
           spellCheck={false}
         />
-        <button className={iconBtn} title={t("Load")} onClick={() => go()}>
+        <button className={iconBtn} title={t("Load")} aria-label={t("Load")} onClick={() => go()}>
           <ArrowRight size={14} />
         </button>
         <button
           className={iconBtn}
-          title={t("Open the current page in a separate app window")}
+          title={t("Open the current page in a separate app window")} aria-label={t("Open the current page in a separate app window")}
           disabled={!currentUrl}
           onClick={() =>
             currentUrl &&
@@ -533,7 +533,7 @@ function NativeBrowser() {
         {loading && (
           // Thin indeterminate top progress bar — the native webview paints over
           // the panel, so this is the one load cue the host UI can still show.
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden">
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-[var(--lx-z-local)] h-0.5 overflow-hidden">
             <div className="lx-browser-progress h-full w-1/3 bg-accent" />
           </div>
         )}
@@ -702,7 +702,7 @@ function IframeBrowser() {
       <div className="flex flex-wrap items-center gap-1.5 border-b border-edge px-2 py-1.5">
         <button
           className={iconBtn}
-          title={t("Back")}
+          title={t("Back")} aria-label={t("Back")}
           disabled={!canGoBack(history)}
           onClick={() => navStep(-1)}
           data-testid="browser-back"
@@ -711,7 +711,7 @@ function IframeBrowser() {
         </button>
         <button
           className={iconBtn}
-          title={t("Forward")}
+          title={t("Forward")} aria-label={t("Forward")}
           disabled={!canGoForward(history)}
           onClick={() => navStep(1)}
           data-testid="browser-forward"
@@ -739,12 +739,12 @@ function IframeBrowser() {
           }}
           onFocus={(e) => e.target.select()}
         />
-        <button className={iconBtn} title={t("Load")} onClick={() => go()}>
+        <button className={iconBtn} title={t("Load")} aria-label={t("Load")} onClick={() => go()}>
           <ArrowRight size={14} />
         </button>
         <button
           className={iconBtn}
-          title={t("Reload")}
+          title={t("Reload")} aria-label={t("Reload")}
           disabled={!url}
           onClick={() => {
             if (windowed) {

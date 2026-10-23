@@ -1015,7 +1015,7 @@ export function FilesPanel() {
               e.stopPropagation();
               void moveEntry(src, entry.path);
             }}
-            className={`group relative flex h-7 w-full items-center gap-1.5 truncate rounded-md pr-2 text-left transition-colors duration-150 hover:bg-raised/70 ${
+            className={`group relative flex h-7 w-full items-center gap-1.5 truncate rounded-md pr-2 text-left transition-colors duration-[var(--lx-dur-fast)] hover:bg-raised/70 ${
               selected.has(entry.path) ? "bg-accent/10 text-strong lx-active-strip" : ""
             } ${embeddedPath === entry.path ? "bg-accent/10 text-strong lx-active-strip" : ""} ${focusedPath === entry.path && !selected.has(entry.path) && embeddedPath !== entry.path ? "bg-raised text-strong" : ""} ${isSearchMatch ? "ring-1 ring-accent/20 bg-accent/5" : ""} ${dropTarget === entry.path ? "ring-1 ring-accent bg-accent/15" : ""}`}
             style={{ paddingLeft: 6 + depth * 14 }}
@@ -1101,7 +1101,7 @@ export function FilesPanel() {
             </div>
           </div>
           <button
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!defaultIde}
             title={`${t("Open project in")} ${defaultIdeLabel}`}
             onClick={() => openInDefaultIde(root)}
@@ -1147,7 +1147,7 @@ export function FilesPanel() {
             </button>
           )}
           {filter && (
-            <button className="shrink-0 rounded p-0.5 text-muted transition-colors hover:bg-surface hover:text-strong" title={t("Clear filter")} onClick={() => setFilter("")}>
+            <button className="shrink-0 rounded p-0.5 text-muted transition-colors hover:bg-surface hover:text-strong" title={t("Clear filter")} aria-label={t("Clear filter")} onClick={() => setFilter("")}>
               <X size={12} />
             </button>
           )}
@@ -1172,10 +1172,10 @@ export function FilesPanel() {
             ))}
           </div>
           <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-edge/60 bg-surface/60 p-0.5">
-            <button className={TOOLBAR_BTN} title={t("New file")} onClick={() => void newEntry(root, false)}>
+            <button className={TOOLBAR_BTN} title={t("New file")} aria-label={t("New file")} onClick={() => void newEntry(root, false)}>
               <FilePlus size={14} />
             </button>
-            <button className={TOOLBAR_BTN} title={t("New folder")} onClick={() => void newEntry(root, true)}>
+            <button className={TOOLBAR_BTN} title={t("New folder")} aria-label={t("New folder")} onClick={() => void newEntry(root, true)}>
               <FolderPlus size={14} />
             </button>
             <span aria-hidden className="mx-0.5 h-4 w-px bg-edge/70" />
@@ -1305,10 +1305,10 @@ export function FilesPanel() {
                   <AppWindow size={12} />
                   <span className="hidden lg:inline">{defaultIdeLabel}</span>
                 </button>
-                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => openFile(embeddedPath)} title={t("Open in editor tab")}>
+                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => openFile(embeddedPath)} title={t("Open in editor tab")} aria-label={t("Open in editor tab")}>
                   <ExternalLink size={12} />
                 </button>
-                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => void closeExplorerEditor()} title={t("Close editor")}>
+                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => void closeExplorerEditor()} title={t("Close editor")} aria-label={t("Close editor")}>
                   <X size={12} />
                 </button>
               </div>

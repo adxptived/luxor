@@ -1,5 +1,6 @@
 /** REST scratch pad: fire HTTP requests without leaving the cockpit. */
 
+import { EmptyState } from "@/components/EmptyState";
 import { formatNumber } from "@/lib/format";
 import { ChevronDown, ChevronRight, Copy, History, Loader2, Plus, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -148,7 +149,7 @@ export function HttpPanel() {
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="rounded-lg border border-edge bg-raised px-2 py-2 font-mono text-xs font-semibold text-strong outline-none focus:border-accent/70"
+            className="rounded-lg border border-edge bg-raised px-2 py-1 font-mono text-xs font-semibold text-strong outline-none focus:border-accent/70"
           >
             {METHODS.map((m) => (
               <option key={m}>{m}</option>
@@ -159,7 +160,7 @@ export function HttpPanel() {
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && void send()}
             placeholder="https://api.example.com/v1/…"
-            className="min-w-0 rounded-lg border border-edge bg-raised px-3 py-2 font-mono text-xs text-strong outline-none placeholder:text-muted focus:border-accent/70"
+            className="min-w-0 rounded-lg border border-edge bg-raised px-3 py-1 font-mono text-xs text-strong outline-none placeholder:text-muted focus:border-accent/70"
           />
           <button
             onClick={() => void send()}
@@ -174,13 +175,13 @@ export function HttpPanel() {
           onClick={() => setShowHeaders((v) => !v)}
           className="mt-2 flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
         >
-          {showHeaders ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Headers and body
+          {showHeaders ? <ChevronDown size={13} /> : <ChevronRight size={13} />} {t("Headers and body")}
         </button>
         <button
           onClick={() => setShowHistory((v) => !v)}
           className="mt-2 ml-2 flex items-center gap-1 rounded-lg px-1.5 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
         >
-          {showHistory ? <ChevronDown size={13} /> : <ChevronRight size={13} />} <History size={12} /> History ({history.length})
+          {showHistory ? <ChevronDown size={13} /> : <ChevronRight size={13} />} <History size={12} /> {t("History (")}{history.length})
         </button>
         {showHistory && (
           <div className="mt-2 rounded-lg border border-edge bg-surface/55 p-2">
@@ -191,7 +192,7 @@ export function HttpPanel() {
                 onClick={() => { setMethod(h.method); setUrl(h.url); setShowHistory(false); }}
                 className="flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left text-xs hover:bg-raised"
               >
-                <span className={`font-mono font-bold ${h.status < 300 ? "text-success" : h.status < 400 ? "text-warning" : "text-danger"}`}>{h.method}</span>
+                <span className={`font-mono font-semibold ${h.status < 300 ? "text-success" : h.status < 400 ? "text-warning" : "text-danger"}`}>{h.method}</span>
                 <span className="min-w-0 flex-1 truncate font-mono text-muted">{h.url}</span>
                 <span className="shrink-0 text-muted">{h.status}</span>
               </button>
@@ -253,18 +254,18 @@ export function HttpPanel() {
                     value={k}
                     onChange={(e) => setHeaders((h) => h.map((p, j) => (j === i ? [e.target.value, p[1]] : p)))}
                     placeholder={t("Header")}
-                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1.5 font-mono text-xs text-strong outline-none focus:border-accent/70"
+                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1 font-mono text-xs text-strong outline-none focus:border-accent/70"
                   />
                   <input
                     value={v}
                     onChange={(e) => setHeaders((h) => h.map((p, j) => (j === i ? [p[0], e.target.value] : p)))}
                     placeholder={t("Value")}
-                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1.5 font-mono text-xs text-strong outline-none focus:border-accent/70"
+                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1 font-mono text-xs text-strong outline-none focus:border-accent/70"
                   />
                   <button
                     onClick={() => setHeaders((h) => h.filter((_, j) => j !== i))}
                     className="rounded-lg px-2 text-muted hover:bg-danger-soft hover:text-danger"
-                    title={t("Delete")}
+                    title={t("Delete")} aria-label={t("Delete")}
                   >
                     <Trash2 size={13} />
                   </button>
@@ -275,7 +276,7 @@ export function HttpPanel() {
               onClick={() => setHeaders((h) => [...h, ["", ""]])}
               className="mt-2 flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs text-muted hover:bg-raised hover:text-strong"
             >
-              <Plus size={12} /> Add header
+              <Plus size={12} /> {t("Add header")}
             </button>
             {canHaveBody && (
               <textarea
@@ -293,29 +294,26 @@ export function HttpPanel() {
 
       <div className="min-h-0 flex-1 overflow-auto p-3">
         {!response && !busy && (
-          <div className="flex h-full min-h-48 items-center justify-center rounded-lg border border-dashed border-edge bg-bar/30 p-6 text-center text-muted">
-            <div>
-              <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-                <Send size={20} />
-              </div>
-              <div className="font-medium text-strong">{t("Send a request to see the response here")}</div>
-              <div className="mt-1 max-w-xs text-xs leading-5">Headers, status, timing and body preview will appear in this panel.</div>
-            </div>
-          </div>
+          <EmptyState
+            fill
+            icon={<Send size={20} />}
+            title={t("Send a request to see the response here")}
+            text={t("Headers, status, timing and body preview will appear in this panel.")}
+          />
         )}
         {busy && (
           <div className="flex h-full min-h-48 items-center justify-center rounded-lg border border-edge bg-bar/30 p-6 text-center text-muted">
             <div>
               <Loader2 size={24} className="mx-auto mb-3 animate-spin text-accent" />
-              <div className="font-medium text-strong">Sending request…</div>
-              <div className="mt-1 text-xs">Waiting for the server response.</div>
+              <div className="font-medium text-strong">{t("Sending request…")}</div>
+              <div className="mt-1 text-xs">{t("Waiting for the server response.")}</div>
             </div>
           </div>
         )}
         {response && (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center gap-2 rounded-lg border border-edge bg-bar/40 p-3 text-xs">
-              <span className={`rounded-lg bg-raised px-2 py-1 font-mono font-bold ${statusColor}`}>
+              <span className={`rounded-lg bg-raised px-2 py-1 font-mono font-semibold ${statusColor}`}>
                 {response.status} {response.status_text}
               </span>
               <span className="rounded-lg bg-raised px-2 py-1 text-muted">{response.elapsed_ms} ms</span>
@@ -329,12 +327,12 @@ export function HttpPanel() {
                   toast(t("Copied"), "success");
                 }}
               >
-                <Copy size={12} /> Copy body
+                <Copy size={12} /> {t("Copy body")}
               </button>
             </div>
             <details className="rounded-lg border border-edge bg-bar/30 p-3 text-xs">
               <summary className="cursor-pointer text-muted hover:text-strong">
-                Response headers ({response.headers.length})
+                {t("Response headers (")}{response.headers.length})
               </summary>
               <div className="mt-2 space-y-1 font-mono">
                 {response.headers.map(([k, v], i) => (

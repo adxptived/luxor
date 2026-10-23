@@ -434,7 +434,7 @@ function BlameView({ repo }: { repo: string }) {
         )}
         {blame?.truncated && (
           <div className="border-b border-warning-soft-strong bg-warning-soft px-3 py-1 text-warning">
-            File is large — blame is limited to the first {blame.lines.length} lines.
+            {t("File is large — blame is limited to the first")} {blame.lines.length} lines.
           </div>
         )}
         {blame?.lines.map((text, i) => {
@@ -473,7 +473,7 @@ function FileSection(props: {
   if (props.entries.length === 0) return null;
   return (
     <div className="px-2 py-1">
-      <div className="px-1 py-1 text-xs font-semibold uppercase tracking-wide text-muted">
+      <div className="px-1 py-1 text-xs font-medium text-muted">
         {props.title}
       </div>
       {props.entries.map((e) => {
@@ -484,7 +484,7 @@ function FileSection(props: {
         const fileDir = slash >= 0 ? e.path.slice(0, slash) : "";
         return (
           <div key={e.path} className="group flex min-w-0 flex-wrap items-center gap-2 rounded px-1 py-0.5 hover:bg-raised">
-            <span className={`w-4 text-center font-mono font-bold ${badge.cls}`}>{badge.label}</span>
+            <span className={`w-4 text-center font-mono font-semibold ${badge.cls}`}>{badge.label}</span>
             <button
               className="flex min-w-0 flex-1 items-baseline gap-1.5 truncate text-left"
               title={`${e.path} — ${tr("Show diff")}`}
@@ -706,7 +706,7 @@ ${c.message}`}
                       openDiff({ repoPath: repo, filePath: f.path, target: "commit", commitId: c.id })
                     }
                   >
-                    <span className={`font-mono font-bold ${badge.cls}`}>{badge.label}</span>
+                    <span className={`font-mono font-semibold ${badge.cls}`}>{badge.label}</span>
                     <span className="truncate">{f.path}</span>
                     <span className="ml-auto shrink-0 font-mono text-3xs">
                       <span className="text-success">+{f.insertions}</span>{" "}
@@ -803,7 +803,7 @@ function BranchList(props: {
       ))}
       {remote.length > 0 && (
         <>
-          <div className="mt-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted">{tr("Remote")}</div>
+          <div className="mt-2 px-1 text-xs font-medium text-muted">{tr("Remote")}</div>
           {remote.map((b) => (
             <div key={b.name} className="px-2 py-1 text-muted">
               {b.name}
@@ -827,7 +827,7 @@ function Btn(props: {
     <button
       onClick={props.onClick}
       disabled={Boolean(props.busy) || props.disabled}
-      className={`rounded px-2 py-0.5 text-xs transition-colors disabled:opacity-40 ${
+      className={`rounded px-2 py-1 text-xs transition-colors disabled:opacity-40 ${
         props.primary
           ? "bg-accent text-on-accent hover:opacity-90"
           : props.danger

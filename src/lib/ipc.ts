@@ -550,6 +550,9 @@ export const statsSample = () => {
 export const agentsSample = () => invoke<AgentInfo[]>("agents_sample");
 export const agentsProcesses = () => invoke<AgentProcess[]>("agents_processes");
 export const ptyTreeStats = (pid: number) => invoke<TreeStats | null>("pty_tree_stats", { pid });
+/** OS-reported working directory of a Luxor terminal's shell (`null` when
+ *  unknown). Fallback for shells that don't emit OSC 7, e.g. cmd.exe. */
+export const ptyCwd = (pid: number) => invoke<string | null>("pty_cwd", { pid });
 export const cliPollRequests = () => invoke<string[]>("cli_poll_requests");
 export const statsPing = (host: string, timeoutMs?: number) =>
   invoke<number | null>("stats_ping", { host, timeoutMs: timeoutMs ?? null });

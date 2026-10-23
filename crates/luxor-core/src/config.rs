@@ -177,6 +177,10 @@ pub struct UiConfig {
     /// Visible nav button ids placed in the top-bar right corner, beside the window controls.
     #[serde(default)]
     pub nav_chrome: Vec<String>,
+    /// Visible nav button ids placed in the top bar's left-aligned group.
+    pub nav_topbar_left: Vec<String>,
+    /// Visible nav button ids placed in the top bar's centered group.
+    pub nav_topbar_center: Vec<String>,
     /// UI zoom factor (1.0 = 100%). Clamped to 0.5–2.0 by the frontend.
     pub zoom: f64,
     /// Show the built-in web browser nav button / panel. Off by default so the
@@ -240,6 +244,12 @@ pub struct UiConfig {
     /// not something every user needs in their tab strip.
     #[serde(default)]
     pub diagnostics_tab: bool,
+    /// Visible border + lift around the active tab (off = background only).
+    pub tab_outline: bool,
+    /// Animations: "system" follows the OS reduce-motion setting (with
+    /// reduce-motion on, motion becomes gentle fades instead of switching
+    /// off), "full" always animates, "reduced" turns animations off.
+    pub motion: String,
 }
 
 /// Nav buttons hidden on a fresh install. The visible set is Terminal, Git,
@@ -280,6 +290,8 @@ impl Default for UiConfig {
                 "git".into(),
                 "palette".into(),
             ],
+            nav_topbar_left: Vec::new(),
+            nav_topbar_center: Vec::new(),
             zoom: 1.0,
             browser_enabled: false,
             close_to_tray: true,
@@ -310,6 +322,8 @@ impl Default for UiConfig {
             glass_enabled: true,
             glass_opacity: 20,
             diagnostics_tab: false,
+            tab_outline: false,
+            motion: "system".into(),
         }
     }
 }
@@ -594,6 +608,26 @@ pub fn save(path: &Path, config: &AppConfig) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ui_prefs_set_in_the_frontend_survive_a_save_roundtrip() {
+        // These used to be missing from UiConfig, so serde dropped them on
+        // every save and the settings silently reset after a restart.
+        let mut cfg = AppConfig::default();
+        cfg.ui.tab_outline = true;
+        cfg.ui.motion = "full".into();
+        cfg.ui.nav_topbar_left = vec!["git".into()];
+        cfg.ui.nav_topbar_center = vec!["files".into()];
+        let back: AppConfig = toml::from_str(&toml::to_string(&cfg).unwrap()).unwrap();
+        assert!(back.ui.tab_outline);
+        assert_eq!(back.ui.motion, "full");
+        assert_eq!(back.ui.nav_topbar_left, vec!["git".to_string()]);
+        assert_eq!(back.ui.nav_topbar_center, vec!["files".to_string()]);
+        // Old configs without the keys still load with the defaults.
+        let old: AppConfig = toml::from_str("").unwrap();
+        assert_eq!(old.ui.motion, "system");
+        assert!(!old.ui.tab_outline);
+    }
 
     #[test]
     fn defaults_load_when_file_missing() {

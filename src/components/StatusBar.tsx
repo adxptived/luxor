@@ -404,12 +404,13 @@ Click: Git explorer · right-click: fetch / pull / push`}
         return (
           <button
             data-testid="status-agents"
-            className="flex items-center gap-1 hover:text-strong"
+            className="flex h-[18px] items-center gap-1.5 rounded-sm bg-accent/12 px-1.5 text-accent transition-colors hover:bg-accent/20"
             title={`${t("Running AI agents:")}\n${detail}\n\n${t("Click to open the Agents panel")}`}
             onClick={() => openPanel("agents")}
           >
-            <Bot size={11} />
-            {total === 1 ? agents[0].label : `${total} agents`} · {fmtCpu(cpu)} ·{" "}
+            <span aria-hidden className="lx-anim-pulse h-1.5 w-1.5 rounded-full bg-accent" />
+            <Bot size={11} aria-hidden />
+            {total === 1 ? agents[0].label : t("{0} agents").replace("{0}", String(total))} · {fmtCpu(cpu)} ·{" "}
             {fmtMem(mem)}
           </button>
         );
@@ -475,6 +476,8 @@ Click: Git explorer · right-click: fetch / pull / push`}
       ref={barRef}
       onContextMenu={barMenu}
       data-testid="statusbar"
+      data-tip-side="top"
+      data-native-title
       title={t("Right-click to customize the status bar (segments, order, alignment)")}
     >
       <div
@@ -539,7 +542,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
           this cluster, so the bar's glass stays uniform across its width. */}
       <div
         ref={clusterRef}
-        className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-1 pl-1"
+        className="absolute right-2 top-1/2 z-[var(--lx-z-local)] flex -translate-y-1/2 items-center gap-1 pl-1"
         data-testid="statusbar-meta"
       >
         <button
@@ -553,7 +556,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
           className={`shrink-0 rounded p-0.5 hover:bg-raised hover:text-strong ${
             config?.ui.right_panel_enabled ? "text-strong" : "text-muted"
           }`}
-          title={t("Toggle right panel")}
+          title={t("Toggle right panel")} aria-label={t("Toggle right panel")}
           onClick={() =>
             config && void saveConfig({ ...config, ui: { ...config.ui, right_panel_enabled: !config.ui.right_panel_enabled } })
           }

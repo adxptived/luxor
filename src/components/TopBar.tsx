@@ -69,7 +69,7 @@ import { confirmDestructive, openContextMenu, useUiStore, type MenuItem } from "
 import { useProjectsStore } from "@/state/projectsStore";
 import { useTabGroups } from "@/state/tabGroupsStore";
 import { QuickActions } from "./QuickActions";
-import { ChromeQuickActions, WindowControls } from "./WindowChrome";
+import { ChromeQuickActions, CommandBarButton, WindowControls } from "./WindowChrome";
 
 /** Accent colors selectable per project tab. */
 const TAB_COLORS: { label: string; value: string | null }[] = [
@@ -908,15 +908,15 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       } ${activeId === p.id ? "bg-surface text-strong" : "text-muted hover:text-strong"} ${
         dragOverId === p.id && dragId && dragId !== p.id
           ? vertical
-            ? "shadow-[inset_0_2px_0_0_var(--lx-muted)]"
-            : "shadow-[inset_2px_0_0_0_var(--lx-muted)]"
+            ? "shadow-[inset_0_2px_0_0_var(--lx-accent)]"
+            : "shadow-[inset_2px_0_0_0_var(--lx-accent)]"
           : ""
       }`}
     >
       {activeId === p.id && (
         <span
           aria-hidden
-          className={`pointer-events-none absolute rounded-full bg-muted ${
+          className={`pointer-events-none absolute rounded-full bg-accent/80 ${
             vertical ? "bottom-2 left-1 top-2 w-[2px]" : "bottom-1 left-2 right-2 h-[2px]"
           }`}
         />
@@ -935,7 +935,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       {activeId === p.id && !p.pinned && !leftCollapsed && (
         <button
           className="rounded p-0.5 text-muted hover:bg-raised hover:text-danger"
-          title={t("Close tab")}
+          title={t("Close tab")} aria-label={t("Close tab")}
           onClick={(e) => {
             e.stopPropagation();
             void closeTab(p.id);
@@ -990,11 +990,12 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
     <div
       className={`lx-anim-topbar relative flex shrink-0 bg-bar text-sm ${
         vertical
-          ? `h-full flex-col overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none ${leftOpen ? "border-r border-edge" : ""}`
+          ? `h-full flex-col overflow-hidden transition-[width] duration-[var(--lx-dur)] ease-out motion-reduce:transition-none ${leftOpen ? "border-r border-edge" : ""}`
           : "w-full items-center border-b border-edge"
       }`}
       style={vertical ? { width: leftOpen ? (leftCollapsed ? collapsedSidebarWidth : "var(--lx-sidebar-w, " + sidebarWidth + "px)") : 0 } : { height: topbarSize }}
       data-testid="topbar"
+      data-tip-side={vertical ? "right" : undefined}
       aria-hidden={vertical && !leftOpen}
       role={!vertical ? "tablist" : undefined}
       aria-label={!vertical ? t("Project tabs and navigation") : undefined}
@@ -1032,7 +1033,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           never disturbs the tab strip's flex layout; only the inner chip is
           interactive (pointer-events), the full-width wrapper is click-through. */}
       {!vertical && (navGroups.center.length > 0 || navDragId) && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-full items-center justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[var(--lx-z-local-overlay)] flex h-full items-center justify-center">
           <div className="pointer-events-auto">
             {renderAlignZone(
               navGroups.center,
@@ -1083,7 +1084,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               setAddMenuPos({ top: Math.max(8, top), left });
               setAddMenu((v) => !v);
             }}
-            title={t("Add tab")}
+            title={t("Add tab")} aria-label={t("Add tab")}
             // Fixed size in the vertical sidebar: a `display: flex` button with
             // `width: auto` stretches to the full width of its block container,
             // which turned this into a sidebar-wide strip.
@@ -1125,7 +1126,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               )}
               {recents.length > 0 && (
                 <>
-                  <div className="mt-1 flex items-center gap-1.5 border-t border-edge px-2 pb-0.5 pt-1.5 text-3xs font-semibold uppercase tracking-wide text-muted">
+                  <div className="mt-1 flex items-center gap-1.5 border-t border-edge px-2 pb-0.5 pt-1.5 text-3xs font-medium text-muted">
                     <History size={11} /> {t("Recent projects")}
                   </div>
                   {recents.map((r) => (
@@ -1149,7 +1150,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
                       </button>
                       <button
                         className="shrink-0 text-muted opacity-0 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
-                        title={t("Remove from recents")}
+                        title={t("Remove from recents")} aria-label={t("Remove from recents")}
                         onClick={() => {
                           void ipc.recentDelete(r.path).then(() =>
                             setRecents((list) => list.filter((x) => x.path !== r.path)),
@@ -1175,7 +1176,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           strip and stack collapse into icon rows. */}
       {vertical && !leftCollapsed && (
         <div
-          className="group relative z-10 flex h-1.5 shrink-0 cursor-row-resize items-center justify-center bg-transparent hover:bg-muted/40"
+          className="group relative z-[var(--lx-z-local)] flex h-1.5 shrink-0 cursor-row-resize items-center justify-center bg-transparent hover:bg-muted/40"
           onPointerDown={startTabStripResize}
           title={t("Drag to resize tab area")}
           data-testid="tab-strip-resize"
@@ -1235,7 +1236,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               <div
                 className="lx-pop-in absolute right-0 top-full z-[var(--lx-z-dropdown)] max-h-80 w-56 overflow-y-auto rounded-lg border border-edge bg-bar p-1 shadow-xl"
               >
-                <div className="mb-1 px-2 py-0.5 text-3xs font-semibold uppercase tracking-wide text-muted">
+                <div className="mb-1 px-2 py-0.5 text-3xs font-medium text-muted">
                   {t("All tabs")}
                 </div>
                 {sortedProjects.map((p) => (
@@ -1272,6 +1273,8 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
             )}
           </span>
         )}
+        {/* Wide windows only: project tabs keep priority on narrow ones. */}
+        {!vertical && <CommandBarButton className="mx-1 hidden w-72 min-[1440px]:flex" />}
         {!vertical && <ChromeQuickActions compact />}
         {quickActionsHere && <QuickActions vertical={vertical} expanded={vertical && !leftCollapsed} />}
         {barNavShown.map((def) => renderNavBtn(def, "topbar"))}
@@ -1313,7 +1316,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       {/* Sidebar resize handle (kept off the buttons so it never eats their clicks) */}
       {vertical && leftOpen && (
         <div
-          className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize hover:bg-muted/40"
+          className="absolute right-0 top-0 z-[var(--lx-z-local)] h-full w-1 cursor-col-resize hover:bg-muted/40"
           onPointerDown={startResize}
           title={t("Drag to resize sidebar")}
           data-testid="sidebar-resize"
@@ -1380,8 +1383,8 @@ function NavBtn(props: {
       } ${
         props.dropTarget
           ? props.vertical
-            ? "shadow-[inset_0_2px_0_0_var(--lx-muted)]"
-            : "shadow-[inset_2px_0_0_0_var(--lx-muted)]"
+            ? "shadow-[inset_0_2px_0_0_var(--lx-accent)]"
+            : "shadow-[inset_2px_0_0_0_var(--lx-accent)]"
           : ""
       }`}
     >
@@ -1406,7 +1409,7 @@ function PresetMenu(props: {
         props.vertical ? "bottom-0 left-full ml-1" : "right-0 top-full mt-1"
       }`}
     >
-      <div className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+      <div className="mb-1 px-1 text-xs font-medium text-muted">
         {t("Ready-made layouts")}
       </div>
       {BUILTIN_LAYOUTS.map((l) => (
@@ -1419,7 +1422,7 @@ function PresetMenu(props: {
           <span className="text-xs text-muted">{t(l.description)}</span>
         </button>
       ))}
-      <div className="mb-1 mt-2 border-t border-edge px-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
+      <div className="mb-1 mt-2 border-t border-edge px-1 pt-2 text-xs font-medium text-muted">
         {t("Layout presets")}
       </div>
       {props.presets.length === 0 && (
@@ -1433,7 +1436,7 @@ function PresetMenu(props: {
           <button
             className="hidden text-danger group-hover:block"
             onClick={() => props.onDelete(p.id)}
-            title={t("Delete preset")}
+            title={t("Delete preset")} aria-label={t("Delete preset")}
           >
             <X size={13} />
           </button>

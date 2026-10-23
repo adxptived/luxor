@@ -163,7 +163,7 @@ export function TasksPanel() {
     <div className="flex h-full flex-col bg-surface text-sm" data-testid="tasks-panel">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-edge px-3 py-2">
         <span className="flex shrink-0 items-center gap-1.5 font-semibold text-strong">
-          <SquareKanban size={15} /> Tasks
+          <SquareKanban size={15} /> {t("Tasks")}
         </span>
         <span className="min-w-0 truncate text-muted">{project ? project.name : "global board"}</span>
         {tasks.length > 0 && (
@@ -185,12 +185,12 @@ export function TasksPanel() {
               }}
               placeholder={t("Filter tasks…")}
               data-testid="task-filter"
-              className="w-36 rounded border border-edge bg-surface py-0.5 pl-6 pr-5 text-xs text-strong outline-none placeholder:text-muted focus:border-muted/60"
+              className="w-36 rounded border border-edge bg-surface py-1 pl-6 pr-5 text-xs text-strong outline-none placeholder:text-muted focus:border-muted/60"
             />
             {filter && (
               <button
                 className="absolute right-1 top-1/2 -translate-y-1/2 rounded text-muted hover:text-strong"
-                title={t("Clear filter")}
+                title={t("Clear filter")} aria-label={t("Clear filter")}
                 onClick={() => setFilter("")}
               >
                 <X size={12} />
@@ -203,11 +203,11 @@ export function TasksPanel() {
             disabled={!tasks.some((t) => t.status === "done")}
             onClick={() => void clearDone()}
           >
-            <Eraser size={14} /> Clear done
+            <Eraser size={14} /> {t("Clear done")}
           </button>
           <button
             className="rounded p-1 text-muted hover:bg-raised hover:text-strong"
-            title={t("Reload tasks")}
+            title={t("Reload tasks")} aria-label={t("Reload tasks")}
             onClick={() => void reload()}
           >
             <RefreshCw size={14} />
@@ -245,7 +245,7 @@ export function TasksPanel() {
                 onDrop(col.id, colTasks.length);
               }}
             >
-              <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+              <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted">
                 {t(col.label)}
                 <span className="rounded bg-raised px-1.5 text-3xs">{colTasks.length}</span>
               </div>
@@ -346,7 +346,7 @@ function TaskCard(props: {
         />
         <div className="flex gap-1.5">
           <button
-            className="rounded bg-raised border border-edge px-2 py-0.5 text-xs font-medium text-strong hover:bg-surface disabled:opacity-40"
+            className="rounded bg-raised border border-edge px-2 py-1 text-xs font-medium text-strong hover:bg-surface disabled:opacity-40"
             disabled={!title.trim()}
             onClick={() => {
               props.onSave({ ...task, title: title.trim(), description });
@@ -356,7 +356,7 @@ function TaskCard(props: {
             {t("Save")}
           </button>
           <button
-            className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong"
+            className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             onClick={props.onCloseEdit}
           >
             {t("common.cancel", "Cancel")}
@@ -396,7 +396,7 @@ function TaskCard(props: {
         <span className="flex shrink-0 gap-0.5">
           <button
             className="rounded p-0.5 text-muted hover:text-strong disabled:opacity-20"
-            title={t("Move left")}
+            title={t("Move left")} aria-label={t("Move left")}
             disabled={!props.canLeft}
             onClick={(e) => {
               e.stopPropagation();
@@ -407,7 +407,7 @@ function TaskCard(props: {
           </button>
           <button
             className="rounded p-0.5 text-muted hover:text-strong disabled:opacity-20"
-            title={t("Move right (⇧ Click card)")}
+            title={t("Move right (⇧ Click card)")} aria-label={t("Move right (⇧ Click card)")}
             disabled={!props.canRight}
             onClick={(e) => {
               e.stopPropagation();
@@ -418,7 +418,7 @@ function TaskCard(props: {
           </button>
           <button
             className="rounded p-0.5 text-muted hover:text-accent"
-            title={t("Copy as agent prompt")}
+            title={t("Copy as agent prompt")} aria-label={t("Copy as agent prompt")}
             onClick={(e) => {
               e.stopPropagation();
               props.onCopyPrompt();
@@ -428,7 +428,7 @@ function TaskCard(props: {
           </button>
           <button
             className="rounded p-0.5 text-muted hover:text-accent"
-            title={t("Edit task")}
+            title={t("Edit task")} aria-label={t("Edit task")}
             onClick={(e) => {
               e.stopPropagation();
               props.onEdit();
@@ -452,7 +452,7 @@ function AddCard(props: { onAdd: (title: string) => void }) {
   if (!open) {
     return (
       <button
-        className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-edge px-2 py-1.5 text-left text-xs text-muted hover:bg-raised hover:text-strong"
+        className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-edge px-2 py-1 text-left text-xs text-muted hover:bg-raised hover:text-strong"
         onClick={() => setOpen(true)}
       >
         <Plus size={13} /> {t("Add task")}

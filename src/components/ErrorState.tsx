@@ -47,8 +47,8 @@ export function ErrorState({
       }
     >
       <div className="max-w-md rounded-lg border border-edge bg-bar/40 p-5 shadow-sm">
-        <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-danger-soft-strong bg-danger-soft text-danger">
-          <Icon size={26} />
+        <div className="lx-empty-icon mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-lg bg-danger-soft text-danger">
+          <Icon size={22} />
         </div>
         <div className="text-sm font-medium text-strong text-pretty">{title}</div>
         {message != null && message !== "" && (
@@ -60,7 +60,7 @@ export function ErrorState({
               <button
                 onClick={onRetry}
                 disabled={retrying}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs text-strong hover:bg-raised disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs text-strong hover:bg-raised disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <RefreshCw size={13} className={retrying ? "lx-anim-spin" : undefined} />
                 {retrying ? t("Retrying…") : t("Try again")}

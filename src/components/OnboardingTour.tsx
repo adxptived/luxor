@@ -107,7 +107,7 @@ export function OnboardingTour() {
     >
       <div className="lx-anim-modal pointer-events-auto w-[28rem] max-w-[92vw] rounded-lg border border-edge bg-bar p-6 shadow-2xl shadow-black/40">
         <div className="mb-1 flex items-center justify-between">
-          <span className="text-xs font-medium uppercase tracking-wide text-muted">
+          <span className="text-xs font-medium text-muted">
             {t("onboarding.step", "Step")} {stepIdx + 1} {t("onboarding.of", "of")} {ONBOARDING_STEPS.length}
           </span>
           <button

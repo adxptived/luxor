@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
-import { formatShellArgs, parseShellArgs } from "./shellArgs";
+import { effectiveShellArgs, formatShellArgs, parseShellArgs, POWERSHELL_HOOK_PLACEHOLDER } from "./shellArgs";
 
 function ok(input: string): string[] {
   const parsed = parseShellArgs(input);
@@ -48,5 +48,18 @@ describe("shellArgs", () => {
     const args = ["-Command", "Write-Host hello world", "", 'quote "inside"'];
     const parsed = parseShellArgs(formatShellArgs(args));
     expect(parsed).toEqual({ ok: true, args });
+  });
+});
+
+describe("effectiveShellArgs", () => {
+  it("PowerShell gets the startup flags plus the cwd prompt hook", () => {
+    const hook = ["-NoExit", "-EncodedCommand", POWERSHELL_HOOK_PLACEHOLDER];
+    expect(effectiveShellArgs("powershell.exe", [], true)).toEqual(["-NoLogo", "-NoProfile", ...hook]);
+    expect(effectiveShellArgs("C:\\Program Files\\PowerShell\\7\\pwsh.exe", [], false)).toEqual(["-NoLogo", ...hook]);
+  });
+
+  it("explicit args win and other shells get nothing injected", () => {
+    expect(effectiveShellArgs("pwsh", ["-NoLogo"], true)).toEqual(["-NoLogo"]);
+    expect(effectiveShellArgs("/bin/bash", [], true)).toEqual([]);
   });
 });

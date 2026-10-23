@@ -48,19 +48,21 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
 
   return (
     <div
-      className="lx-empty-state flex h-full w-full items-center justify-center overflow-auto px-4 py-6 text-center"
+      className="flex h-full w-full items-center justify-center overflow-auto bg-surface px-4 py-8"
       data-testid="empty-dock"
     >
-      <div className="lx-card w-full max-w-2xl p-5" style={{ borderRadius: "var(--lx-radius-xl)" }}>
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-lg border border-edge bg-raised text-muted">
-          <LayoutGrid size={24} />
+      <div className="w-full max-w-xl">
+        <div className="flex flex-col items-center text-center">
+          <div className="lx-empty-icon flex h-11 w-11 items-center justify-center rounded-lg bg-accent/10 text-accent" aria-hidden>
+            <LayoutGrid size={20} />
+          </div>
+          <div className="mt-3 text-sm font-medium text-strong">{t("Nothing open")}</div>
+          <p className="mt-1 max-w-sm text-xs leading-5 text-muted text-pretty">
+            {t("Every tab in this workspace is closed. Reopen the essentials or choose any panel from the menu.")}
+          </p>
         </div>
-        <div className="mt-3 text-base font-semibold text-strong">{t("Nothing open")}</div>
-        <p className="mx-auto mt-1 max-w-md text-sm leading-5 text-muted">
-          {t("Every tab in this workspace is closed. Reopen the essentials or choose any panel from the menu.")}
-        </p>
 
-        <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
           <EmptyAction icon={SquareTerminal} label={t("New terminal")} hint={hintFor("terminal.new", useAppStore.getState().config) || "Ctrl+`"} primary onClick={() => addTerminal()} />
           <EmptyAction icon={FolderTree} label={t("Files")} hint={t("Browse project")} onClick={() => openPanel("files")} />
           {hasFolder ? (
@@ -70,8 +72,8 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
           )}
         </div>
 
-        <div className="mt-4 text-2xs font-semibold uppercase tracking-wide text-muted">{t("Ready-made layouts")}</div>
-        <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="mt-6 px-1 text-2xs font-medium text-muted">{t("Ready-made layouts")}</div>
+        <div className="mt-1.5 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
           {BUILTIN_LAYOUTS.map((l) => (
             <EmptyAction
               key={l.id}
@@ -83,17 +85,14 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
           ))}
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-2xs text-muted">
           <button
-            className="flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-sm text-muted hover:border-muted hover:bg-raised hover:text-strong"
+            className="flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
             onClick={allPanels}
-            title={t("Open any panel")}
-           aria-label={t("Open any panel")}>
-            <Plus size={14} /> {t("More panels…")}
+          >
+            <Plus size={13} /> {t("More panels…")}
           </button>
-          <span className="max-w-full truncate rounded-full border border-edge px-2 py-1 text-3xs uppercase tracking-wide text-muted">
-            {t("Tip: right-click tabs, sidebar and status bar for customization.")}
-          </span>
+          <span>{t("Tip: right-click tabs, sidebar and status bar for customization.")}</span>
         </div>
       </div>
     </div>
@@ -110,18 +109,19 @@ function EmptyAction(props: {
   return (
     <button
       onClick={props.onClick}
-      className={`lx-hover-lift group flex min-w-0 items-center gap-3 rounded-lg border px-3 py-2.5 text-left ${
-        props.primary
-          ? "border-edge bg-raised text-strong hover:bg-surface"
-          : "border-edge bg-surface/50 text-strong hover:border-muted hover:bg-raised"
+      className={`group flex min-w-0 items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors ${
+        props.primary ? "bg-accent/10 text-strong hover:bg-accent/15" : "bg-raised/50 text-strong hover:bg-raised"
       }`}
-      style={{ borderRadius: "var(--lx-radius-lg)" }}
     >
-      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-raised text-muted group-hover:bg-surface">
-        <props.icon size={15} className="shrink-0" />
+      <span
+        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${
+          props.primary ? "bg-accent/15 text-accent" : "bg-raised text-muted group-hover:text-strong"
+        }`}
+      >
+        <props.icon size={14} className="shrink-0" />
       </span>
       <span className="min-w-0">
-        <span className="block truncate text-sm font-medium">{props.label}</span>
+        <span className="block truncate text-xs font-medium">{props.label}</span>
         <span className="block truncate text-2xs text-muted">{props.hint}</span>
       </span>
     </button>

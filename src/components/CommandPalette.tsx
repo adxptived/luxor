@@ -1,6 +1,7 @@
 import { Command as CommandIcon, CornerDownLeft, FileSearch, Hash, PanelRight, Search, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { EmptyState } from "@/components/EmptyState";
 import { t } from "@/lib/i18n";
 import { updateRepo, updateToast } from "@/lib/updates";
 import * as ipc from "@/lib/ipc";
@@ -31,6 +32,8 @@ interface Command {
 }
 
 type PaletteItem = Command | NavFile | NavSymbol | NavPanel;
+
+const PREFIX_MODES: Record<string, PaletteMode> = { ">": "commands", "/": "files", "@": "symbols", ":": "panels" };
 
 function commandParts(label: string): { section: string; title: string } {
   const idx = label.indexOf(":");
@@ -122,13 +125,13 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       { id: "terminal.new", label: t("cmd.terminal.new", "Terminal: New terminal"), hint: "Ctrl+`", run: close(() => dock.addTerminal()) },
       { id: "git.open", label: t("cmd.git.open", "Git: Open explorer"), hint: "Ctrl+Shift+G", run: close(() => dock.openPanel("git")) },
       { id: "files.open", label: t("cmd.files.open", "Files: Open file explorer"), hint: "Ctrl+Shift+E", run: close(() => dock.openPanel("files")) },
-      { id: "project.add", label: "Project: Add project folder…", run: close(() => void projectsStore.addProject()) },
-      { id: "project.addBlank", label: "Project: New blank workspace", run: close(() => void projectsStore.addBlank()) },
-      { id: "project.switcher", label: "Project: Quick switcher…", hint: "Ctrl+P", run: close(() => appStore.setSwitcherOpen(true)) },
+      { id: "project.add", label: t("Project: Add project folder…"), run: close(() => void projectsStore.addProject()) },
+      { id: "project.addBlank", label: t("Project: New blank workspace"), run: close(() => void projectsStore.addBlank()) },
+      { id: "project.switcher", label: t("Project: Quick switcher…"), hint: "Ctrl+P", run: close(() => appStore.setSwitcherOpen(true)) },
       { id: "settings.open", label: t("cmd.settings.open", "Settings: Open settings"), hint: "Ctrl+,", run: close(() => appStore.setSettingsOpen(true)) },
       {
         id: "appearance.toggleTheme",
-        label: "Appearance: Toggle dark/light theme",
+        label: t("Appearance: Toggle dark/light theme"),
         run: close(() => {
           const config = appStore.config;
           if (!config) return;
@@ -143,7 +146,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       },
       {
         id: "project.rename",
-        label: "Project: Rename active tab…",
+        label: t("Project: Rename active tab…"),
         run: close(() => {
           const active = projectsStore.projects.find((p) => p.id === projectsStore.activeId);
           if (!active) return;
@@ -169,12 +172,12 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
         hint: "Ctrl+W",
         run: close(() => dock.closeActivePanel()),
       },
-      { id: "layout.reset", label: "Layout: Reset to default", run: close(() => dock.resetLayout(
+      { id: "layout.reset", label: t("Layout: Reset to default"), run: close(() => dock.resetLayout(
         projectsStore.projects.find((p) => p.id === projectsStore.activeId)?.path ?? null,
       )) },
       ...BUILTIN_LAYOUTS.map((l) => ({
         id: `layout.builtin.${l.id}`,
-        label: `Layout: ${l.label}`,
+        label: `${t("Layout")}: ${t(`layout.${l.id}`, l.label)}`,
         run: close(() =>
           void dock.applyBuiltinLayout(
             l.id,
@@ -182,18 +185,18 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
           ),
         ),
       })),
-      { id: "layout.focusNext", label: "Layout: Focus next group", run: close(() => focusNeighbourGroup(1)) },
-      { id: "layout.focusPrev", label: "Layout: Focus previous group", run: close(() => focusNeighbourGroup(-1)) },
-      { id: "layout.moveNext", label: "Layout: Move tab to next group", run: close(() => moveTabToNeighbourGroup(1)) },
-      { id: "layout.movePrev", label: "Layout: Move tab to previous group", run: close(() => moveTabToNeighbourGroup(-1)) },
+      { id: "layout.focusNext", label: t("Layout: Focus next group"), run: close(() => focusNeighbourGroup(1)) },
+      { id: "layout.focusPrev", label: t("Layout: Focus previous group"), run: close(() => focusNeighbourGroup(-1)) },
+      { id: "layout.moveNext", label: t("Layout: Move tab to next group"), run: close(() => moveTabToNeighbourGroup(1)) },
+      { id: "layout.movePrev", label: t("Layout: Move tab to previous group"), run: close(() => moveTabToNeighbourGroup(-1)) },
       {
         id: "layout.splitRight",
-        label: "Layout: Split right with new terminal",
+        label: t("Layout: Split right with new terminal"),
         run: close(() => dock.splitWithTerminal("right")),
       },
       {
         id: "layout.splitDown",
-        label: "Layout: Split down with new terminal",
+        label: t("Layout: Split down with new terminal"),
         run: close(() => dock.splitWithTerminal("below")),
       },
       { id: "launcher.open", label: t("cmd.launcher.open", "Launcher: Open launcher panel"), run: close(() => dock.openPanel("launcher")) },
@@ -255,44 +258,44 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       },
       {
         id: "files.openFile",
-        label: "Files: Open file in viewer/editor…",
+        label: t("Files: Open file in viewer/editor…"),
         run: close(() => {
           void ipc.pickFile().then((path) => path && dock.openFile(path));
         }),
       },
       {
         id: "db.open",
-        label: "Database: Open SQLite database…",
+        label: t("Database: Open SQLite database…"),
         run: close(() => {
           void ipc.pickFile().then((path) => path && dock.openFile(path));
         }),
       },
       {
         id: "zoom.in",
-        label: "View: Zoom in",
+        label: t("View: Zoom in"),
         hint: "Ctrl+= / Ctrl+wheel",
         run: () => appStore.setZoom((appStore.config?.ui.zoom ?? 1) + ZOOM_STEP),
       },
       {
         id: "zoom.out",
-        label: "View: Zoom out",
+        label: t("View: Zoom out"),
         hint: "Ctrl+-",
         run: () => appStore.setZoom((appStore.config?.ui.zoom ?? 1) - ZOOM_STEP),
       },
-      { id: "zoom.reset", label: "View: Reset zoom (100%)", hint: "Ctrl+0", run: () => appStore.setZoom(1) },
+      { id: "zoom.reset", label: t("View: Reset zoom (100%)"), hint: "Ctrl+0", run: () => appStore.setZoom(1) },
       {
         id: "sidebar.customize",
-        label: "Sidebar: Customize nav buttons…",
+        label: t("Sidebar: Customize nav buttons…"),
         run: close(() => appStore.setSettingsOpen(true, "interface")),
       },
       {
         id: "statusbar.customize",
-        label: "Status bar: Customize segments…",
+        label: t("Status bar: Customize segments…"),
         run: close(() => appStore.setSettingsOpen(true, "statusbar")),
       },
       {
         id: "layout.save",
-        label: "Layout: Save as preset…",
+        label: t("Layout: Save as preset…"),
         run: close(() => {
           void useUiStore
             .getState()
@@ -306,7 +309,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
     for (const theme of THEMES) {
       cmds.push({
         id: `appearance.theme.${theme.id}`,
-        label: `Appearance: Theme — ${theme.label}`,
+        label: `${t("Appearance: Theme")} — ${theme.label}`,
         run: close(() => {
           const config = appStore.config;
           if (config) void appStore.saveConfig({ ...config, theme: theme.id });
@@ -507,9 +510,9 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
         data-testid="command-palette"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="shrink-0 border-b border-edge bg-[radial-gradient(circle_at_top_left,var(--lx-raised),transparent_52%)] p-3">
+        <div className="shrink-0 border-b border-edge p-3">
           <div className="mb-2 flex items-center justify-between gap-3 px-1">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-2 text-xs font-medium text-muted">
               <span className="flex h-6 w-6 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
                 <CommandIcon size={13} />
               </span>
@@ -541,7 +544,20 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
             <input
               ref={inputRef}
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                // Prefix shortcuts (VS Code style): ">" commands, "/" files,
+                // "@" symbols, ":" panels. The prefix switches the mode and is
+                // not kept in the query.
+                const v = e.target.value;
+                const prefixMode = PREFIX_MODES[v.charAt(0)];
+                if (prefixMode) {
+                  setMode(prefixMode);
+                  setSelected(0);
+                  setQuery(v.slice(1).trimStart());
+                  return;
+                }
+                setQuery(v);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Escape") onEscape();
                 if (e.key === "ArrowDown") {
@@ -572,7 +588,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                 }
               }}
               data-testid="palette-input"
-              placeholder={t("Type a command, panel, theme, project…")}
+              placeholder={mode === "commands" ? t("Type a command…  / files  @ symbols  : panels") : t("Search…")}
               className="min-w-0 flex-1 bg-transparent py-3 text-strong outline-none placeholder:text-muted/70"
             />
             <span className="rounded-full border border-edge px-2 py-0.5 text-3xs text-muted">
@@ -583,21 +599,18 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
 
         <div role="listbox" aria-label={t("Results")} className="min-h-0 flex-1 overflow-auto p-1.5 [max-height:min(28rem,62vh)]">
           {navLoading && (
-            <div className="m-2 rounded-lg border border-dashed border-edge px-4 py-8 text-center text-sm text-muted">
-              <Sparkles size={20} className="mx-auto mb-2 text-muted" />
-              <div className="font-medium text-strong">{t("Loading…")}</div>
-            </div>
+            <EmptyState tone="muted" icon={<Sparkles size={20} />} title={t("Loading…")} />
           )}
           {!navLoading && mode === "commands" && groupedCommands && groupedCommands.map((group) => (
             <div key={group.category.id}>
-              <div className="px-3 pb-0.5 pt-2 text-3xs font-semibold uppercase tracking-wide text-muted">
+              <div className="px-3 pb-0.5 pt-2 text-3xs font-medium text-muted">
                 {t(group.category.label)}
               </div>
               {group.items.map((c) => {
                 const idx = filtered.indexOf(c);
                 if (idx < 0) return null;
                 const parts = commandParts(c.label);
-                const RowIcon = categoryOf(c.label).icon;
+                const RowIcon = categoryOf(c).icon;
                 return (
                   <button
                     key={c.id}
@@ -605,16 +618,16 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                     onMouseEnter={() => setSelected(idx)}
                     role="option"
                     aria-selected={idx === selected}
-                    className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                    className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--lx-dur-fast)] ${
                       idx === selected ? "bg-accent/10 text-strong lx-active-strip" : "text-muted hover:bg-raised/70 hover:text-strong"
                     }`}
                   >
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${idx === selected ? "border-muted bg-raised text-strong" : "border-edge bg-surface text-muted"}`}>
+                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${idx === selected ? "bg-accent/15 text-accent" : "bg-raised/70 text-muted"}`}>
                       <RowIcon size={14} />
                     </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate font-medium text-strong">{parts.title || c.label}</span>
-                      <span className="block truncate text-2xs uppercase tracking-wide text-muted">{parts.section}</span>
+                      <span className="block truncate text-2xs text-muted">{parts.section}</span>
                     </span>
                     {c.hint && <Kbd>{c.hint}</Kbd>}
                     {idx === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
@@ -626,16 +639,16 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
           {!navLoading && mode === "commands" && !groupedCommands && filtered.map((item, i) => {
             const c = item as Command;
             const parts = commandParts(c.label);
-            const RowIcon = categoryOf(c.label).icon;
+            const RowIcon = categoryOf(c).icon;
             return (
               <div key={c.id}>
                 {recentCount > 0 && i === 0 && (
-                  <div className="px-3 pb-0.5 pt-1 text-3xs font-semibold uppercase tracking-wide text-muted">
+                  <div className="px-3 pb-0.5 pt-1 text-3xs font-medium text-muted">
                     {t("Recently used")}
                   </div>
                 )}
                 {recentCount > 0 && i === recentCount && (
-                  <div className="px-3 pb-0.5 pt-2 text-3xs font-semibold uppercase tracking-wide text-muted">
+                  <div className="px-3 pb-0.5 pt-2 text-3xs font-medium text-muted">
                     {t("All commands")}
                   </div>
                 )}
@@ -644,18 +657,18 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                   onMouseEnter={() => setSelected(i)}
                   role="option"
                   aria-selected={i === selected}
-                  className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                  className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--lx-dur-fast)] ${
                     i === selected ? "bg-accent/10 text-strong lx-active-strip" : "text-muted hover:bg-raised/70 hover:text-strong"
                   }`}
                 >
-                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${i === selected ? "border-muted bg-raised text-strong" : "border-edge bg-surface text-muted"}`}>
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${i === selected ? "bg-accent/15 text-accent" : "bg-raised/70 text-muted"}`}>
                     <RowIcon size={14} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate font-medium text-strong">
                       <FuzzyText text={parts.title || c.label} query={query} />
                     </span>
-                    <span className="block truncate text-2xs uppercase tracking-wide text-muted">{parts.section}</span>
+                    <span className="block truncate text-2xs text-muted">{parts.section}</span>
                   </span>
                   {c.hint && <Kbd>{c.hint}</Kbd>}
                   {i === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
@@ -672,11 +685,11 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                 onMouseEnter={() => setSelected(i)}
                 role="option"
                 aria-selected={i === selected}
-                className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--lx-dur-fast)] ${
                   i === selected ? "bg-accent/10 text-strong lx-active-strip" : "text-muted hover:bg-raised/70 hover:text-strong"
                 }`}
               >
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${i === selected ? "border-muted bg-raised text-strong" : "border-edge bg-surface text-muted"}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${i === selected ? "bg-accent/15 text-accent" : "bg-raised/70 text-muted"}`}>
                   <FileSearch size={14} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -698,11 +711,11 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                 onMouseEnter={() => setSelected(i)}
                 role="option"
                 aria-selected={i === selected}
-                className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--lx-dur-fast)] ${
                   i === selected ? "bg-accent/10 text-strong lx-active-strip" : "text-muted hover:bg-raised/70 hover:text-strong"
                 }`}
               >
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${i === selected ? "border-muted bg-raised text-strong" : "border-edge bg-surface text-muted"}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${i === selected ? "bg-accent/15 text-accent" : "bg-raised/70 text-muted"}`}>
                   <Hash size={14} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -724,11 +737,11 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
                 onMouseEnter={() => setSelected(i)}
                 role="option"
                 aria-selected={i === selected}
-                className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+                className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--lx-dur-fast)] ${
                   i === selected ? "bg-accent/10 text-strong lx-active-strip" : "text-muted hover:bg-raised/70 hover:text-strong"
                 }`}
               >
-                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${i === selected ? "border-muted bg-raised text-strong" : "border-edge bg-surface text-muted"}`}>
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${i === selected ? "bg-accent/15 text-accent" : "bg-raised/70 text-muted"}`}>
                   <PanelRight size={14} />
                 </span>
                 <span className="min-w-0 flex-1">
@@ -741,13 +754,11 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
             );
           })}
           {!navLoading && filtered.length === 0 && (
-            <div className="m-2 rounded-lg border border-dashed border-edge px-4 py-8 text-center text-sm text-muted">
-              <Sparkles size={20} className="mx-auto mb-2 text-accent" />
-              <div className="font-medium text-strong">{t("No matching commands")}</div>
-              <p className="mx-auto mt-1 max-w-sm text-xs leading-5">
-                {t("Try a panel name, a project name, Git, theme, layout, session, or a shorter query.")}
-              </p>
-            </div>
+            <EmptyState
+              icon={<Search size={20} />}
+              title={t("No matching commands")}
+              text={t("Try a panel name, a project name, Git, theme, layout, session, or a shorter query.")}
+            />
           )}
         </div>
 
@@ -760,8 +771,9 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
           <span className="hidden shrink-0 items-center gap-2.5 sm:flex">
             <span className="flex items-center gap-1"><Kbd>↑↓</Kbd> {t("navigate")}</span>
             <span className="flex items-center gap-1"><Kbd>↵</Kbd> {t("run")}</span>
-            <span className="flex items-center gap-1"><Kbd>Ctrl+P</Kbd> {t("Files")}</span>
-            <span className="flex items-center gap-1"><Kbd>Ctrl+G</Kbd> {t("Symbols")}</span>
+            <span className="flex items-center gap-1" title={t("Ctrl+P also opens files")}><Kbd>/</Kbd> {t("Files")}</span>
+            <span className="flex items-center gap-1" title={t("Ctrl+G also opens symbols")}><Kbd>@</Kbd> {t("Symbols")}</span>
+            <span className="flex items-center gap-1"><Kbd>:</Kbd> {t("Panels")}</span>
             <span className="flex items-center gap-1"><Kbd>Esc</Kbd> {t("close")}</span>
           </span>
         </div>

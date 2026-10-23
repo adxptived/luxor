@@ -48,7 +48,7 @@ export function TagsView({ repo, busy, run }: { repo: string; busy: string | nul
           disabled={!name.trim() || busy !== null}
           className="rounded bg-accent px-2 py-1 text-xs font-medium text-on-accent disabled:opacity-40"
         >
-          Tag HEAD
+          {t("Tag HEAD")}
         </button>
       </div>
       {tags.length === 0 && <div className="py-6 text-center text-xs text-muted">{tr("No tags.")}</div>}
@@ -60,14 +60,14 @@ export function TagsView({ repo, busy, run }: { repo: string; busy: string | nul
           {t.message && <span className="flex-1 truncate text-xs text-muted">{t.message}</span>}
           {!t.message && <span className="flex-1" />}
           <button
-            title={tr("Push tag to remote")}
+            title={tr("Push tag to remote")} aria-label={tr("Push tag to remote")}
             className="text-muted opacity-0 hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             onClick={() => void run(tr("Push tag"), () => ipc.gitPushTag(repo, t.name), `${tr("Pushed")} ${t.name}`)}
           >
             <UploadCloud size={13} />
           </button>
           <button
-            title={tr("Delete tag")}
+            title={tr("Delete tag")} aria-label={tr("Delete tag")}
             className="text-muted opacity-0 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             onClick={() =>
               void confirmDestructive({ title: tr("Delete tag"), message: `${tr("Delete tag")} ${t.name}? ${tr("(local only)")}` }).then(
@@ -101,7 +101,7 @@ export function ReflogView({ repo, run }: { repo: string; run: RunFn }) {
           <span className="flex-1 truncate text-strong">{e.message}</span>
           <span className="shrink-0 text-muted">{formatUnixDateTime(e.time)}</span>
           <button
-            title={tr("Cherry-pick this commit onto HEAD")}
+            title={tr("Cherry-pick this commit onto HEAD")} aria-label={tr("Cherry-pick this commit onto HEAD")}
             className="shrink-0 text-muted opacity-0 hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             onClick={() =>
               void run(tr("Cherry-pick"), () => ipc.gitCherryPick(repo, e.id), `${tr("Cherry-picked")} ${e.short_id}`)
@@ -132,10 +132,10 @@ export function SubmodulesView({ repo, run }: { repo: string; run: RunFn }) {
             </div>
           </div>
           <button
-            className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong"
+            className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             onClick={() => void run(tr("Update submodule"), () => ipc.gitSubmoduleUpdate(repo, s.name).then(load), tr("Submodule updated"))}
           >
-            Init / update
+            {t("Init / update")}
           </button>
         </div>
       ))}
@@ -199,14 +199,14 @@ export function ConflictsView({ repo }: { repo: string }) {
               [tr("Theirs (incoming)"), active.theirs],
             ] as const).map(([label, text]) => (
               <div key={label} className="flex min-h-24 flex-col overflow-hidden rounded border border-edge">
-                <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs uppercase tracking-wide text-muted">{label}</div>
+                <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs text-muted">{label}</div>
                 <pre className="min-h-0 flex-1 overflow-auto bg-surface p-2 font-mono text-xs leading-5 text-strong">{text}</pre>
               </div>
             ))}
           </div>
         )}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-edge">
-          <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs uppercase tracking-wide text-muted">{tr("Result (editable)")}</div>
+          <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs text-muted">{tr("Result (editable)")}</div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -224,7 +224,7 @@ export function ConflictsView({ repo }: { repo: string }) {
       {paths.length === 0 && <div className="py-6 text-center text-xs text-muted">{tr("No merge conflicts ✓")}</div>}
       {paths.map((p) => (
         <button key={p} onClick={() => void open(p)} className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-raised">
-          <span className="font-mono font-bold text-danger">!</span>
+          <span className="font-mono font-semibold text-danger">!</span>
           <span className="truncate text-strong">{p}</span>
         </button>
       ))}

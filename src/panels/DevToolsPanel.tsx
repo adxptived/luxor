@@ -3,10 +3,12 @@
  * (update + vulnerability check), process viewer, HTML preview and crash reports.
  */
 
+import { EmptyState } from "@/components/EmptyState";
 import { formatTime, formatUnixDateTime } from "@/lib/format";
 import {
   AlertCircle,
   AlertTriangle,
+  ArrowUpRight,
   AppWindow,
   CheckCircle2,
   CircleDashed,
@@ -27,7 +29,10 @@ import {
   Rocket,
   ScrollText,
   Search,
+  ShieldCheck,
   TerminalSquare,
+  Download,
+  X,
   Activity,
   Square,
   Sparkles,
@@ -50,6 +55,7 @@ import type {
   DiskUsageReport,
   EnvFile,
   ProcessNode,
+  RegistryPackage,
   VulnAdvisory,
 } from "@/lib/types";
 import { errorMessage } from "@/lib/types";
@@ -105,7 +111,7 @@ export function DevToolsPanel() {
               onClick={() => setTab(tb.id)}
               title={compact ? t(tb.label) : undefined}
               aria-label={t(tb.label)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition duration-150 ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition duration-[var(--lx-dur-fast)] ${
                 active
                   ? "border-accent bg-accent/10 text-accent font-semibold shadow-sm"
                   : "border-edge bg-surface text-muted hover:bg-raised hover:text-strong hover:border-muted"
@@ -194,13 +200,13 @@ function DiagnosticsTab({ root }: { root: string }) {
         <div className="flex min-w-0 items-start gap-2.5">
           <div className="rounded-lg border border-accent/30 bg-accent/10 p-2 text-accent"><Activity size={17} /></div>
           <div className="min-w-0">
-            <div className="font-semibold text-strong">Developer diagnostics</div>
-            <p className="mt-0.5 max-w-xl text-xs leading-5 text-muted">Read-only health checks for native IPC, project tooling and desktop integrations. Checks never send notifications or modify your project.</p>
+            <div className="font-semibold text-strong">{t("Developer diagnostics")}</div>
+            <p className="mt-0.5 max-w-xl text-xs leading-5 text-muted">{t("Read-only health checks for native IPC, project tooling and desktop integrations. Checks never send notifications or modify your project.")}</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button onClick={() => void copyReport()} disabled={!report || running} className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs text-muted transition hover:border-accent hover:text-accent disabled:opacity-40"><Copy size={12} /> Copy report</button>
-          <button onClick={() => void run()} disabled={running} className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-2.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/15 disabled:opacity-50"><RefreshCw size={12} className={running ? "animate-spin" : ""} /> {running ? "Checking…" : "Run all"}</button>
+          <button onClick={() => void copyReport()} disabled={!report || running} className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs text-muted transition hover:border-accent hover:text-accent disabled:opacity-40"><Copy size={12} /> {t("Copy report")}</button>
+          <button onClick={() => void run()} disabled={running} className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent transition hover:bg-accent/15 disabled:opacity-50"><RefreshCw size={12} className={running ? "animate-spin" : ""} /> {running ? "Checking…" : "Run all"}</button>
         </div>
       </div>
 
@@ -215,7 +221,7 @@ function DiagnosticsTab({ root }: { root: string }) {
       )}
 
       {!report && running ? (
-        <div className="flex flex-1 items-center justify-center gap-2 py-16 text-sm text-muted"><RefreshCw size={16} className="animate-spin text-accent" /> Inspecting subsystems…</div>
+        <div className="flex flex-1 items-center justify-center gap-2 py-16 text-sm text-muted"><RefreshCw size={16} className="animate-spin text-accent" /> {t("Inspecting subsystems…")}</div>
       ) : (
         <div className="flex flex-col gap-3">
           {DIAGNOSTIC_GROUPS.map((group) => {
@@ -224,7 +230,7 @@ function DiagnosticsTab({ root }: { root: string }) {
             return (
               <section key={group} aria-labelledby={`diagnostic-${group}`} className="overflow-hidden rounded-xl border border-edge bg-surface shadow-sm">
                 <div className="flex items-center justify-between border-b border-edge bg-bar/30 px-3 py-2">
-                  <h3 id={`diagnostic-${group}`} className="text-xs font-semibold uppercase tracking-wide text-muted">{group}</h3>
+                  <h3 id={`diagnostic-${group}`} className="text-xs font-medium capitalize text-muted">{group}</h3>
                   <span className="text-2xs text-muted">{checks.filter((check) => check.state === "pass").length}/{checks.length} passed</span>
                 </div>
                 <div className="divide-y divide-edge/60">
@@ -235,7 +241,7 @@ function DiagnosticsTab({ root }: { root: string }) {
           })}
         </div>
       )}
-      {report && <div className="px-1 text-2xs text-muted">Completed in {report.duration_ms} ms · {report.runtime === "tauri" ? "Native desktop runtime" : "Browser preview (native checks mocked)"}</div>}
+      {report && <div className="px-1 text-2xs text-muted">{t("Completed in")} {report.duration_ms} ms · {report.runtime === "tauri" ? "Native desktop runtime" : "Browser preview (native checks mocked)"}</div>}
     </div>
   );
 }
@@ -352,7 +358,7 @@ function HtmlTab({ root }: { root: string }) {
     <div className="flex h-full flex-col">
       <Header onRefresh={scan} busy={scanning}>
         <AppWindow size={13} className="text-accent" />
-        <span className="font-semibold text-strong">HTML Preview Engine</span>
+        <span className="font-semibold text-strong">{t("HTML Preview Engine")}</span>
         {scanning && <span className="text-xs text-muted animate-pulse ml-1">{t("Scanning…")}</span>}
         <span className="text-xs text-muted ml-1">({files.length} found)</span>
       </Header>
@@ -367,21 +373,21 @@ function HtmlTab({ root }: { root: string }) {
           <button
             onClick={() => void createDemo()}
             disabled={creatingDemo}
-            className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent hover:bg-accent/15 transition disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-4 py-1 text-xs font-semibold text-accent hover:bg-accent/15 transition disabled:opacity-40"
           >
             <Sparkles size={13} /> {creatingDemo ? t("Creating…") : t("Generate demo.html")}
           </button>
         </div>
       ) : (
         <div className="p-2 space-y-1.5">
-          <div className="px-1 pb-1 text-3xs uppercase tracking-widest font-bold text-muted">
-            Click a page to open it as a preview tab with Source ↔ View toggle and auto-refresh
+          <div className="px-1 pb-1 text-3xs font-medium text-muted">
+            {t("Click a page to open it as a preview tab with Source ↔ View toggle and auto-refresh")}
           </div>
           {files.map((f) => (
             <button
               key={f}
               onClick={() => openPreview(f)}
-              className="group flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent/40 hover:bg-raised transition duration-150 shadow-sm"
+              className="group flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent/40 hover:bg-raised transition duration-[var(--lx-dur-fast)] shadow-sm"
             >
               <AppWindow size={14} className="text-accent shrink-0 group-hover:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
@@ -390,14 +396,14 @@ function HtmlTab({ root }: { root: string }) {
               </div>
               <div className="shrink-0 flex items-center gap-1 text-3xs text-muted">
                 <Eye size={11} className="text-accent opacity-50 group-hover:opacity-100 group-focus-within:opacity-100 transition" />
-                <span className="hidden group-hover:block group-focus-within:block text-accent font-medium">Open preview →</span>
+                <span className="hidden group-hover:block group-focus-within:block text-accent font-medium">{t("Open preview →")}</span>
               </div>
             </button>
           ))}
           <button
             onClick={() => void createDemo()}
             disabled={creatingDemo}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-edge px-3 py-2 text-xs text-muted hover:border-accent hover:text-accent transition disabled:opacity-40 mt-2"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-edge px-3 py-1 text-xs text-muted hover:border-accent hover:text-accent transition disabled:opacity-40 mt-2"
           >
             <Sparkles size={12} /> {creatingDemo ? t("Creating…") : t("Add demo.html template")}
           </button>
@@ -534,7 +540,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
       </Header>
 
       {lastCommand && (
-        <div className="rounded-lg border border-accent/25 bg-accent/5 p-2 flex items-center justify-between text-xs transition duration-150">
+        <div className="rounded-lg border border-accent/25 bg-accent/5 p-2 flex items-center justify-between text-xs transition duration-[var(--lx-dur-fast)]">
           <div className="flex items-center gap-2 min-w-0">
             <span className="font-semibold text-accent shrink-0">{t("Last command:")}</span>
             <code className="font-mono bg-bar/30 px-1.5 py-0.5 rounded text-strong truncate max-w-sm md:max-w-md">{lastCommand}</code>
@@ -551,7 +557,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
       <div className="rounded-lg border border-edge bg-bar/35 p-2.5 shadow-sm">
         <div className="mb-2 flex flex-wrap items-start gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
               <Code2 size={13} className="text-accent" /> {t("IDE workspace actions")}
             </div>
             <div className="mt-1 text-xs leading-5 text-muted">
@@ -564,35 +570,35 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
             onClick={() => openIde()}
             disabled={!defaultIde}
             title={`${t("Open project in")} ${defaultIdeLabel}`}
-            className="flex items-center gap-1 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/15 disabled:opacity-40"
+            className="flex items-center gap-1 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/15 disabled:opacity-40"
           >
             <AppWindow size={13} /> {t("Open in")} {defaultIdeLabel}
           </button>
-          <button onClick={() => openPanel("files")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => openPanel("files")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <FolderOpen size={13} /> {t("Files")}
           </button>
-          <button onClick={() => openPanel("search")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => openPanel("search")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <Search size={13} /> {t("Search")}
           </button>
-          <button onClick={() => openPanel("git")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => openPanel("git")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <GitBranch size={13} /> {t("Git")}
           </button>
-          <button onClick={() => addTerminal({ cwd: root })} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => addTerminal({ cwd: root })} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <TerminalSquare size={13} /> {t("Terminal tab")}
           </button>
-          <button onClick={openExternalTerminal} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={openExternalTerminal} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <ExternalLink size={13} /> {t("External terminal")}
           </button>
-          <button onClick={() => void ipc.launcherOpenFileManager(root).catch((e: unknown) => toast(errorMessage(e), "error"))} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => void ipc.launcherOpenFileManager(root).catch((e: unknown) => toast(errorMessage(e), "error"))} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <FolderOpen size={13} /> {t("Explorer")}
           </button>
           {visibleIdeActions.slice(0, compact ? 2 : 5).map((ide) => (
-            <button key={ide.command} onClick={() => openIde(ide.command)} title={ide.command} className="flex items-center gap-1 rounded-lg border border-accent/25 bg-accent/10 px-2.5 py-1.5 text-xs text-accent hover:bg-accent/15">
+            <button key={ide.command} onClick={() => openIde(ide.command)} title={ide.command} className="flex items-center gap-1 rounded-lg border border-accent/25 bg-accent/10 px-2.5 py-1 text-xs text-accent hover:bg-accent/15">
               <Code2 size={13} /> {ide.label}
             </button>
           ))}
           {ideActions.length === 0 && !defaultIde && (
-            <button onClick={() => openIde()} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+            <button onClick={() => openIde()} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
               <Code2 size={13} /> {t("Open IDE")}
             </button>
           )}
@@ -602,7 +608,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
       <div className="rounded-lg border border-edge bg-bar/35 p-2.5 shadow-sm">
         <div className="flex flex-wrap items-start gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
               <Search size={13} className="text-accent" /> {t("Find executable")}
             </div>
             <div className="mt-1 text-xs leading-5 text-muted">
@@ -612,7 +618,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
           <button
             onClick={() => void scan()}
             disabled={scanning}
-            className="shrink-0 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent disabled:opacity-40 transition"
+            className="shrink-0 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent disabled:opacity-40 transition"
           >
             {scanning ? t("Scanning…") : t("Rescan EXE")}
           </button>
@@ -638,7 +644,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
             const profile = exeProfile(exe);
             const rel = relativeExePath(root, exe);
             return (
-              <div key={exe} className="group flex items-center gap-2 rounded-lg border border-edge bg-surface px-2.5 py-2 hover:border-accent/40 hover:bg-raised/80 transition duration-150">
+              <div key={exe} className="group flex items-center gap-2 rounded-lg border border-edge bg-surface px-2.5 py-2 hover:border-accent/40 hover:bg-raised/80 transition duration-[var(--lx-dur-fast)]">
                 <Play size={12} className="shrink-0 text-accent animate-pulse" />
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-1.5">
@@ -657,22 +663,22 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
                   {!compact && <div className="truncate font-mono text-2xs text-muted" title={rel}>{rel}</div>}
                 </div>
                 <div className="flex items-center gap-0.5">
-                  <button onClick={() => void runExe(exe)} title={t("Run detached")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
+                  <button onClick={() => void runExe(exe)} title={t("Run detached")} aria-label={t("Run detached")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
                     <Play size={14} />
                   </button>
-                  <button onClick={() => void openExe(exe)} title={t("Open with default app")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
+                  <button onClick={() => void openExe(exe)} title={t("Open with default app")} aria-label={t("Open with default app")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
                     <ExternalLink size={14} />
                   </button>
                   {!compact && (
-                    <button onClick={() => runInTerminal(quotePath(exe))} title={t("Run in a new terminal tab")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
+                    <button onClick={() => runInTerminal(quotePath(exe))} title={t("Run in a new terminal tab")} aria-label={t("Run in a new terminal tab")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
                       <TerminalSquare size={14} />
                     </button>
                   )}
-                  <button onClick={() => openFolder(exe)} title={t("Open containing folder")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
+                  <button onClick={() => openFolder(exe)} title={t("Open containing folder")} aria-label={t("Open containing folder")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
                     <FolderOpen size={14} />
                   </button>
                   {!compact && (
-                    <button onClick={() => void copyPath(exe)} title={t("Copy full path")} className="shrink-0 rounded-lg p-1 text-muted opacity-60 hover:bg-surface hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition">
+                    <button onClick={() => void copyPath(exe)} title={t("Copy full path")} aria-label={t("Copy full path")} className="shrink-0 rounded-lg p-1 text-muted opacity-60 hover:bg-surface hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition">
                       <Copy size={14} />
                     </button>
                   )}
@@ -692,7 +698,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
 
       {groups.map((g) => (
         <div key={g.tool} className="rounded-lg border border-edge bg-bar/15 p-2.5">
-          <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
+          <div className="mb-2 px-1 text-xs font-medium text-muted flex items-center gap-1.5">
             <Layers size={12} className="text-accent" />
             {g.tool}
           </div>
@@ -702,7 +708,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
                 key={c.cmd}
                 onClick={() => runInTerminal(c.cmd)}
                 title={`${c.hint ? c.hint + " · " : ""}${c.cmd}`}
-                className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1.5 font-mono text-xs hover:border-accent hover:bg-raised transition duration-150 text-strong"
+                className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 font-mono text-xs hover:border-accent hover:bg-raised transition duration-[var(--lx-dur-fast)] text-strong"
               >
                 <Play size={11} className="text-accent" />
                 {c.label}
@@ -764,15 +770,7 @@ function Header({
 }
 
 function EmptyToolState({ icon: Icon, title, text }: { icon: LucideIcon; title: string; text?: string }) {
-  return (
-    <div className="m-2 rounded-lg border border-dashed border-edge bg-bar/30 px-5 py-8 text-center text-xs text-muted">
-      <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-        <Icon size={22} />
-      </div>
-      <div className="font-medium text-strong">{title}</div>
-      {text && <div className="mx-auto mt-1 max-w-md leading-5">{text}</div>}
-    </div>
-  );
+  return <EmptyState icon={<Icon size={20} />} title={title} text={text} />;
 }
 
 function EnvTab({ root }: { root: string }) {
@@ -865,7 +863,7 @@ function LogsTab({ root: _root }: { root: string }) {
     <div className="flex h-full flex-col">
       <Header onRefresh={() => setLogs(getLogsFiltered(minLvl))}>
         <ScrollText size={13} className="text-accent" />
-        <span className="font-semibold text-strong">System & Agent Live Console</span>
+        <span className="font-semibold text-strong">{t("System & Agent Live Console")}</span>
         <button
           onClick={() => { clearLogs(); setLogs([]); }}
           className="ml-auto rounded border border-edge px-2 py-0.5 hover:text-strong transition text-2xs"
@@ -890,17 +888,17 @@ function LogsTab({ root: _root }: { root: string }) {
           onChange={(e) => setMinLvl(e.target.value as LogLevel)}
           className="rounded-lg border border-edge bg-surface px-2 py-1 text-xs text-strong outline-none focus:border-accent"
         >
-          <option value="DEBUG">DEBUG & Above</option>
-          <option value="INFO">INFO & Above</option>
-          <option value="WARN">WARN & Above</option>
-          <option value="ERROR">ERROR Only</option>
+          <option value="DEBUG">{t("DEBUG & Above")}</option>
+          <option value="INFO">{t("INFO & Above")}</option>
+          <option value="WARN">{t("WARN & Above")}</option>
+          <option value="ERROR">{t("ERROR Only")}</option>
         </select>
       </div>
 
       {/* Log Feed */}
       <div className="flex-1 overflow-auto bg-surface p-3 font-mono text-2xs space-y-1.5 select-text lx-no-scrollbar leading-relaxed">
         {filteredLogs.length === 0 ? (
-          <div className="text-center text-muted py-8 italic">No logs recorded matching filters.</div>
+          <div className="text-center text-muted py-8 italic">{t("No logs recorded matching filters.")}</div>
         ) : (
           filteredLogs.map((l) => (
             <div key={l.id} className="flex gap-2 items-start hover:bg-raised px-1 py-0.5 rounded transition">
@@ -931,7 +929,7 @@ function DiskTab({ root }: { root: string }) {
     <div>
       <Header onRefresh={load} busy={busy}>
         <HardDrive size={13} className="text-accent" /> 
-        <span className="font-semibold text-strong">Disk Usage Analyzer</span>
+        <span className="font-semibold text-strong">{t("Disk Usage Analyzer")}</span>
         {report && <span className="text-xs text-muted ml-1.5">({fmtBytes(report.total_bytes)} total)</span>}
         {busy && <span className="text-xs text-muted ml-auto animate-pulse">{t("Scanning…")}</span>}
       </Header>
@@ -947,7 +945,7 @@ function DiskTab({ root }: { root: string }) {
             </div>
             <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
               <span className="font-semibold text-strong font-mono min-w-[70px] text-right">{fmtBytes(d.bytes)}</span>
-              {d.cleanable && <span className="rounded-full bg-warning-soft border border-warning-soft-strong px-2 py-0.5 text-3xs text-warning font-semibold uppercase tracking-wider shrink-0">cleanable</span>}
+              {d.cleanable && <span className="rounded-full bg-warning-soft border border-warning-soft-strong px-2 py-0.5 text-3xs text-warning font-medium shrink-0">cleanable</span>}
             </div>
           </div>
         ))}
@@ -974,7 +972,7 @@ function DepsTab({ root }: { root: string }) {
         if (names.length) next[kind] = await ipc.latestVersions(kind, names.slice(0, 60));
       }
       setLatest(next);
-      toast("Latest versions fetched", "success");
+      toast(t("Latest versions fetched"), "success");
     } catch (e) {
       toast(errorMessage(e), "error");
     } finally {
@@ -994,7 +992,10 @@ function DepsTab({ root }: { root: string }) {
         if (pkgs.length) found.push(...(await ipc.osvCheck(kind, pkgs.slice(0, 100))));
       }
       setVulns(found);
-      toast(found.length ? `${found.length} known vulnerabilities` : "No known vulnerabilities (OSV)", found.length ? "error" : "success");
+      toast(
+        found.length ? t("Known vulnerabilities: {0}").replace("{0}", String(found.length)) : t("No known vulnerabilities (OSV)"),
+        found.length ? "error" : "success",
+      );
     } catch (e) {
       toast(errorMessage(e), "error");
     } finally {
@@ -1014,32 +1015,34 @@ function DepsTab({ root }: { root: string }) {
   return (
     <div className="space-y-3">
       <Header onRefresh={load}>
-        <Package size={13} className="text-accent" /> 
-        <span className="font-semibold text-strong">Dependencies & Vulnerability Dashboard</span>
+        <Package size={13} className="text-accent" />
+        <span className="font-semibold text-strong">{t("Dependencies")}</span>
       </Header>
 
       <div className="px-2 flex flex-wrap gap-1.5">
-        <button onClick={() => void checkUpdates()} disabled={busy} className="flex-1 min-w-[120px] rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-accent hover:text-accent disabled:opacity-40 transition">
-          🔍 Check updates
+        <button onClick={() => void checkUpdates()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1 text-xs font-semibold text-strong hover:border-accent hover:text-accent disabled:opacity-40 transition">
+          <RefreshCw size={13} className={busy ? "lx-anim-spin" : undefined} /> {t("Check updates")}
         </button>
-        <button onClick={() => void checkVulns()} disabled={busy} className="flex-1 min-w-[120px] rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-danger hover:text-danger disabled:opacity-40 transition">
-          🛡️ Check vulnerability index (OSV)
+        <button onClick={() => void checkVulns()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1 text-xs font-semibold text-strong hover:border-danger hover:text-danger disabled:opacity-40 transition">
+          <ShieldCheck size={13} /> {t("Check vulnerabilities (OSV)")}
         </button>
       </div>
+
+      <PackageSearch defaultKind={(manifests[0]?.kind as RegistryKind | undefined) ?? "npm"} />
 
       {/* Dashboard Metrics */}
       <div className="grid grid-cols-3 gap-2 px-2">
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Manifests</div>
-          <div className="text-base font-bold text-strong">{manifests.length}</div>
+          <div className="text-3xs text-muted mb-0.5">{t("Manifests")}</div>
+          <div className="text-base font-semibold text-strong">{manifests.length}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Total Deps</div>
-          <div className="text-base font-bold text-strong">{totalDepsCount}</div>
+          <div className="text-3xs text-muted mb-0.5">{t("Total deps")}</div>
+          <div className="text-base font-semibold text-strong">{totalDepsCount}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Vulnerable</div>
-          <div className={`text-base font-bold ${vulns && vulns.length > 0 ? "text-danger animate-pulse" : "text-success"}`}>
+          <div className="text-3xs text-muted mb-0.5">{t("Vulnerable")}</div>
+          <div className={`text-base font-semibold ${vulns && vulns.length > 0 ? "text-danger" : vulns ? "text-success" : "text-strong"}`}>
             {vulns ? vulns.length : "—"}
           </div>
         </div>
@@ -1049,14 +1052,14 @@ function DepsTab({ root }: { root: string }) {
 
       {vulns && vulns.length > 0 && (
         <div className="mx-2 mb-2 rounded-lg border border-danger-soft-strong bg-danger-soft p-3">
-          <div className="text-xs font-semibold text-danger mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+          <div className="text-xs font-medium text-danger mb-1.5 flex items-center gap-1.5">
             <AlertTriangle size={13} />
-            {vulns.length} SECURITY VULNERABILITIES FOUND
+            {t("Known vulnerabilities: {0}").replace("{0}", String(vulns.length))}
           </div>
           <div className="space-y-1.5">
             {vulns.map((v) => (
-              <div key={`${v.package}-${v.id}`} className="text-2xs leading- relaxed border-b border-danger-soft pb-1.5 last:border-0 font-mono">
-                <span className="font-bold text-danger bg-danger-soft border border-danger-soft-strong px-1.5 py-0.5 rounded mr-1.5">{v.id}</span>
+              <div key={`${v.package}-${v.id}`} className="text-2xs leading-relaxed border-b border-danger-soft pb-1.5 last:border-0 font-mono">
+                <span className="font-semibold text-danger bg-danger-soft border border-danger-soft-strong px-1.5 py-0.5 rounded mr-1.5">{v.id}</span>
                 <span className="text-strong font-semibold">{v.package}</span>
                 {v.summary && <span className="text-muted font-normal ml-1.5">— {v.summary}</span>}
               </div>
@@ -1070,7 +1073,7 @@ function DepsTab({ root }: { root: string }) {
           <div key={m.path} className="p-3 rounded-lg border border-edge bg-bar/15 shadow-sm">
             <div className="font-semibold text-strong flex items-center justify-between border-b border-edge pb-1.5 mb-2">
               <span className="truncate">{m.path}</span>
-              <span className="rounded-full bg-raised px-2.5 py-0.5 text-3xs font-semibold uppercase tracking-wider text-muted border border-edge">
+              <span className="rounded-full bg-raised px-2.5 py-0.5 text-3xs font-medium text-muted border border-edge">
                 {m.kind} ({m.deps.length})
               </span>
             </div>
@@ -1084,7 +1087,7 @@ function DepsTab({ root }: { root: string }) {
                     {d.dev && <span className="text-muted/60 text-3xs bg-raised px-1 rounded">dev</span>}
                     {newer && (
                       <span className="text-warning flex items-center gap-1 shrink-0 bg-warning-soft border border-warning-soft-strong px-1 rounded text-3xs">
-                        ➔ {newer}
+                        <ArrowUpRight size={10} aria-hidden /> {newer}
                       </span>
                     )}
                   </div>
@@ -1095,6 +1098,174 @@ function DepsTab({ root }: { root: string }) {
         ))}
       </div>
     </div>
+  );
+}
+
+type RegistryKind = "npm" | "cargo" | "pip";
+const REGISTRY_KINDS: { id: RegistryKind; label: string }[] = [
+  { id: "npm", label: "npm" },
+  { id: "cargo", label: "crates.io" },
+  { id: "pip", label: "PyPI" },
+];
+
+/** Shell command that adds `name` to a project of the given registry kind. */
+function installCommand(kind: RegistryKind, name: string): string {
+  if (kind === "cargo") return `cargo add ${name}`;
+  if (kind === "pip") return `pip install ${name}`;
+  return `npm install ${name}`;
+}
+
+function compactCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}k`;
+  return String(n);
+}
+
+/**
+ * Package lookup across npm / crates.io / PyPI (backed by the `registry_search`
+ * IPC command). Debounced as-you-type; each hit can be opened on its registry
+ * page or copied as an install command.
+ */
+function PackageSearch({ defaultKind }: { defaultKind: RegistryKind }) {
+  const toast = useAppStore((s) => s.toast);
+  const [kind, setKind] = useState<RegistryKind>(defaultKind);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<RegistryPackage[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const seq = useRef(0);
+
+  useEffect(() => setKind(defaultKind), [defaultKind]);
+
+  useEffect(() => {
+    const q = query.trim();
+    const id = ++seq.current;
+    if (!q) {
+      setResults(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const timer = window.setTimeout(() => {
+      ipc
+        .registrySearch(kind, q, 12)
+        .then((r) => {
+          if (id !== seq.current) return;
+          setResults(r);
+          setError(null);
+        })
+        .catch((e) => {
+          if (id !== seq.current) return;
+          setResults([]);
+          setError(errorMessage(e));
+        })
+        .finally(() => {
+          if (id === seq.current) setLoading(false);
+        });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [kind, query]);
+
+  const copyInstall = (name: string) => {
+    const cmd = installCommand(kind, name);
+    void navigator.clipboard
+      .writeText(cmd)
+      .then(() => toast(t("Copied: {0}").replace("{0}", cmd), "success"))
+      .catch(() => toast(t("Copy failed"), "error"));
+  };
+
+  return (
+    <section className="mx-2 rounded-lg border border-edge bg-bar/25 p-2.5" aria-label={t("Find a package")}>
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-strong">
+        <Search size={13} className="text-accent" />
+        {t("Find a package")}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <div className="flex shrink-0 rounded-lg border border-edge bg-surface p-0.5" role="radiogroup" aria-label={t("Registry")}>
+          {REGISTRY_KINDS.map((r) => (
+            <button
+              key={r.id}
+              role="radio"
+              aria-checked={kind === r.id}
+              onClick={() => setKind(r.id)}
+              className={`rounded-md px-2 py-1 text-2xs font-semibold transition ${
+                kind === r.id ? "bg-accent/15 text-accent" : "text-muted hover:text-strong"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative min-w-[160px] flex-1">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setQuery("");
+            }}
+            placeholder={kind === "pip" ? t("Exact package name…") : t("Search packages…")}
+            aria-label={t("Search packages…")}
+            spellCheck={false}
+            className="w-full rounded-lg border border-edge bg-surface py-1 pl-2.5 pr-7 font-mono text-xs text-strong outline-none focus:border-accent"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:text-strong"
+              title={t("Clear")}
+              aria-label={t("Clear")}
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {query.trim() && (
+        <div className="mt-2 space-y-1" aria-live="polite" aria-busy={loading}>
+          {loading && !results && <div className="px-1 py-2 text-2xs text-muted">{t("Searching…")}</div>}
+          {error && <div className="rounded-md bg-danger-soft px-2 py-1.5 text-2xs text-danger">{error}</div>}
+          {results && results.length === 0 && !error && !loading && (
+            <div className="px-1 py-2 text-2xs text-muted">{t("No packages found")}</div>
+          )}
+          {results?.map((p) => (
+            <div key={p.name} className="group flex items-start gap-2 rounded-md px-2 py-1.5 transition hover:bg-raised/60">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="truncate font-mono text-xs font-semibold text-strong">{p.name}</span>
+                  {p.version && <span className="shrink-0 font-mono text-3xs text-muted">{p.version}</span>}
+                  {p.downloads > 0 && (
+                    <span className="flex shrink-0 items-center gap-0.5 text-3xs text-muted" title={t("Downloads")}>
+                      <Download size={10} /> {compactCount(p.downloads)}
+                    </span>
+                  )}
+                </div>
+                {p.description && <div className="line-clamp-2 text-2xs leading-4 text-muted">{p.description}</div>}
+              </div>
+              <div className="flex shrink-0 gap-0.5 opacity-70 transition group-hover:opacity-100 group-focus-within:opacity-100">
+                <button
+                  onClick={() => copyInstall(p.name)}
+                  className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-accent"
+                  title={installCommand(kind, p.name)}
+                  aria-label={t("Copy install command for {0}").replace("{0}", p.name)}
+                >
+                  <Copy size={12} />
+                </button>
+                <button
+                  onClick={() => void ipc.openUrl(p.url)}
+                  className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-accent"
+                  title={p.url}
+                  aria-label={t("Open {0} in the registry").replace("{0}", p.name)}
+                >
+                  <ExternalLink size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -1120,13 +1291,13 @@ function ProcsTab() {
     <div>
       <Header onRefresh={load}>
         <Cpu size={13} className="text-accent animate-spin-slow" /> 
-        <span className="font-semibold text-strong">Runtime Process Explorer</span>
+        <span className="font-semibold text-strong">{t("Runtime Process Explorer")}</span>
       </Header>
       {nodes.length === 0 && <EmptyToolState icon={Cpu} title={t("No processes reported")} text={t("Refresh to read the current process tree again.")} />}
 
       <div className="p-2 space-y-1 max-h-[500px] overflow-y-auto select-none">
         {nodes.map((n) => (
-          <div key={n.pid} className="group flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-raised transition duration-150" style={{ paddingLeft: 10 + n.depth * 14 }}>
+          <div key={n.pid} className="group flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-raised transition duration-[var(--lx-dur-fast)]" style={{ paddingLeft: 10 + n.depth * 14 }}>
             <span className="w-12 text-right font-mono text-muted select-text">PID {n.pid}</span>
             <span className="flex-1 truncate text-strong select-text font-medium" title={n.cmd}>{n.name}</span>
             <span className="w-14 text-right font-mono text-muted">{n.cpu_percent.toFixed(1)}%</span>
@@ -1167,12 +1338,12 @@ function PerfTab() {
     <div>
       <Header onRefresh={() => { setSamples(getPerfSamples()); setSummary(getPerfSummary()); }}>
         <Activity size={13} className="text-accent" /> 
-        <span className="font-semibold text-strong">Live Performance Engine</span>
+        <span className="font-semibold text-strong">{t("Live Performance Engine")}</span>
       </Header>
       <div className="mb-3 flex items-center gap-2 px-3">
         <button
           onClick={toggleCollection}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-semibold transition ${
             collecting 
               ? "border-danger-soft-strong bg-danger-soft text-danger hover:bg-danger-soft-strong animate-pulse" 
               : "border-accent/40 bg-accent/10 text-accent hover:bg-accent/15"
@@ -1183,7 +1354,7 @@ function PerfTab() {
         </button>
         <button
           onClick={() => { clearPerfSamples(); setSamples([]); setSummary(null); }}
-          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs text-strong hover:text-accent hover:border-accent transition font-semibold"
+          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-3 py-1 text-xs text-strong hover:text-accent hover:border-accent transition font-semibold"
         >
           <RefreshCw size={12} /> {t("Clear")}
         </button>
@@ -1203,7 +1374,7 @@ function PerfTab() {
           {/* Simple sparkline for heap usage */}
           {samples.length > 2 && (
             <div className="p-3 rounded-lg border border-edge bg-bar/15 shadow-sm">
-              <div className="mb-2 text-3xs uppercase tracking-wider text-muted font-bold">Heap usage timeline (MB)</div>
+              <div className="mb-2 text-3xs text-muted font-medium">{t("Heap usage timeline (MB)")}</div>
               <svg width="100%" height={80} className="overflow-visible">
                 {(() => {
                   const max = Math.max(...samples.map((s) => s.heapUsedMB), 1);
@@ -1229,8 +1400,8 @@ function PerfTab() {
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-edge bg-bar/15 px-3 py-2 text-center shadow-sm">
-      <div className="text-3xs uppercase tracking-wider text-muted font-bold mb-0.5">{label}</div>
-      <div className="font-mono text-sm text-strong font-bold">{value}</div>
+      <div className="text-3xs text-muted font-medium mb-0.5">{label}</div>
+      <div className="font-mono text-sm text-strong font-semibold">{value}</div>
     </div>
   );
 }
@@ -1253,7 +1424,7 @@ function CrashesTab() {
         <Header>
           <button onClick={() => setActive(null)} className="rounded border border-edge px-2.5 py-0.5 hover:text-strong transition">← Back</button>
           <span className="font-semibold text-strong text-2xs font-mono truncate max-w-sm">{active.name}</span>
-          <button onClick={() => void navigator.clipboard.writeText(content)} className="ml-auto hover:text-strong transition text-xs">Copy</button>
+          <button onClick={() => void navigator.clipboard.writeText(content)} className="ml-auto hover:text-strong transition text-xs">{t("Copy")}</button>
         </Header>
         <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-all px-3 py-2 font-mono text-xs text-strong bg-surface select-text leading-relaxed">{content}</pre>
       </div>
@@ -1264,7 +1435,7 @@ function CrashesTab() {
     <div>
       <Header onRefresh={load}>
         <Bug size={13} className="text-danger" /> 
-        <span className="font-semibold text-strong">Crash Diagnostic Logger</span>
+        <span className="font-semibold text-strong">{t("Crash Diagnostic Logger")}</span>
         <span className="text-xs text-muted">({reports.length} files)</span>
       </Header>
       {reports.length === 0 && <EmptyToolState icon={Bug} title={t("No crashes recorded 🎉")} text={t("Crash reports will appear here when the desktop runtime writes one.")} />}
@@ -1274,7 +1445,7 @@ function CrashesTab() {
           <button
             key={r.name}
             onClick={() => void open(r)}
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent hover:bg-raised transition duration-150"
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent hover:bg-raised transition duration-[var(--lx-dur-fast)]"
           >
             <AlertTriangle size={14} className="text-danger shrink-0" />
             <span className="flex-1 truncate font-mono text-xs text-strong">{r.name}</span>

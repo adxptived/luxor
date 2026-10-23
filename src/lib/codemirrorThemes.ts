@@ -31,8 +31,11 @@ interface Palette {
 }
 
 const PALETTES: Record<string, Palette> = {
-  "luxor-dark":  { bg: "#101014", fg: "#d6d6dc", comment: "#5c5c66", keyword: "#e8b059", string: "#9ece6a", number: "#d19a66", type: "#7aa2f7", func: "#e0af68", lineHighlight: "#1a1a21", selection: "#3a3540", inactiveSelection: "#2a2530", cursor: "#e8b059", gutterFg: "#5c5c66" },
-  "luxor-light": { bg: "#fafafa", fg: "#33333a", comment: "#9c9ca6", keyword: "#b07818", string: "#50741f", number: "#a05a1f", type: "#3b5bdb", func: "#8a6116", lineHighlight: "#ededf0", selection: "#c4b387", inactiveSelection: "#d9cfb1", cursor: "#b07818", gutterFg: "#9c9ca6" },
+  // The Luxor palettes follow the app surface (and its active-line tone) via
+  // CSS variables, so the editor sits flush with the layered dock background
+  // instead of showing as a darker box inside a lifted panel.
+  "luxor-dark":  { bg: "var(--lx-surface, #101014)", fg: "#d6d6dc", comment: "#5c5c66", keyword: "#e8b059", string: "#9ece6a", number: "#d19a66", type: "#7aa2f7", func: "#e0af68", lineHighlight: "color-mix(in srgb, var(--lx-raised, #1a1a21) 70%, transparent)", selection: "#3a3540", inactiveSelection: "#2a2530", cursor: "#e8b059", gutterFg: "#5c5c66" },
+  "luxor-light": { bg: "var(--lx-surface, #fafafa)", fg: "#33333a", comment: "#9c9ca6", keyword: "#b07818", string: "#50741f", number: "#a05a1f", type: "#3b5bdb", func: "#8a6116", lineHighlight: "color-mix(in srgb, var(--lx-raised, #ededf0) 70%, transparent)", selection: "#c4b387", inactiveSelection: "#d9cfb1", cursor: "#b07818", gutterFg: "#9c9ca6" },
   monokai:       { bg: "#272822", fg: "#f8f8f2", comment: "#75715e", keyword: "#f92672", string: "#e6db74", number: "#ae81ff", type: "#66d9ef", func: "#a6e22e", lineHighlight: "#3e3d32", selection: "#5a5a3a", inactiveSelection: "#49483e", cursor: "#f8f8f0", gutterFg: "#75715e" },
   "github-dark": { bg: "#0d1117", fg: "#c9d1d9", comment: "#8b949e", keyword: "#ff7b72", string: "#a5d6ff", number: "#79c0ff", type: "#ffa657", func: "#d2a8ff", lineHighlight: "#161b22", selection: "#26415e", inactiveSelection: "#1c2e44", cursor: "#c9d1d9", gutterFg: "#8b949e" },
   "one-dark":    { bg: "#282c34", fg: "#abb2bf", comment: "#5c6370", keyword: "#c678dd", string: "#98c379", number: "#d19a66", type: "#e5c07b", func: "#61afef", lineHighlight: "#2c313c", selection: "#475062", inactiveSelection: "#3a3f4d", cursor: "#abb2bf", gutterFg: "#5c6370" },

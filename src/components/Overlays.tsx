@@ -400,7 +400,7 @@ function Toasts() {
                     toast.action?.run();
                     dismiss(toast.id);
                   }}
-                  className="shrink-0 rounded border border-current px-2 py-0.5 text-xs font-medium hover:bg-raised"
+                  className="shrink-0 rounded border border-current px-2 py-1 text-xs font-medium hover:bg-raised"
                 >
                   {toast.action.label}
                 </button>
@@ -408,7 +408,7 @@ function Toasts() {
               <button
                 onClick={() => dismiss(toast.id)}
                 className="shrink-0 rounded p-0.5 text-muted hover:bg-raised hover:text-strong"
-                title={t("Dismiss")}
+                title={t("Dismiss")} aria-label={t("Dismiss")}
               >
                 <X size={13} />
               </button>

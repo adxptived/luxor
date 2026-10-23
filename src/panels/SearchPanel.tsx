@@ -1,5 +1,6 @@
 /** Project-wide search & replace with per-file selection and preview. */
 
+import { EmptyState as SharedEmptyState } from "@/components/EmptyState";
 import { CaseSensitive, CheckCircle2, FileText, FolderSearch, History, Loader2, Regex, Replace, Search, Undo2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { VList } from "virtua";
@@ -200,9 +201,9 @@ export function SearchPanel() {
                 id="search-history-list"
                 role="listbox"
                 aria-label={t("Recent searches")}
-                className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-edge bg-raised shadow-lg"
+                className="absolute left-0 right-0 top-full z-[var(--lx-z-local-overlay)] mt-1 overflow-hidden rounded-lg border border-edge bg-raised shadow-lg"
               >
-                <div className="flex items-center justify-between border-b border-edge/60 px-3 py-1.5 text-3xs uppercase tracking-wide text-muted">
+                <div className="flex items-center justify-between border-b border-edge/60 px-3 py-1.5 text-3xs text-muted">
                   <span className="inline-flex items-center gap-1"><History size={11} /> {t("Recent searches")}</span>
                   <button
                     className="rounded px-1.5 py-0.5 hover:bg-surface hover:text-strong"
@@ -267,15 +268,15 @@ export function SearchPanel() {
             <button
               onClick={() => void applyReplace()}
               disabled={busy || !hasResults || includedFiles === 0}
-              className="rounded-lg border border-danger-soft-strong bg-danger-soft px-3 py-2 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:opacity-40"
+              className="rounded-lg border border-danger-soft-strong bg-danger-soft px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:opacity-40"
             >
-              Replace selected
+              {t("Replace selected")}
             </button>
             {undoSnapshot && (
               <button
                 onClick={() => void undoReplace()}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-2 text-xs font-medium text-strong hover:bg-raised disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1 text-xs font-medium text-strong hover:bg-raised disabled:opacity-40"
                 title={t("Restore the files changed by the last replace")}
               >
                 <Undo2 size={13} />
@@ -309,7 +310,7 @@ export function SearchPanel() {
               {/* Opaque bg instead of translucent + backdrop-blur: a per-group
                   sticky blur inside the scroller forced a re-blur of passing
                   content on EVERY scroll frame (very costly on WebView2). */}
-              <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-edge bg-raised px-3 py-2 text-xs">
+              <div className="sticky top-0 z-[var(--lx-z-local)] flex items-center gap-2 border-b border-edge bg-raised px-3 py-2 text-xs">
                 {showReplace && (
                   <input
                     type="checkbox"
@@ -404,13 +405,5 @@ function Toggle({
 }
 
 function EmptyState({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
-  return (
-    <div className="flex h-full min-h-48 items-center justify-center p-4 lx-fade-in">
-      <div className="max-w-md rounded-lg border border-dashed border-edge bg-bar/30 px-6 py-8 text-center text-muted">
-        <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">{icon}</div>
-        <div className="font-medium text-strong">{title}</div>
-        <div className="mt-1 text-xs leading-5">{text}</div>
-      </div>
-    </div>
-  );
+  return <SharedEmptyState fill className="lx-fade-in" icon={icon} title={title} text={text} />;
 }

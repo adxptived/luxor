@@ -1,6 +1,13 @@
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
+import iconButtonLabel from "./eslint-rules/icon-button-label.js";
+
+// eslint-plugin-jsx-a11y is picked up automatically once it is installed
+// (`bun add -d eslint-plugin-jsx-a11y`). Until then the local
+// `luxor/icon-button-label` rule below still guards the most common
+// regression the audit found: icon-only buttons with no accessible name.
+const jsxA11y = await import("eslint-plugin-jsx-a11y").then((m) => m.default ?? m).catch(() => null);
 
 // Focused flat config. The heavy lifting (types, unused vars) is owned by
 // `tsc --noEmit`; ESLint here exists primarily to enforce the React Hooks
@@ -34,6 +41,40 @@ export default [
       "react-hooks/exhaustive-deps": "warn",
     },
   },
+  // ── Accessibility guard (audit P5) ───────────────────────────────────────
+  // Icon-only <button>s must carry aria-label: `title` is only a tooltip and is
+  // not reliably announced by screen readers. See eslint-rules/.
+  {
+    files: ["src/**/*.tsx"],
+    ignores: ["src/**/*.test.tsx"],
+    plugins: {
+      luxor: { rules: { "icon-button-label": iconButtonLabel } },
+      ...(jsxA11y ? { "jsx-a11y": jsxA11y } : {}),
+    },
+    rules: {
+      "luxor/icon-button-label": "error",
+      ...(jsxA11y
+        ? {
+            // Structural ARIA mistakes are hard errors; the interaction rules
+            // start as warnings so they can be burned down without blocking CI.
+            "jsx-a11y/aria-props": "error",
+            "jsx-a11y/aria-proptypes": "error",
+            "jsx-a11y/aria-role": "error",
+            "jsx-a11y/role-has-required-aria-props": "error",
+            "jsx-a11y/role-supports-aria-props": "error",
+            "jsx-a11y/alt-text": "error",
+            "jsx-a11y/iframe-has-title": "error",
+            "jsx-a11y/tabindex-no-positive": "error",
+            "jsx-a11y/control-has-associated-label": [
+              "warn",
+              { ignoreElements: ["input", "textarea", "select", "td", "th", "tr"], depth: 4 },
+            ],
+            "jsx-a11y/click-events-have-key-events": "warn",
+            "jsx-a11y/no-static-element-interactions": "warn",
+          }
+        : {}),
+    },
+  },
   // ── Design-system guard (audit S1) ───────────────────────────────────────
   // Forbids raw Tailwind palette classes (text-red-400, bg-zinc-900/50, …) in
   // string and template literals. The design system exposes semantic tokens
@@ -64,6 +105,29 @@ export default [
             "TemplateElement[value.raw=/(?:text|bg|border|ring|fill|stroke|from|to|via|divide|outline|decoration|placeholder)-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-[0-9]/]",
           message:
             "Raw Tailwind palette class detected. Use a semantic design token instead (text-danger / text-success / text-warning / text-info, bg-surface/raised/bar, *-soft / *-soft-strong, text-chart-1..6, text-on-accent). See styles.css @theme and themes.ts.",
+        },
+        // Layer guard: stacking goes through the --lx-z-* scale in styles.css
+        // (z-[var(--lx-z-local)], z-[var(--lx-z-menu)], …), never raw numbers.
+        {
+          selector: "Literal[value=/(^|\\s)-?z-(10|20|30|40|50)(\\s|$)/]",
+          message: "Layer guard: use a --lx-z-* token (e.g. z-[var(--lx-z-local)]) instead of a raw z-index class.",
+        },
+        {
+          selector: "TemplateElement[value.raw=/(^|\\s)-?z-(10|20|30|40|50)(\\s|$)/]",
+          message: "Layer guard: use a --lx-z-* token (e.g. z-[var(--lx-z-local)]) instead of a raw z-index class.",
+        },
+        // Typography guard (UI rework): sentence-case labels and two weights.
+        // All-caps labels shouted in every panel and font-bold competed with
+        // headings; use font-medium for labels and font-semibold for titles.
+        {
+          selector: "Literal[value=/(^|\\s)(uppercase|font-bold|font-extrabold|font-black|tracking-wider|tracking-widest)(\\s|$)/]",
+          message:
+            "Typography guard: no all-caps / extra-wide tracking / bold labels. Use sentence case with font-medium (labels) or font-semibold (titles).",
+        },
+        {
+          selector: "TemplateElement[value.raw=/(^|\\s)(uppercase|font-bold|font-extrabold|font-black|tracking-wider|tracking-widest)(\\s|$)/]",
+          message:
+            "Typography guard: no all-caps / extra-wide tracking / bold labels. Use sentence case with font-medium (labels) or font-semibold (titles).",
         },
       ],
     },

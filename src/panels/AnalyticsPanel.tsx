@@ -36,6 +36,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -137,7 +138,7 @@ export function AnalyticsPanel() {
           </div>
           <button
             onClick={() => void refresh()}
-            className="flex items-center gap-1.5 rounded-md border border-edge px-2.5 py-1.5 text-xs text-strong transition hover:bg-raised"
+            className="flex items-center gap-1.5 rounded-md border border-edge px-2.5 py-1 text-xs text-strong transition hover:bg-raised"
           >
             <RefreshCw size={13} /> {t("Refresh")}
           </button>
@@ -362,7 +363,7 @@ function Card({
     <section className="rounded-xl border border-edge bg-bar/40 p-4">
       {(title || right) && (
         <header className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+          <h2 className="flex items-center gap-1.5 text-xs font-medium text-muted">
             {icon}
             {title}
           </h2>
@@ -377,7 +378,7 @@ function Card({
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-1 flex items-center gap-3">
-      <span className="text-2xs font-semibold uppercase tracking-wider text-muted">{children}</span>
+      <span className="text-2xs font-medium text-muted">{children}</span>
       <span className="h-px flex-1 bg-edge" />
     </div>
   );
@@ -748,7 +749,7 @@ function DetailedTotals({
     <div className="grid grid-cols-2 gap-3 @md:grid-cols-3 @2xl:grid-cols-4">
       {tiles.map((tile) => (
         <div key={tile.label} className="rounded-lg border border-edge bg-surface/50 p-3">
-          <div className="flex items-center gap-1.5 text-2xs font-medium uppercase tracking-wide text-muted">
+          <div className="flex items-center gap-1.5 text-2xs font-medium text-muted">
             <span className="text-muted">{tile.icon}</span>
             <span className="truncate">{tile.label}</span>
           </div>
@@ -1096,7 +1097,7 @@ function ExportShare() {
   return (
     <details className="group rounded-xl border border-edge bg-bar/35 p-3 text-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-muted transition hover:text-strong">
-        <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+        <span className="flex items-center gap-2 text-xs font-medium">
           <Share2 size={13} /> {t("Export & Share")}
         </span>
         <span className="text-2xs normal-case opacity-70 group-open:hidden">
@@ -1154,7 +1155,7 @@ function Toggle({
       >
         {/* Transform-based knob animation runs on the compositor (no layout work per frame). */}
         <span
-          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-150 ${checked ? "translate-x-4" : "translate-x-0"}`}
+          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-[var(--lx-dur-fast)] ${checked ? "translate-x-4" : "translate-x-0"}`}
         />
       </button>
     </label>
@@ -1217,8 +1218,9 @@ function PrivacyControls() {
         onChange={(v) => updatePrefs({ ...prefs, mask_projects: v })}
       />
 
-      <p className="rounded-md border border-edge bg-bar/60 px-3 py-2 text-xs text-muted">
-        🔒 {t("All statistics are stored locally in local_stats.db and are NEVER sent to any server.")}
+      <p className="flex items-start gap-2 rounded-md border border-edge bg-bar/60 px-3 py-2 text-xs text-muted">
+        <Lock size={13} className="mt-px shrink-0 text-success" aria-hidden />
+        {t("All statistics are stored locally in local_stats.db and are NEVER sent to any server.")}
       </p>
 
       <div className="flex flex-wrap gap-2">

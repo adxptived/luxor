@@ -5,6 +5,7 @@ import { NavRail } from "@/components/NavRail";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { needsOnboarding, startOnboarding } from "@/lib/onboarding";
 import { installQuitGuard } from "@/lib/quitGuard";
+import { installTooltips } from "@/lib/tooltip";
 import { updateRepo, updateToast } from "@/lib/updates";
 import { pruneTerminalStates } from "@/lib/terminalState";
 import { Overlays } from "@/components/Overlays";
@@ -320,6 +321,9 @@ export default function App() {
   }, []);
 
   // Ask before quitting when that would lose unsaved edits or a running job.
+  // Themed tooltips for every [title] element (replaces the native popup).
+  useEffect(() => installTooltips(), []);
+
   useEffect(() => {
     let dispose: (() => void) | undefined;
     let cancelled = false;

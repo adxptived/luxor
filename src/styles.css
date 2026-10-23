@@ -51,6 +51,26 @@
    * into `text-3xs`. */
   --text-3xs: 0.6875rem;  /* 11px — badges, status-bar labels, row numbers */
   --text-2xs: 0.71875rem; /* 11.5px — dense secondary text inside panels */
+
+  /* One corner style (UI rework). Before, `rounded` (4px), `rounded-md` (6px),
+   * `rounded-lg` (8px), 7px/9px chrome buttons and tabs and 12/16px dialogs all
+   * mixed on one screen. Now there are only two shapes:
+   *   6px  — everything inside the app: buttons, inputs, rows, tabs, cards,
+   *          menus (`rounded`, `rounded-md`, `rounded-lg`, --lx-radius-sm/md)
+   *   10px — floating surfaces: dialogs, the palette, settings (`rounded-xl`,
+   *          --lx-radius-lg/xl)
+   * plus 4px for tiny inline chips (`rounded-sm`, kbd, inline code) and
+   * `rounded-full` for dots and pills. */
+  --default-transition-duration: 140ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  --radius: 6px;
+  --radius-xs: 4px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 6px;
+  --radius-xl: 10px;
+  --radius-2xl: 10px;
+  --radius-3xl: 10px;
 }
 
 :root {
@@ -58,7 +78,7 @@
    * applyAppearance(); removing the inline prop falls back to these defaults. */
   --lx-font-ui: ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   --lx-font-mono: "Cascadia Mono", "JetBrains Mono", Consolas, monospace;
-  --lx-tab-radius: 9px;
+  --lx-tab-radius: 6px;
 
   /* ── Design tokens (Phase 0) ──────────────────────────────────────
    * Single source of truth for bar heights, caption button widths,
@@ -68,16 +88,20 @@
   --lx-caption-w: 46px;        /* caption button width (Windows-style) */
   --lx-ease: cubic-bezier(.22, 1, .36, 1);
   --lx-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
-  --lx-dur-fast: 120ms;
-  --lx-dur: 200ms;
+  /* Motion: two speeds for everything a person triggers — fast for hover,
+   * press and toggles; base for opening, closing and layout moves — plus slow
+   * for large surfaces. Hard-coded 0.12s/0.13s/0.16s/0.18s/0.22s/0.24s… values
+   * were folded into these (UI rework). */
+  --lx-dur-fast: 140ms;
+  --lx-dur: 220ms;
   --lx-dur-slow: 300ms;
 
   /* ── Radius scale ─────────────────────────────────────────────────────── */
-  --lx-radius-xs: 4px;
-  --lx-radius-sm: 6px;
-  --lx-radius-md: 8px;
-  --lx-radius-lg: 12px;
-  --lx-radius-xl: 16px;
+  --lx-radius-xs: 4px;  /* tiny chips, kbd, inline code */
+  --lx-radius-sm: 6px;  /* controls, rows, tabs */
+  --lx-radius-md: 6px;  /* cards, menus, popovers — same shape as controls */
+  --lx-radius-lg: 10px; /* floating: dialogs, palette */
+  --lx-radius-xl: 10px;
 
   /* ── Semantic colors (overridden per-theme below) ─────────────────────── */
   --lx-success: #3fb950;
@@ -143,6 +167,8 @@
    * 1000 zoo. Ascending = visually on top. Context menus sit ABOVE modals so a
    * right-click menu is never hidden behind a dialog (this also fixes the DB
    * cell editor previously rendering at z-[300], above the context menu). */
+  --lx-z-local: 10;        /* inside a panel: sticky headers, floating controls */
+  --lx-z-local-overlay: 20; /* inside a panel: its own scrims and popups */
   --lx-z-dropdown: 50;     /* popovers / select & TopBar dropdown menus */
   --lx-z-overlay: 50;      /* full-screen modal scrims (Settings, palette, switcher) */
   --lx-z-onboarding: 60;   /* onboarding tour */
@@ -465,7 +491,7 @@ body,
 /* ── Sidebar collapse/expand animation ───────────────────────────────────── */
 .lx-anim-side-panel,
 .lx-anim-right-panel {
-  transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+  transition: width var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1),
               opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: width;
   overflow: hidden;
@@ -510,10 +536,10 @@ body,
   }
 }
 .lx-slide-in {
-  animation: lx-slide-in 0.16s ease-out;
+  animation: lx-slide-in var(--lx-dur-fast) ease-out;
 }
 .lx-pop-in {
-  animation: lx-pop-in 0.12s ease-out;
+  animation: lx-pop-in var(--lx-dur-fast) ease-out;
 }
 
 /* Indeterminate sweep for the embedded browser's top progress bar. */
@@ -553,7 +579,7 @@ body,
   text-overflow: ellipsis;
   padding: 4px 12px;
   border: 1px solid var(--lx-accent);
-  border-radius: 6px;
+  border-radius: var(--lx-radius-sm);
   background: var(--lx-raised);
   color: var(--lx-strong);
   font-size: 12px;
@@ -578,7 +604,7 @@ body,
 /* Keyboard focus ring — only for keyboard users (:focus-visible), so mouse
  * clicks keep the chrome clean. :where() keeps specificity at 0 so component
  * colors always win; only the outline is added. */
-:where(button, a, input, textarea, select, summary, [role="button"], [tabindex]):focus-visible {
+:where(button, a, summary, [role="button"], [tabindex]):focus-visible {
   /* Inset offset (drawn *inside* the box) so the ring is never clipped by an
    * `overflow:hidden` ancestor (segmented controls / toolbars used to lose
    * their top edge) and never overlaps a tightly-packed neighbour. The ring
@@ -586,14 +612,27 @@ body,
    *
    * Uses the theme accent (not --lx-muted): the accent clears the WCAG 1.4.11
    * 3:1 non-text-contrast bar against every theme surface, whereas muted fell
-   * below 3:1 in 6 themes and left keyboard focus effectively invisible. */
+   * below 3:1 in 6 themes and left keyboard focus effectively invisible.
+   * The soft outer halo keeps it findable on busy toolbars. */
   outline: 2px solid var(--lx-focus-ring, var(--lx-accent));
   outline-offset: -2px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lx-accent) 25%, transparent);
 }
+/* Text fields: a calm accent border plus a faint halo instead of the loud 2px
+ * ring (it painted "yellow stripes" around every search box). */
+:where(input, textarea, select):focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
+}
+/* The terminal and the editor paint their own focus surfaces. */
 .xterm :where(*):focus-visible,
 .cm-editor :where(*):focus-visible {
   outline: none;
+  box-shadow: none;
 }
+/* This is the ONLY place the global focus ring is defined (it used to be
+ * declared three times further down, each pass partly undoing the last). */
 
 /* ── Accent reaches native controls too ──────────────────────────────────────
  * `accent-color` is an inherited property, so setting it once on the root makes
@@ -627,11 +666,11 @@ summary,
 [role="button"],
 [draggable="true"] {
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease,
-    border-color 0.12s ease,
-    box-shadow 0.14s ease,
-    opacity 0.12s ease;
+    background-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    box-shadow var(--lx-dur-fast) ease,
+    opacity var(--lx-dur-fast) ease;
 }
 .xterm button,
 .xterm a,
@@ -676,9 +715,9 @@ summary,
   border-radius: var(--lx-tab-radius) var(--lx-tab-radius) 0 0;
   background: transparent;
   transition:
-    background-color 0.16s ease,
-    box-shadow 0.16s ease,
-    color 0.16s ease;
+    background-color var(--lx-dur-fast) ease,
+    box-shadow var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease;
 }
 .dockview-theme-dark .dv-tab:hover,
 .dockview-theme-light .dv-tab:hover {
@@ -887,14 +926,14 @@ summary,
 /* Reference-style square chrome buttons: flat enough to feel native, but with
  * visible hit targets instead of the old floating chevron/arrow look. */
 .lx-square-btn {
-  border-radius: 7px;
+  border-radius: var(--lx-radius-sm);
   border: 1px solid transparent;
   background: transparent;
   transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease,
-    transform 120ms ease;
+    background-color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease,
+    transform var(--lx-dur-fast) ease;
 }
 .lx-square-btn:hover {
   border-color: transparent;
@@ -941,7 +980,7 @@ summary,
     opacity var(--lx-dur) var(--lx-ease);
 }
 
-/* ── NavRail hover: subtle background, no accent color �����─────────────────── */
+/* ── NavRail hover: subtle background, no accent color ──────────────────── */
 .lx-active-strip {
   position: relative;
 }
@@ -962,30 +1001,49 @@ summary,
   color: var(--lx-strong);
 }
 
-/* ── NavRail tooltip on hover: small floating label ─────────────────────── */
-.lx-nav-rail button[data-nav-id]:hover::after,
-.lx-nav-rail button[data-nav-more]:hover::after {
-  content: attr(title);
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 4px 10px;
-  background: var(--lx-raised);
-  color: var(--lx-strong);
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: var(--lx-radius-sm);
-  border: 1px solid var(--lx-edge);
-  box-shadow: var(--lx-shadow-md);
-  white-space: nowrap;
-  pointer-events: none;
+/* ── Tooltips (src/lib/tooltip.ts) ─────────────────────────────────────────
+ * One themed tooltip replaces the slow, unstyled native `title` popup for the
+ * whole app (and the old NavRail-only ::after label, which doubled up with the
+ * native one). Positioned by JS; this only owns the look and the entrance. */
+.lx-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
   z-index: var(--lx-z-tooltip);
-  opacity: 1;
+  max-width: min(320px, calc(100vw - 12px));
+  padding: 4px 8px;
+  border-radius: var(--lx-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--lx-edge) 80%, var(--lx-strong) 20%);
+  background: color-mix(in srgb, var(--lx-raised) 94%, var(--lx-strong) 6%);
+  color: var(--lx-strong);
+  box-shadow: var(--lx-shadow-md);
+  font-family: var(--lx-font-ui);
+  font-size: var(--text-3xs);
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
 }
+.lx-tooltip[data-open] {
+  visibility: visible;
+  opacity: 1;
+  animation: lx-tooltip-in var(--lx-dur-fast) var(--lx-ease, ease-out);
+}
+.lx-tooltip[data-side="top"] { --lx-tip-from: 3px; }
+.lx-tooltip[data-side="bottom"] { --lx-tip-from: -3px; }
 @keyframes lx-tooltip-in {
-  from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
-  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+  from { opacity: 0; translate: 0 var(--lx-tip-from, 0); }
+  to   { opacity: 1; translate: 0 0; }
+}
+.lx-tooltip[data-side="right"][data-open] {
+  animation-name: lx-tooltip-in-right;
+}
+@keyframes lx-tooltip-in-right {
+  from { opacity: 0; translate: -3px 0; }
+  to   { opacity: 1; translate: 0 0; }
 }
 
 /* ── Caption buttons (Phase 1) ─────────────────────────────────────
@@ -1113,7 +1171,7 @@ summary,
 .lx-markdown code {
   background: var(--lx-raised);
   border: 1px solid var(--lx-edge);
-  border-radius: 4px;
+  border-radius: var(--lx-radius-xs);
   padding: 0.1em 0.35em;
   font-family: var(--lx-font-mono);
   font-size: 0.85em;
@@ -1121,7 +1179,7 @@ summary,
 .lx-markdown pre {
   background: var(--lx-bar);
   border: 1px solid var(--lx-edge);
-  border-radius: 8px;
+  border-radius: var(--lx-radius-md);
   padding: 10px 14px;
   overflow-x: auto;
   margin: 0.8em 0;
@@ -1159,7 +1217,7 @@ summary,
 }
 .lx-markdown img {
   max-width: 100%;
-  border-radius: 6px;
+  border-radius: var(--lx-radius-md);
 }
 
 /* xterm fills its panel */
@@ -1221,7 +1279,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: none;
   background: var(--lx-accent);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
-  transition: transform 120ms ease;
+  transition: transform var(--lx-dur-fast) ease;
 }
 input[type="range"]::-webkit-slider-thumb:hover,
 input[type="range"]:focus-visible::-webkit-slider-thumb {
@@ -1312,10 +1370,10 @@ body,
 .lx-editor-toolbar > label {
   min-height: 26px;
   transition:
-    background-color 0.13s ease,
-    border-color 0.13s ease,
-    color 0.13s ease,
-    box-shadow 0.13s ease;
+    background-color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease,
+    box-shadow var(--lx-dur-fast) ease;
 }
 .lx-editor-toolbar > button:active {
   transform: translateY(0.5px);
@@ -1328,8 +1386,8 @@ body,
 /* Status bar: tighter, calmer, with hover affordance on its inline buttons. */
 .lx-editor-statusbar button {
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1507,12 +1565,14 @@ textarea {
 
 /* 5. Empty-state illustration: a gentle pulse on the accent icon to draw the
  *    eye toward the primary action in empty panels. */
-@keyframes lx-empty-pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+/* Empty-state icon: one gentle entrance instead of the old forever-pulse,
+ * which kept every empty panel blinking in the corner of the eye. */
+@keyframes lx-empty-in {
+  from { opacity: 0; transform: translateY(3px) scale(0.96); }
+  to   { opacity: 1; transform: none; }
 }
 .lx-empty-icon {
-  animation: lx-empty-pulse 2.4s ease-in-out infinite;
+  animation: lx-empty-in 260ms var(--lx-ease) both;
 }
 
 /* 6. Tooltip-like title attributes: style native browser tooltips is not
@@ -1546,7 +1606,7 @@ textarea {
  *    disappears, content fades in). Prevents the jarring "pop" when a
  *    heavy panel like Settings or DbPanel first renders. */
 .lx-fade-in {
-  animation: lx-fade-in 0.18s ease-out;
+  animation: lx-fade-in var(--lx-dur-fast) ease-out;
 }
 @keyframes lx-fade-in {
   from { opacity: 0; }
@@ -1565,13 +1625,7 @@ textarea {
 /* 10. High-contrast focus ring for users who need it. The default 2px
  *     outline is good, but on very busy toolbars it can get lost. This
  *     adds a subtle box-shadow halo on focus-visible for the app chrome. */
-:where(button, a, [role="button"], [tabindex]):focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lx-accent) 25%, transparent);
-}
-.xterm :where(*):focus-visible,
-.cm-editor :where(*):focus-visible {
-  box-shadow: none;
-}
+/* (focus halo: merged into the single focus block near the top) */
 
 /* ===========================================================================
  * ANIMATION SYSTEM (audit pass 4)
@@ -1636,7 +1690,7 @@ textarea {
 /* Branded app mark used in the tray popup header (and its settings preview). */
 .lx-brand-mark {
   background: linear-gradient(135deg, var(--lx-accent), var(--lx-accent-2));
-  transition: transform 0.12s ease, filter 0.12s ease;
+  transition: transform var(--lx-dur-fast) ease, filter var(--lx-dur-fast) ease;
 }
 .lx-brand-mark:hover {
   filter: brightness(1.06);
@@ -1680,60 +1734,60 @@ textarea {
 }
 /* NavRail buttons: staggered fade-in (set --lx-i per item for cascade) */
 .lx-anim-nav-item {
-  animation: lx-nav-item-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: lx-nav-item-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: calc(var(--lx-i, 0) * 0.04s);
 }
 
 /* Right panel: slides in from the right */
 .lx-anim-panel-right {
-  animation: lx-panel-slide-right 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-panel-slide-right var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Side panel: slides in from the left */
 .lx-anim-panel-left {
-  animation: lx-panel-slide-left 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-panel-slide-left var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Generic panel content: subtle fade + scale on mount */
 .lx-anim-panel {
-  animation: lx-panel-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-panel-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* TopBar: slides down from the top */
 .lx-anim-bar-top {
-  animation: lx-bar-slide-down 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-bar-slide-down var(--lx-dur-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* StatusBar: slides up from the bottom */
 .lx-anim-bar-bottom {
-  animation: lx-bar-slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-bar-slide-up var(--lx-dur-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Dockview tabs: scale-in when a new tab opens */
 .dv-tab {
-  animation: lx-tab-open 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-tab-open var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: left center;
 }
 
 /* Context menu: pop-in with scale */
 .lx-anim-menu {
-  animation: lx-menu-pop 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-menu-pop var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top left;
 }
 
 /* Dialog / prompt: scale + fade */
 .lx-anim-dialog {
-  animation: lx-dialog-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-dialog-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Toast: slide up + scale (replaces the older lx-slide-in for toasts) */
 .lx-anim-toast {
-  animation: lx-toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-toast-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Dropdown menus: expand from top */
 .lx-anim-dropdown {
-  animation: lx-dropdown-in 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-dropdown-in var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top;
 }
 
@@ -1784,12 +1838,12 @@ textarea {
 
 /* Settings modal: scale + fade */
 .lx-anim-modal {
-  animation: lx-modal-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-modal-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Command palette / project switcher: slide down + scale */
 .lx-anim-palette {
-  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-palette-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Smooth spinner (replaces ad-hoc border-spin) */
@@ -1835,18 +1889,18 @@ textarea {
 
 /* Context menu overlay */
 .lx-context-menu {
-  animation: lx-menu-pop 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-menu-pop var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top left;
 }
 
 /* Dialog overlay (confirm/prompt) */
 .lx-dialog-overlay {
-  animation: lx-dialog-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-dialog-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Toast notifications */
 .lx-toast {
-  animation: lx-toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-toast-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Toast auto-dismiss countdown: a thin bar that shrinks over the toast's ttl.
@@ -1870,28 +1924,28 @@ textarea {
  * so a click near the window edge missed it and neither dismissed the modal nor
  * was blocked from the app underneath. */
 .lx-settings-modal {
-  animation: lx-backdrop-in 0.24s ease-out;
+  animation: lx-backdrop-in var(--lx-dur) ease-out;
 }
 .lx-settings-modal > div {
-  animation: lx-modal-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-modal-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 .lx-settings-modal.lx-modal-leaving {
-  animation: lx-backdrop-out 0.18s ease-in forwards;
+  animation: lx-backdrop-out var(--lx-dur-fast) ease-in forwards;
 }
 .lx-settings-modal.lx-modal-leaving > div {
-  animation: lx-modal-exit 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-modal-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 @keyframes lx-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lx-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 
 /* Command palette */
 .lx-command-palette {
-  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-palette-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Project switcher */
 .lx-project-switcher {
-  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-palette-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ===========================================================================
@@ -1922,12 +1976,12 @@ textarea {
   to   { opacity: 0; transform: translateY(8px) scale(0.92); }
 }
 .lx-toast.lx-toast-leaving {
-  animation: lx-toast-out 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-toast-out var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 /* Hover lift on cards & list rows */
 .lx-hover-lift {
-  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s ease;
+  transition: transform var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1), box-shadow var(--lx-dur-fast) ease;
 }
 .lx-hover-lift:hover {
   transform: translateY(-2px);
@@ -1943,7 +1997,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 /* Tab hover: subtle lift */
 .dv-tab:not(.dv-active-tab):hover {
   transform: translateY(-1px);
-  transition: transform 0.12s ease;
+  transition: transform var(--lx-dur-fast) ease;
 }
 
 /* Panel content slide-in on tab switch */
@@ -1952,7 +2006,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 1; transform: translateX(0); }
 }
 .dv-content-container > .dv-panel {
-  animation: lx-content-slide 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-content-slide var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* NavRail button hover: icon scale */
@@ -1967,7 +2021,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
    add opacity fade for inner content */
 .lx-anim-right-panel > div,
 .lx-anim-side-panel > div {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--lx-dur) ease;
 }
 
 /* Loading spinner pulse */
@@ -2001,7 +2055,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 1; max-height: 500px; transform: scaleY(1); }
 }
 .lx-anim-expand {
-  animation: lx-expand-down 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-expand-down var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top;
   overflow: hidden;
 }
@@ -2027,7 +2081,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 1; transform: translateY(0); }
 }
 .lx-anim-widget-in {
-  animation: lx-widget-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation: lx-widget-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* Per-widget / per-panel accent override: `--lx-accent` is swapped inline on
@@ -2058,9 +2112,8 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lx-accent) 40%, transparent); }
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--lx-accent) 10%, transparent); }
 }
-.lx-anim-focus-glow:focus-visible {
-  animation: lx-focus-glow 1.8s ease-in-out infinite;
-}
+/* .lx-anim-focus-glow: no longer pulses forever while focused — the static
+ * focus ring above is enough and the loop competed with real motion. */
 
 /* ===========================================================================
  * PHASE 2 — Top-bar menu polish
@@ -2112,7 +2165,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 .lx-toolbar-item:focus-visible {
   outline: none;
   z-index: 10;
-  border-radius: 7px;
+  border-radius: var(--lx-radius-sm);
   background: var(--lx-accent-soft);
   color: var(--lx-strong);
 }
@@ -2149,13 +2202,13 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 0; transform: scale(0.95) translateY(4px); }
 }
 .lx-modal-leaving {
-  animation: lx-modal-exit 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-modal-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .lx-palette-leaving {
-  animation: lx-palette-exit 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-palette-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .lx-dialog-leaving {
-  animation: lx-dialog-exit 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-dialog-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 /* Ripple effect on quick action button press */
@@ -2324,7 +2377,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 /* ── Card / panel surface depth ─────────────────────────────────────────── */
 .lx-card {
   border: 1px solid var(--lx-edge);
-  border-radius: var(--lx-radius-lg);
+  border-radius: var(--lx-radius-md);
   background: var(--lx-raised);
   box-shadow: var(--lx-shadow-sm);
   transition: box-shadow var(--lx-dur) var(--lx-ease), border-color var(--lx-dur) var(--lx-ease);
@@ -2504,50 +2557,92 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   height: 0 !important;
   display: none !important;
 }
-/* --- Reduced motion --------------------------------------------------------
+/* --- Motion preference -----------------------------------------------------
  *
- * INVERTED on purpose. This used to be a hand-maintained allowlist of ~45 class
- * names, which meant every new animation was unprotected until someone
- * remembered to add it — and several already had been missed: Tailwind's
- * `animate-pulse` (skeletons in DevTools/Editor/HtmlPreview) and `animate-spin`
- * (23 sites) were never in the list, so they kept moving under `reduce`.
+ * Settings → Appearance → Animations sets <html data-motion>:
+ *   "system"  (default) follow the OS. With "reduce motion" on — which Windows
+ *             turns on whenever "Animation effects" is off, and in most remote
+ *             desktop / VM sessions — movement becomes gentle fades instead of
+ *             every animation silently switching off. Before, that blanket
+ *             0.01ms rule made it look like Luxor had no animations at all.
+ *   "full"    always animate as designed.
+ *   "reduced" stop everything (the old reduce-motion behaviour).
  *
- * Now everything is stopped by default and the few animations that carry
- * MEANING rather than decoration opt back in below. Adding a new animation can
- * no longer silently bypass the preference.
- *
- * `0.01ms` rather than `none`: it lets `animationend` / `transitionend` still
- * fire, so components that wait for a transition to finish before unmounting
- * (see `useEnterExit`) do not hang. */
+ * `0.01ms` rather than `none` where things stop: it lets `animationend` /
+ * `transitionend` still fire, so components that wait for a transition before
+ * unmounting (see `useEnterExit`) do not hang. */
+@keyframes lx-motion-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes lx-motion-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* "reduced": everything stops; only meaningful spinners keep turning. */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+:root[data-motion="reduced"] :is(.animate-spin, .lx-anim-spin, .lx-spinner) {
+  /* A spinner's rotation IS the "still working" signal; a frozen glyph reads
+   * as a hung app. Kept slow and steady. */
+  animation-duration: 1.2s !important;
+  animation-iteration-count: infinite !important;
+}
+
+/* "system" + OS reduce-motion: keep the feedback, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
+  :root:not([data-motion="full"]):not([data-motion="reduced"]) :is(
+      [class*="lx-anim-"]:not([class*="-out"]):not(.lx-anim-spin):not(.lx-anim-pulse),
+      .lx-slide-in,
+      .lx-pop-in,
+      .lx-fade-in,
+      .lx-empty-icon,
+      .lx-tooltip[data-open]
+    ) {
+    animation-name: lx-motion-fade-in !important;
     animation-delay: 0s !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0s !important;
-    scroll-behavior: auto !important;
   }
-
-  /* Opt-outs: a spinner's rotation IS the "still working" signal. Removing it
-   * leaves a frozen glyph that reads as a hung app, which is worse for the
-   * users this preference exists to help. Kept slow and steady. */
-  .animate-spin,
-  .lx-anim-spin,
-  .lx-spinner {
-    animation-duration: 1.2s !important;
-    animation-iteration-count: infinite !important;
+  :root:not([data-motion="full"]):not([data-motion="reduced"]) :is(
+      [class*="lx-anim-"][class*="-out"],
+      .lx-modal-leaving,
+      .lx-palette-leaving,
+      .lx-dialog-leaving
+    ) {
+    animation-name: lx-motion-fade-out !important;
   }
+  /* Hover lifts and press nudges are movement too. */
+  :root:not([data-motion="full"]):not([data-motion="reduced"]) :is(.lx-hover-lift, .lx-square-btn, button):is(:hover, :active) {
+    transform: none !important;
+  }
+  :root:not([data-motion="full"]) {
+    scroll-behavior: auto;
+  }
+}
 
-  /* Purely decorative looping accents stay off entirely. */
-  .lx-empty-icon,
-  .lx-browser-progress,
-  .lx-status-dot::after {
+/* Purely decorative loops stay off whenever motion is reduced (by the OS
+ * without an explicit "full", or by the "reduced" setting). */
+:root[data-motion="reduced"] :is(.lx-browser-progress, .animate-pulse, .lx-anim-pulse),
+:root[data-motion="reduced"] .lx-status-dot::after {
+  animation: none !important;
+}
+:root[data-motion="reduced"] .lx-status-dot::after {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) :is(.lx-browser-progress, .animate-pulse, .lx-anim-pulse),
+  :root:not([data-motion="full"]) .lx-status-dot::after {
     animation: none !important;
   }
-  .lx-status-dot::after {
+  :root:not([data-motion="full"]) .lx-status-dot::after {
     display: none;
   }
 }
@@ -2587,21 +2682,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 input, textarea, select {
   border-color: transparent;
 }
-:where(input, textarea, select):focus-visible {
-  /* Calm, themed focus: a thin accent-tinted border plus a faint 1px halo.
-   * The previous bright 2px solid-accent ring (`var(--lx-accent)`) painted a
-   * loud yellow/amber box around every text field (Settings search, task
-   * filter, preset name, …) which read as garish "yellow stripes". Keyboard
-   * focus stays clearly visible, just no longer shouty. */
-  outline: none;
-  border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
-}
-.xterm :where(input, textarea):focus-visible,
-.cm-editor :where(*):focus-visible {
-  outline: none;
-  box-shadow: none;
-}
+/* (text-field focus: defined once in the focus block near the top) */
 
 /* Virtualized scroll containers (Files tree, Git history, Search results).
  * `contain: content` isolates their layout/paint from the rest of the page so
@@ -2621,4 +2702,187 @@ input, textarea, select {
 }
 .animate-session-fade {
   animation: lx-session-fade 2.2s ease-in-out forwards;
+}
+
+/* ===========================================================================
+ * Layered surfaces (UI rework, direction "A")
+ * ---------------------------------------------------------------------------
+ * Before: chrome (title bar, nav rail, tab strips, status bar) and the work
+ * area (terminals, Git, Files…) were nearly the same colour and every zone was
+ * fenced with a 1px border, so nothing told the eye where the work is.
+ * Now depth is carried by brightness instead of lines:
+ *   chrome  — one step darker than the theme's bar colour (`--lx-chrome`)
+ *   work    — the dock content, one step lighter than the surface (`--lx-work`)
+ * Panels are re-scoped (surface/raised/bar/edge are lifted together), so every
+ * existing `bg-surface` / `bg-raised` / `border-edge` keeps its relative order
+ * and all 15 themes follow automatically. Light themes invert the recipe
+ * (white work area, slightly greyer chrome).
+ * Opt-out hook: <html data-surfaces="flat"> restores the old flat look.
+ * =========================================================================== */
+:root {
+  --lx-chrome: color-mix(in srgb, var(--lx-bar) 62%, #000 38%);
+  --lx-chrome-raised: color-mix(in srgb, var(--lx-raised) 91%, var(--lx-strong) 9%);
+  --lx-work: color-mix(in srgb, var(--lx-surface) 93%, var(--lx-strong) 7%);
+  --lx-work-raised: color-mix(in srgb, var(--lx-raised) 91%, var(--lx-strong) 9%);
+  --lx-work-bar: color-mix(in srgb, var(--lx-bar) 91%, var(--lx-strong) 9%);
+  --lx-work-edge: color-mix(in srgb, var(--lx-edge) 84%, var(--lx-strong) 16%);
+}
+/* Light themes: a pale, almost-white chrome around a pure white work sheet.
+ * Brightness steps are tiny on white, so light themes keep soft hairlines at
+ * the zone boundaries (rules further down) instead of relying on tone alone. */
+:root[data-theme="light"],
+:root[data-theme="catppuccin_latte"],
+:root[data-theme="solarized_light"],
+:root[data-theme="github_light"] {
+  --lx-chrome: color-mix(in srgb, var(--lx-bar) 80%, var(--lx-raised) 20%);
+  --lx-chrome-raised: color-mix(in srgb, var(--lx-raised) 92%, var(--lx-strong) 8%);
+  --lx-work: color-mix(in srgb, var(--lx-surface) 25%, #fff 75%);
+  --lx-work-raised: color-mix(in srgb, var(--lx-raised) 75%, #fff 25%);
+  --lx-work-bar: color-mix(in srgb, var(--lx-bar) 65%, #fff 35%);
+  --lx-work-edge: color-mix(in srgb, var(--lx-edge) 85%, #fff 15%);
+}
+
+/* Chrome zones: darker base; anything "raised" inside them (active project
+ * tab, hovered buttons, right-panel widgets) lifts toward the work colour. */
+:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+  --lx-bar: var(--lx-chrome);
+  --color-bar: var(--lx-chrome);
+  --lx-glass-bg: var(--lx-chrome);
+  --lx-surface: var(--lx-work);
+  --color-surface: var(--lx-work);
+  --lx-raised: var(--lx-chrome-raised);
+  --color-raised: var(--lx-chrome-raised);
+  --lx-edge: var(--lx-work-edge);
+  --color-edge: var(--lx-work-edge);
+  background-color: var(--lx-chrome);
+}
+/* Zone boundaries are drawn by the brightness step, not by lines. */
+:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+  border-color: transparent;
+}
+:root:not([data-surfaces="flat"]) body,
+:root:not([data-surfaces="flat"]) #root > div {
+  background-color: var(--lx-chrome);
+}
+
+/* Dock: dark tab strips, lifted content; the active tab takes the work colour
+ * and melts into its panel (same idea as before, now with real contrast). */
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) {
+  --dv-tabs-and-actions-container-background-color: var(--lx-chrome);
+  --dv-group-view-background-color: var(--lx-work);
+  --dv-separator-border: var(--lx-chrome);
+  --dv-paneview-header-border-color: transparent;
+}
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) .dv-active-tab {
+  background: var(--lx-work) !important;
+}
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) .dv-active-tab :is(svg, .lucide) {
+  color: var(--lx-accent);
+}
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) .dv-tab:not(.dv-active-tab):hover {
+  background: color-mix(in srgb, var(--lx-work) 55%, transparent);
+}
+:root:not([data-surfaces="flat"]) .dv-content-container {
+  --lx-surface: var(--lx-work);
+  --color-surface: var(--lx-work);
+  --lx-raised: var(--lx-work-raised);
+  --color-raised: var(--lx-work-raised);
+  --lx-bar: var(--lx-work-bar);
+  --color-bar: var(--lx-work-bar);
+  --lx-edge: var(--lx-work-edge);
+  --color-edge: var(--lx-work-edge);
+  background-color: var(--lx-work);
+}
+/* The work area reads as one sheet: soften its top-left corner where it
+ * meets the nav rail and the tab strip. */
+:root:not([data-surfaces="flat"]) .dv-dockview {
+  background-color: var(--lx-chrome);
+}
+
+/* Light themes: soft hairlines where chrome meets the white work sheet. */
+:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) {
+  --lx-hairline: color-mix(in srgb, var(--lx-edge) 75%, transparent);
+}
+:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+  border-color: var(--lx-hairline);
+}
+:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) :is(.dockview-theme-dark, .dockview-theme-light) {
+  --dv-separator-border: var(--lx-hairline);
+}
+:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) .dv-tabs-and-actions-container {
+  box-shadow: inset 0 -1px 0 var(--lx-hairline);
+}
+:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) :is(.dockview-theme-dark, .dockview-theme-light) .dv-active-tab {
+  box-shadow: inset 1px 0 0 var(--lx-hairline), inset -1px 0 0 var(--lx-hairline), inset 0 1px 0 var(--lx-hairline) !important;
+}
+:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) [data-testid="topbar"] [aria-selected="true"][data-project-id] {
+  box-shadow: 0 0 0 1px var(--lx-hairline), 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Active nav-rail item: tinted chip + accent icon instead of a bare bar. */
+:root:not([data-surfaces="flat"]) .lx-nav-rail button.is-active,
+:root:not([data-surfaces="flat"]) .lx-nav-rail button[data-active="true"] {
+  background: color-mix(in srgb, var(--lx-strong) 8%, transparent);
+  border-radius: var(--lx-radius-md);
+}
+:root:not([data-surfaces="flat"]) .lx-nav-rail button.is-active svg,
+:root:not([data-surfaces="flat"]) .lx-nav-rail button[data-active="true"] svg {
+  color: var(--lx-accent);
+}
+:root:not([data-surfaces="flat"]) .lx-nav-rail button.is-active::before,
+:root:not([data-surfaces="flat"]) .lx-nav-rail button[data-active="true"]::before {
+  height: 50%;
+  border-radius: 0 3px 3px 0;
+}
+
+/* ── Command bar (title bar) ─────────────────────────────────────────────── */
+.lx-command-bar {
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(420px, 100%);
+  height: 24px;
+  padding: 0 6px 0 10px;
+  border-radius: var(--lx-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--lx-strong) 9%, transparent);
+  background: color-mix(in srgb, var(--lx-strong) 4%, transparent);
+  color: var(--lx-muted);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  transition:
+    background-color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease;
+}
+.lx-command-bar:hover {
+  background: color-mix(in srgb, var(--lx-strong) 8%, transparent);
+  border-color: color-mix(in srgb, var(--lx-strong) 16%, transparent);
+  color: var(--lx-strong);
+}
+.lx-command-bar-kbd {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--lx-radius-xs);
+  background: color-mix(in srgb, var(--lx-strong) 8%, transparent);
+  font-family: var(--lx-font-mono);
+  font-size: var(--text-3xs);
+  color: var(--lx-muted);
+}
+
+/* Settings search: rows matching the query get a soft accent wash and a bar,
+ * so the hit is visible inside long sections, not only in the nav. */
+.lx-setting-hit {
+  position: relative;
+  background: color-mix(in srgb, var(--lx-accent) 9%, transparent);
+}
+.lx-setting-hit::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 0 2px 2px 0;
+  background: var(--lx-accent);
 }

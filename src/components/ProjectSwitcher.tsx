@@ -98,7 +98,7 @@ export function ProjectSwitcher() {
       >
         <div className="shrink-0 border-b border-edge bg-[radial-gradient(circle_at_top_left,var(--lx-raised),transparent_56%)] p-3">
           <div className="mb-2 flex items-center justify-between gap-3 px-1">
-            <div className="text-xs font-semibold uppercase tracking-wide text-muted">{t("Switch project")}</div>
+            <div className="text-xs font-medium text-muted">{t("Switch project")}</div>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-edge bg-surface px-3 focus-within:border-transparent">
             <Search size={15} className="shrink-0 text-muted" />
@@ -137,7 +137,7 @@ export function ProjectSwitcher() {
               onMouseEnter={() => setSelected(i)}
               aria-selected={i === selected}
               role="option"
-              className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+              className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--lx-dur-fast)] ${
                 i === selected ? "bg-accent/10 text-strong lx-active-strip" : "text-muted hover:bg-raised/70 hover:text-strong"
               }`}
             >
@@ -160,7 +160,7 @@ export function ProjectSwitcher() {
                 </span>
                 <span className="block truncate text-xs text-muted">{p.path || t("Blank workspace")}</span>
               </span>
-              {p.id === activeId && <span className="rounded-full border border-edge px-2 py-0.5 text-3xs uppercase text-muted">{t("active")}</span>}
+              {p.id === activeId && <span className="rounded-full border border-edge px-2 py-0.5 text-3xs text-muted">{t("active")}</span>}
               {i === selected && <CornerDownLeft size={14} className="hidden shrink-0 text-muted sm:block" />}
             </button>
           ))}

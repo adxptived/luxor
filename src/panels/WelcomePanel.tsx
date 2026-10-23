@@ -34,6 +34,7 @@ const WELCOME_TIPS = [
   "Right-click tabs, the sidebar and the status bar for more actions.",
   "Open .sqlite/.db files from the file explorer — there's a built-in DB viewer.",
   "Customize the sidebar buttons: right-click a button or open Settings → Interface.",
+  "In the command palette, start with / for files, @ for symbols or : for panels.",
 ];
 
 const BLANK_TIPS = [
@@ -75,20 +76,19 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
     <div className="h-full overflow-auto bg-surface px-4 py-6 sm:px-6 sm:py-8">
       <div className="mx-auto flex min-h-full w-full max-w-6xl items-center">
         <div className="grid w-full grid-cols-1 gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(22rem,0.75fr)]">
-          <section className="lx-empty-state relative overflow-hidden rounded-lg border border-edge p-5 sm:p-7" style={{ boxShadow: "var(--lx-shadow-lg)" }}>
-            
-            <div className="relative">
+          <section className="p-1 sm:p-2">
+            <div>
               <div className="mb-5 flex flex-wrap items-center gap-3">
-                <div className="flex h-14 w-14 items-center justify-center rounded-lg border border-edge bg-raised text-muted">
-                  {blank ? <LayoutGrid size={26} /> : <SquareTerminal size={26} />}
+                <div className="lx-empty-icon flex h-12 w-12 items-center justify-center rounded-lg bg-accent/10 text-accent" aria-hidden>
+                  {blank ? <LayoutGrid size={22} /> : <SquareTerminal size={22} />}
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-strong sm:text-4xl">
+                    <h1 className="text-2xl font-semibold tracking-tight text-strong sm:text-3xl">
                       {blank ? t("Blank workspace") : "Luxor"}
                     </h1>
                     {!blank && (
-                      <span className="rounded-full border border-edge bg-bar px-2 py-0.5 font-mono text-2xs text-muted">
+                      <span className="rounded-full bg-raised px-2 py-0.5 font-mono text-2xs text-muted">
                         v{APP_VERSION}
                       </span>
                     )}
@@ -101,7 +101,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                 <WelcomeAction
                   icon={SquareTerminal}
                   label={t("New terminal")}
@@ -138,7 +138,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
                 )}
               </div>
 
-              <div className="mt-5 grid grid-cols-1 gap-2 text-xs text-muted sm:grid-cols-3">
+              <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 px-1 text-xs text-muted">
                 <FeaturePill icon={Search} label={t("Command-first")} value={hintFor("palette", config)} />
                 <FeaturePill icon={FolderGit2} label={t("Git + GitHub")} value={t("inside app")} />
                 <FeaturePill icon={Sparkles} label={t("Adaptive UI")} value={t("small windows") } />
@@ -147,9 +147,9 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
           </section>
 
           <aside className="grid grid-cols-1 gap-4">
-            <section className="rounded-lg border border-edge bg-bar/80 p-3">
+            <section className="rounded-lg bg-raised/40 p-3">
               <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
+                <div className="flex items-center gap-1.5 text-2xs font-medium text-muted">
                   <History size={12} /> {t("Recent projects")}
                 </div>
                 {recents.length > 0 && <span className="text-3xs text-muted">{recents.length}</span>}
@@ -176,15 +176,15 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
                   </button>
                 ))}
                 {recents.length === 0 && (
-                  <div className="rounded-lg border border-dashed border-edge px-3 py-5 text-center text-xs text-muted">
+                  <div className="px-2.5 py-3 text-xs leading-5 text-muted">
                     {t("No recent projects yet. Open a folder and it will stay here for fast return.")}
                   </div>
                 )}
               </div>
             </section>
 
-            <section className="rounded-lg border border-edge bg-bar/80 px-4 py-3 text-left text-xs text-muted">
-              <div className="mb-1.5 flex items-center gap-1.5 font-semibold uppercase tracking-wide">
+            <section className="rounded-lg bg-raised/40 px-4 py-3 text-left text-xs text-muted">
+              <div className="mb-1.5 flex items-center gap-1.5 font-medium">
                 <Lightbulb size={12} className="text-muted" /> {t("Tips")}
               </div>
               <ul className="space-y-1.5">
@@ -210,12 +210,10 @@ export const WelcomePanel = React.memo(WelcomePanelImpl);
 
 function FeaturePill(props: { icon: React.ComponentType<{ size?: number; className?: string }>; label: string; value: string }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-lg border border-edge bg-bar/70 px-3 py-2">
-      <props.icon size={14} className="shrink-0 text-accent" />
-      <span className="min-w-0">
-        <span className="block truncate text-3xs uppercase tracking-wide text-muted">{props.label}</span>
-        <span className="block truncate text-xs font-medium text-strong">{props.value}</span>
-      </span>
+    <div className="flex min-w-0 items-center gap-1.5">
+      <props.icon size={13} className="shrink-0 text-accent" />
+      <span className="truncate">{props.label}</span>
+      {props.value && <span className="truncate font-medium text-strong">{props.value}</span>}
     </div>
   );
 }
@@ -230,18 +228,20 @@ function WelcomeAction(props: {
   return (
     <button
       onClick={props.onClick}
-      className={`lx-hover-lift group flex min-w-0 items-center gap-3 rounded-lg border px-4 py-3 text-left ${
-        props.primary
-          ? "border-edge bg-raised text-strong hover:bg-surface"
-          : "border-edge bg-bar/70 hover:border-muted hover:bg-raised"
+      className={`group flex min-w-0 items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+        props.primary ? "bg-accent/10 text-strong hover:bg-accent/15" : "bg-raised/50 hover:bg-raised"
       }`}
     >
-      <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-raised text-muted">
-        <props.icon size={17} />
+      <span
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
+          props.primary ? "bg-accent/15 text-accent" : "bg-raised text-muted group-hover:text-strong"
+        }`}
+      >
+        <props.icon size={16} />
       </span>
       <span className="flex min-w-0 flex-1 flex-col">
         {/* Wrap instead of truncating so labels stay fully readable in narrow layouts. */}
-        <span className="text-pretty font-medium leading-snug text-strong">{props.label}</span>
+        <span className="text-pretty text-sm font-medium leading-snug text-strong">{props.label}</span>
         <span className="truncate text-xs text-muted" title={props.hint}>
           {props.hint}
         </span>

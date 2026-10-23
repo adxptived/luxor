@@ -117,6 +117,7 @@ function defaultMockConfig(): AppConfig {
       tab_height: 0,
       tab_strip_height: 0,
       tab_outline: false,
+      motion: "system",
       quick_actions: "top",
       nav_order: [],
       nav_hidden: [],
@@ -586,7 +587,6 @@ export async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>)
     case "snippet_list":
     case "bookmark_list":
     case "session_list":
-    case "registry_search":
     case "osv_check":
     case "docker_containers":
     case "docker_images":
@@ -606,6 +606,16 @@ export async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>)
       return undefined as T;
     case "diag_collect":
       return `Luxor diagnostics report (browser mock)\n\n--- Frontend log (session) ---\n${logsAsText()}\n` as T;
+    case "registry_search": {
+      const q = String((args as { query?: string } | undefined)?.query ?? "").trim();
+      if (!q) return [] as T;
+      return [
+        { name: q, version: "1.0.0", description: `Mock package for "${q}"`, url: "https://example.com", downloads: 120_000 },
+        { name: `${q}-utils`, version: "0.4.2", description: "Helpers (mock data in the browser build)", url: "https://example.com", downloads: 3_400 },
+      ] as T;
+    }
+    case "pty_cwd":
+      return null as T;
     case "github_repo":
       return null as T;
     case "github_comment_add":

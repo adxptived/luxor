@@ -172,7 +172,7 @@ function Widget({
     >
       {ui.showTitles && (
         <div
-          className={`flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted ${
+          className={`flex items-center gap-1.5 text-2xs font-medium text-muted ${
             compact ? "mb-1" : "mb-1.5"
           }`}
         >
@@ -492,7 +492,7 @@ function OptNumber({
         min={min}
         max={max}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-14 rounded border border-edge bg-raised px-1 py-0.5 text-right text-xs text-strong outline-none focus:border-accent"
+        className="w-14 rounded border border-edge bg-raised px-1 py-1 text-right text-xs text-strong outline-none focus:border-accent"
       />
     </label>
   );
@@ -535,7 +535,7 @@ function WidgetOptionsEditor({
                 .filter((n) => Number.isFinite(n) && n > 0);
               onPatch({ presets });
             }}
-            className="rounded border border-edge bg-raised px-1.5 py-0.5 text-xs text-strong outline-none focus:border-accent"
+            className="rounded border border-edge bg-raised px-1.5 py-1 text-xs text-strong outline-none focus:border-accent"
           />
         </label>
       );
@@ -659,7 +659,7 @@ function PanelEditor({
                 <button
                   className={`rounded p-0.5 hover:bg-raised ${open ? "text-accent" : "text-muted hover:text-strong"}`}
                   onClick={() => setOpenId(open ? null : w.id)}
-                  title={t("Widget settings")}
+                  title={t("Widget settings")} aria-label={t("Widget settings")}
                   aria-expanded={open}
                 >
                   <Settings2 size={13} />
@@ -668,7 +668,7 @@ function PanelEditor({
               <button
                 className="rounded p-0.5 text-muted hover:bg-raised hover:text-strong"
                 onClick={() => onChange(setWidgetEnabled(cfg, w.id, !w.enabled))}
-                title={w.enabled ? t("Hide widget") : t("Show widget")}
+                title={w.enabled ? t("Hide widget") : t("Show widget")} aria-label={w.enabled ? t("Hide widget") : t("Show widget")}
               >
                 {w.enabled ? <Eye size={13} /> : <EyeOff size={13} />}
               </button>
@@ -676,7 +676,7 @@ function PanelEditor({
             {open && (
               <div className="lx-anim-expand border-t border-edge px-2 py-1.5 text-xs">
                 <div className="mb-1.5">
-                  <div className="mb-1 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Accent")}</div>
+                  <div className="mb-1 text-3xs font-medium text-muted">{t("Accent")}</div>
                   <AccentPicker value={w.accent} onChange={(a) => onChange(setWidgetAccent(cfg, w.id, a))} />
                 </div>
                 <WidgetOptionsEditor
@@ -691,9 +691,9 @@ function PanelEditor({
       })}
 
       <div className="mt-2 rounded-md border border-edge px-2 py-1.5">
-        <div className="mb-1 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Panel accent")}</div>
+        <div className="mb-1 text-3xs font-medium text-muted">{t("Panel accent")}</div>
         <AccentPicker value={cfg.accent} onChange={(a) => onChange({ ...cfg, accent: a })} />
-        <div className="mb-1 mt-2 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Density")}</div>
+        <div className="mb-1 mt-2 text-3xs font-medium text-muted">{t("Density")}</div>
         <div className="flex gap-1">
           {(["comfortable", "compact"] as const).map((d) => (
             <button
@@ -707,7 +707,7 @@ function PanelEditor({
             </button>
           ))}
         </div>
-        <div className="mb-1 mt-2 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Font size")}</div>
+        <div className="mb-1 mt-2 text-3xs font-medium text-muted">{t("Font size")}</div>
         <div className="flex gap-1">
           {(
             [
@@ -1069,7 +1069,7 @@ function RightPanelImpl() {
       case "embed":
         return wrap(
           <div className="flex flex-col border-b border-edge">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-2xs font-medium text-muted">
               <AppWindow size={12} /> {t("Embedded panel")}
             </div>
             {EmbedComp ? (
@@ -1108,7 +1108,7 @@ function RightPanelImpl() {
       data-testid="right-panel"
     >
       <div
-        className={`flex h-full flex-col overflow-y-auto ${fontClass} transition-opacity duration-150 ${
+        className={`flex h-full flex-col overflow-y-auto ${fontClass} transition-opacity duration-[var(--lx-dur-fast)] ${
           shown ? "opacity-100" : "opacity-0"
         } ${rpConfig.accent ? "lx-rp-accented" : ""}`}
         style={{ width: responsiveWidth }}
@@ -1116,12 +1116,12 @@ function RightPanelImpl() {
         {/* Sticky: the header lives inside the panel's scroll container, so with
             enough widgets the "customize" and "hide" buttons used to scroll out
             of reach. */}
-        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-edge bg-bar px-2.5 py-1.5">
-          <span className="text-2xs font-semibold uppercase tracking-wide text-muted">{t("Panel")}</span>
+        <div className="sticky top-0 z-[var(--lx-z-local)] flex shrink-0 items-center justify-between border-b border-edge bg-bar px-2.5 py-1.5">
+          <span className="text-2xs font-medium text-muted">{t("Panel")}</span>
           <div className="flex items-center gap-0.5">
             <button
               className={`rounded p-0.5 hover:bg-raised ${editing ? "text-accent" : "text-muted hover:text-strong"}`}
-              title={editing ? t("Done editing") : t("Customize panel")}
+              title={editing ? t("Done editing") : t("Customize panel")} aria-label={editing ? t("Done editing") : t("Customize panel")}
               onClick={() => setEditing((v) => !v)}
               aria-pressed={editing}
             >

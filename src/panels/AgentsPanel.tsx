@@ -1,4 +1,5 @@
 import { Bot, FolderOpen, RefreshCw, Skull, TerminalSquare } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useEffect, useMemo, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
@@ -171,23 +172,20 @@ export function AgentsPanel() {
 
 
           {procs !== null && procs.length === 0 && (
-        <div className="mt-4 rounded-lg border border-dashed border-edge bg-bar/30 px-5 py-10 text-center text-muted">
-          <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-            <Bot size={28} />
-          </div>
-          <div className="font-medium text-strong">{t("agents.empty", "No AI agents running")}</div>
-          <div className="mx-auto mt-1 max-w-md text-xs leading-5 opacity-70">
-            {t(
-              "agents.empty_hint",
-              "Start claude, codex, gemini, opencode, devin… in any terminal and they will show up here automatically.",
-            )}
-          </div>
-        </div>
+        <EmptyState
+          className="mt-4"
+          icon={<Bot size={20} />}
+          title={t("agents.empty", "No AI agents running")}
+          text={t(
+            "agents.empty_hint",
+            "Start claude, codex, gemini, opencode, devin… in any terminal and they will show up here automatically.",
+          )}
+        />
       )}
 
       {groups.map(([label, rows]) => (
         <div key={label} className="mb-3">
-          <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
+          <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
             {label}
             <span className="rounded bg-raised px-1.5 text-3xs">{rows.length}</span>
           </div>
@@ -222,7 +220,7 @@ export function AgentsPanel() {
                   <button
                     onClick={() => openHere(p)}
                     className="shrink-0 rounded p-1 text-muted hover:bg-raised hover:text-accent"
-                    title={t("agents.open_terminal", "Open terminal in this directory")}
+                    title={t("agents.open_terminal", "Open terminal in this directory")} aria-label={t("agents.open_terminal", "Open terminal in this directory")}
                     data-testid={`agent-term-${p.pid}`}
                   >
                     <TerminalSquare size={14} />
@@ -231,7 +229,7 @@ export function AgentsPanel() {
                     onClick={() => void ipc.openPath(p.cwd)}
                     disabled={!p.cwd}
                     className="shrink-0 rounded p-1 text-muted hover:bg-raised hover:text-strong disabled:opacity-30"
-                    title={t("agents.reveal", "Reveal working directory")}
+                    title={t("agents.reveal", "Reveal working directory")} aria-label={t("agents.reveal", "Reveal working directory")}
                     data-testid={`agent-reveal-${p.pid}`}
                   >
                     <FolderOpen size={14} />
@@ -240,7 +238,7 @@ export function AgentsPanel() {
                     onClick={() => void kill(p)}
                     disabled={killing.has(p.pid)}
                     className="shrink-0 rounded p-1 text-muted hover:bg-danger-soft hover:text-danger disabled:opacity-40"
-                    title={t("agents.kill_title", "Stop agent?")}
+                    title={t("agents.kill_title", "Stop agent?")} aria-label={t("agents.kill_title", "Stop agent?")}
                     data-testid={`agent-kill-${p.pid}`}
                   >
                     {killing.has(p.pid) ? (

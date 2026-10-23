@@ -59,9 +59,9 @@ export function PdfPanel(props: IDockviewPanelProps) {
           <div className="mt-3 truncate rounded-lg border border-edge bg-surface px-2 py-1 font-mono text-2xs" title={path}>{path}</div>
           <button
             onClick={() => setReloadKey((k) => k + 1)}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs hover:bg-raised hover:text-strong"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs hover:bg-raised hover:text-strong"
           >
-            <RefreshCw size={13} /> Retry
+            <RefreshCw size={13} /> {t("Retry")}
           </button>
         </div>
       </div>
@@ -83,19 +83,19 @@ export function PdfPanel(props: IDockviewPanelProps) {
         <button
           onClick={() => setReloadKey((k) => k + 1)}
           className="rounded-lg border border-edge px-2 py-1.5 hover:bg-raised hover:text-strong"
-          title={t("Reload")}
+          title={t("Reload")} aria-label={t("Reload")}
         >
           <RefreshCw size={13} />
         </button>
         <button
           onClick={() => void navigator.clipboard.writeText(path).then(() => toast(t("Copied"), "success"))}
           className="rounded-lg border border-edge px-2 py-1.5 hover:bg-raised hover:text-strong"
-          title={t("Copy path")}
+          title={t("Copy path")} aria-label={t("Copy path")}
         >
           <Copy size={13} />
         </button>
         <span className="hidden items-center gap-1 rounded-full border border-edge bg-surface px-2 py-1 text-3xs sm:flex">
-          <AlertTriangle size={11} className="text-muted" /> Native viewer
+          <AlertTriangle size={11} className="text-muted" /> {t("Native viewer")}
         </span>
       </div>
       <iframe src={src} title={path} className="min-h-0 flex-1 border-0 bg-surface" />

@@ -61,19 +61,19 @@ export function NoFolderCta({ hint }: { hint: string }) {
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <button
-            className="flex items-center gap-1.5 rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20"
+            className="flex items-center gap-1.5 rounded-lg border border-accent bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
             onClick={() => void browse()}
           >
             <FolderOpen size={13} /> {t("Choose folder…")}
           </button>
-          <span className="flex items-center gap-1 rounded-full border border-edge bg-raised px-2 py-1 text-3xs uppercase tracking-wide text-muted">
+          <span className="flex items-center gap-1 rounded-full border border-edge bg-raised px-2 py-1 text-3xs text-muted">
             <Sparkles size={11} className="text-accent" /> {t("Enables Files, Git, Search and Launcher")}
           </span>
         </div>
 
         <div className="mx-auto mt-4 flex w-full max-w-md items-center gap-1.5 rounded-lg border border-edge bg-surface p-1 focus-within:border-transparent">
           <input
-            className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-xs text-strong outline-none"
+            className="min-w-0 flex-1 bg-transparent px-2 py-1 text-xs text-strong outline-none"
             placeholder={t("…or paste a path and press Enter")}
             value={path}
             onChange={(e) => setPath(e.target.value)}
@@ -84,7 +84,7 @@ export function NoFolderCta({ hint }: { hint: string }) {
           <button
             className="rounded-lg bg-raised p-1.5 text-muted hover:text-accent disabled:opacity-30"
             disabled={!path.trim()}
-            title={t("Attach folder")}
+            title={t("Attach folder")} aria-label={t("Attach folder")}
             onClick={() => void attach(path)}
           >
             <ArrowRight size={14} />

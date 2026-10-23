@@ -90,8 +90,8 @@ export function isPowerShell(shell: string): boolean {
  * Mirrors `default_shell_args` in `crates/luxor-core/src/pty.rs` so the Settings
  * preview matches what actually launches: explicit args always win; otherwise
  * PowerShell gets `-NoLogo -NoProfile` (fast start) or just `-NoLogo` (profile
- * mode, which loads the user's PowerShell profile). Non-PowerShell shells get
- * no injected arguments.
+ * mode, which loads the user's PowerShell profile), followed by the OSC 7
+ * prompt hook. Non-PowerShell shells get no injected arguments.
  */
 export function effectiveShellArgs(
   shell: string,
@@ -100,5 +100,12 @@ export function effectiveShellArgs(
 ): string[] {
   if (configuredArgs.length > 0) return configuredArgs;
   if (!isPowerShell(shell)) return [];
-  return fastPowershellStartup ? ["-NoLogo", "-NoProfile"] : ["-NoLogo"];
+  const base = fastPowershellStartup ? ["-NoLogo", "-NoProfile"] : ["-NoLogo"];
+  // The backend also installs a prompt hook that reports the current folder
+  // (OSC 7) via `-NoExit -EncodedCommand <base64>`; the blob is shown as a
+  // readable placeholder rather than an opaque wall of base64.
+  return [...base, "-NoExit", "-EncodedCommand", POWERSHELL_HOOK_PLACEHOLDER];
 }
+
+/** Stand-in shown in Settings for the base64 cwd-reporting prompt hook. */
+export const POWERSHELL_HOOK_PLACEHOLDER = "<cwd-hook>";
