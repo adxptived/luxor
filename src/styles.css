@@ -169,6 +169,7 @@
    * cell editor previously rendering at z-[300], above the context menu). */
   --lx-z-local: 10;        /* inside a panel: sticky headers, floating controls */
   --lx-z-local-overlay: 20; /* inside a panel: its own scrims and popups */
+  --lx-z-backdrop: 40;     /* invisible click-catchers behind dropdowns */
   --lx-z-dropdown: 50;     /* popovers / select & TopBar dropdown menus */
   --lx-z-overlay: 50;      /* full-screen modal scrims (Settings, palette, switcher) */
   --lx-z-onboarding: 60;   /* onboarding tour */
