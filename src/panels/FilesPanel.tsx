@@ -1015,7 +1015,7 @@ export function FilesPanel() {
               e.stopPropagation();
               void moveEntry(src, entry.path);
             }}
-            className={`group relative flex h-7 w-full items-center gap-1.5 truncate rounded-md pr-2 text-left transition-colors duration-150 hover:bg-raised/70 ${
+            className={`group relative flex h-7 w-full items-center gap-1.5 truncate rounded-md pr-2 text-left transition-colors duration-[var(--lx-dur-fast)] hover:bg-raised/70 ${
               selected.has(entry.path) ? "bg-accent/10 text-strong lx-active-strip" : ""
             } ${embeddedPath === entry.path ? "bg-accent/10 text-strong lx-active-strip" : ""} ${focusedPath === entry.path && !selected.has(entry.path) && embeddedPath !== entry.path ? "bg-raised text-strong" : ""} ${isSearchMatch ? "ring-1 ring-accent/20 bg-accent/5" : ""} ${dropTarget === entry.path ? "ring-1 ring-accent bg-accent/15" : ""}`}
             style={{ paddingLeft: 6 + depth * 14 }}

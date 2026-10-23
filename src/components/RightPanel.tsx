@@ -1108,7 +1108,7 @@ function RightPanelImpl() {
       data-testid="right-panel"
     >
       <div
-        className={`flex h-full flex-col overflow-y-auto ${fontClass} transition-opacity duration-150 ${
+        className={`flex h-full flex-col overflow-y-auto ${fontClass} transition-opacity duration-[var(--lx-dur-fast)] ${
           shown ? "opacity-100" : "opacity-0"
         } ${rpConfig.accent ? "lx-rp-accented" : ""}`}
         style={{ width: responsiveWidth }}
@@ -1116,7 +1116,7 @@ function RightPanelImpl() {
         {/* Sticky: the header lives inside the panel's scroll container, so with
             enough widgets the "customize" and "hide" buttons used to scroll out
             of reach. */}
-        <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-edge bg-bar px-2.5 py-1.5">
+        <div className="sticky top-0 z-[var(--lx-z-local)] flex shrink-0 items-center justify-between border-b border-edge bg-bar px-2.5 py-1.5">
           <span className="text-2xs font-medium text-muted">{t("Panel")}</span>
           <div className="flex items-center gap-0.5">
             <button

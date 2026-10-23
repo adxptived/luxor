@@ -990,7 +990,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
     <div
       className={`lx-anim-topbar relative flex shrink-0 bg-bar text-sm ${
         vertical
-          ? `h-full flex-col overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none ${leftOpen ? "border-r border-edge" : ""}`
+          ? `h-full flex-col overflow-hidden transition-[width] duration-[var(--lx-dur)] ease-out motion-reduce:transition-none ${leftOpen ? "border-r border-edge" : ""}`
           : "w-full items-center border-b border-edge"
       }`}
       style={vertical ? { width: leftOpen ? (leftCollapsed ? collapsedSidebarWidth : "var(--lx-sidebar-w, " + sidebarWidth + "px)") : 0 } : { height: topbarSize }}
@@ -1033,7 +1033,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           never disturbs the tab strip's flex layout; only the inner chip is
           interactive (pointer-events), the full-width wrapper is click-through. */}
       {!vertical && (navGroups.center.length > 0 || navDragId) && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex h-full items-center justify-center">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[var(--lx-z-local-overlay)] flex h-full items-center justify-center">
           <div className="pointer-events-auto">
             {renderAlignZone(
               navGroups.center,
@@ -1176,7 +1176,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
           strip and stack collapse into icon rows. */}
       {vertical && !leftCollapsed && (
         <div
-          className="group relative z-10 flex h-1.5 shrink-0 cursor-row-resize items-center justify-center bg-transparent hover:bg-muted/40"
+          className="group relative z-[var(--lx-z-local)] flex h-1.5 shrink-0 cursor-row-resize items-center justify-center bg-transparent hover:bg-muted/40"
           onPointerDown={startTabStripResize}
           title={t("Drag to resize tab area")}
           data-testid="tab-strip-resize"
@@ -1316,7 +1316,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       {/* Sidebar resize handle (kept off the buttons so it never eats their clicks) */}
       {vertical && leftOpen && (
         <div
-          className="absolute right-0 top-0 z-10 h-full w-1 cursor-col-resize hover:bg-muted/40"
+          className="absolute right-0 top-0 z-[var(--lx-z-local)] h-full w-1 cursor-col-resize hover:bg-muted/40"
           onPointerDown={startResize}
           title={t("Drag to resize sidebar")}
           data-testid="sidebar-resize"

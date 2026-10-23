@@ -410,7 +410,7 @@ function DataView({ path, table, onChanged }: { path: string; table: string; onC
         )}
         {rows && rows.rows.length > 0 && (
           <table className="w-full border-collapse text-xs">
-            <thead className="sticky top-0 z-10 bg-bar">
+            <thead className="sticky top-0 z-[var(--lx-z-local)] bg-bar">
               <tr>
                 <th className="w-8 border-b border-edge px-2 py-1 text-left font-semibold text-muted">#</th>
                 {rows.columns.map((c) => {

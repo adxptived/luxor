@@ -194,7 +194,7 @@ function SidePanelImpl() {
       data-testid="side-panel"
     >
       <div
-        className={`flex h-full flex-col overflow-y-auto text-xs transition-opacity duration-150 ${
+        className={`flex h-full flex-col overflow-y-auto text-xs transition-opacity duration-[var(--lx-dur-fast)] ${
           shown ? "opacity-100" : "opacity-0"
         }`}
         style={{ width: collapsed ? railWidth : panelWidth }}

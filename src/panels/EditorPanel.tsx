@@ -862,7 +862,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
           style={{ fontSize: `${fontSize}px` }}
         />
         {editorLoading && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center gap-2 bg-surface text-xs text-muted lx-fade-in">
+          <div className="absolute inset-0 z-[var(--lx-z-local)] flex items-center justify-center gap-2 bg-surface text-xs text-muted lx-fade-in">
             <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-edge border-t-accent" />
             {t("editor.loading", "Loading editor…")}
           </div>

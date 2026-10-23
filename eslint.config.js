@@ -106,6 +106,16 @@ export default [
           message:
             "Raw Tailwind palette class detected. Use a semantic design token instead (text-danger / text-success / text-warning / text-info, bg-surface/raised/bar, *-soft / *-soft-strong, text-chart-1..6, text-on-accent). See styles.css @theme and themes.ts.",
         },
+        // Layer guard: stacking goes through the --lx-z-* scale in styles.css
+        // (z-[var(--lx-z-local)], z-[var(--lx-z-menu)], …), never raw numbers.
+        {
+          selector: "Literal[value=/(^|\\s)-?z-(10|20|30|40|50)(\\s|$)/]",
+          message: "Layer guard: use a --lx-z-* token (e.g. z-[var(--lx-z-local)]) instead of a raw z-index class.",
+        },
+        {
+          selector: "TemplateElement[value.raw=/(^|\\s)-?z-(10|20|30|40|50)(\\s|$)/]",
+          message: "Layer guard: use a --lx-z-* token (e.g. z-[var(--lx-z-local)]) instead of a raw z-index class.",
+        },
         // Typography guard (UI rework): sentence-case labels and two weights.
         // All-caps labels shouted in every panel and font-bold competed with
         // headings; use font-medium for labels and font-semibold for titles.

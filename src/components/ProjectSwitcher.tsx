@@ -137,7 +137,7 @@ export function ProjectSwitcher() {
               onMouseEnter={() => setSelected(i)}
               aria-selected={i === selected}
               role="option"
-              className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-150 ${
+              className={`group flex w-full min-w-0 items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors duration-[var(--lx-dur-fast)] ${
                 i === selected ? "bg-accent/10 text-strong lx-active-strip" : "text-muted hover:bg-raised/70 hover:text-strong"
               }`}
             >

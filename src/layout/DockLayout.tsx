@@ -615,7 +615,7 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
     // frozen when switching project tabs. Opacity cannot be overridden by
     // children, and z-index keeps the active dock on top for hit-testing.
     <div
-      className={`absolute inset-0 bg-surface ${active ? "z-10" : "pointer-events-none z-0 opacity-0"}`}
+      className={`absolute inset-0 bg-surface ${active ? "z-[var(--lx-z-local)]" : "pointer-events-none z-0 opacity-0"}`}
       aria-hidden={!active}
       data-testid={`dock-${dockKey}`}
       onDragOver={(e) => {
@@ -653,7 +653,7 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
       />
       </DockKeyContext.Provider>
       {empty && (
-        <div className="absolute inset-0 z-20 bg-surface">
+        <div className="absolute inset-0 z-[var(--lx-z-local-overlay)] bg-surface">
           <EmptyDock dockKey={dockKey} />
         </div>
       )}

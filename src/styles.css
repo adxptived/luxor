@@ -61,6 +61,8 @@
    *          --lx-radius-lg/xl)
    * plus 4px for tiny inline chips (`rounded-sm`, kbd, inline code) and
    * `rounded-full` for dots and pills. */
+  --default-transition-duration: 140ms;
+  --default-transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
   --radius: 6px;
   --radius-xs: 4px;
   --radius-sm: 4px;
@@ -86,8 +88,12 @@
   --lx-caption-w: 46px;        /* caption button width (Windows-style) */
   --lx-ease: cubic-bezier(.22, 1, .36, 1);
   --lx-ease-spring: cubic-bezier(.34, 1.56, .64, 1);
-  --lx-dur-fast: 120ms;
-  --lx-dur: 200ms;
+  /* Motion: two speeds for everything a person triggers — fast for hover,
+   * press and toggles; base for opening, closing and layout moves — plus slow
+   * for large surfaces. Hard-coded 0.12s/0.13s/0.16s/0.18s/0.22s/0.24s… values
+   * were folded into these (UI rework). */
+  --lx-dur-fast: 140ms;
+  --lx-dur: 220ms;
   --lx-dur-slow: 300ms;
 
   /* ── Radius scale ─────────────────────────────────────────────────────── */
@@ -161,6 +167,8 @@
    * 1000 zoo. Ascending = visually on top. Context menus sit ABOVE modals so a
    * right-click menu is never hidden behind a dialog (this also fixes the DB
    * cell editor previously rendering at z-[300], above the context menu). */
+  --lx-z-local: 10;        /* inside a panel: sticky headers, floating controls */
+  --lx-z-local-overlay: 20; /* inside a panel: its own scrims and popups */
   --lx-z-dropdown: 50;     /* popovers / select & TopBar dropdown menus */
   --lx-z-overlay: 50;      /* full-screen modal scrims (Settings, palette, switcher) */
   --lx-z-onboarding: 60;   /* onboarding tour */
@@ -483,7 +491,7 @@ body,
 /* ── Sidebar collapse/expand animation ───────────────────────────────────── */
 .lx-anim-side-panel,
 .lx-anim-right-panel {
-  transition: width 220ms cubic-bezier(0.22, 1, 0.36, 1),
+  transition: width var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1),
               opacity 160ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: width;
   overflow: hidden;
@@ -528,10 +536,10 @@ body,
   }
 }
 .lx-slide-in {
-  animation: lx-slide-in 0.16s ease-out;
+  animation: lx-slide-in var(--lx-dur-fast) ease-out;
 }
 .lx-pop-in {
-  animation: lx-pop-in 0.12s ease-out;
+  animation: lx-pop-in var(--lx-dur-fast) ease-out;
 }
 
 /* Indeterminate sweep for the embedded browser's top progress bar. */
@@ -596,7 +604,7 @@ body,
 /* Keyboard focus ring — only for keyboard users (:focus-visible), so mouse
  * clicks keep the chrome clean. :where() keeps specificity at 0 so component
  * colors always win; only the outline is added. */
-:where(button, a, input, textarea, select, summary, [role="button"], [tabindex]):focus-visible {
+:where(button, a, summary, [role="button"], [tabindex]):focus-visible {
   /* Inset offset (drawn *inside* the box) so the ring is never clipped by an
    * `overflow:hidden` ancestor (segmented controls / toolbars used to lose
    * their top edge) and never overlaps a tightly-packed neighbour. The ring
@@ -604,14 +612,27 @@ body,
    *
    * Uses the theme accent (not --lx-muted): the accent clears the WCAG 1.4.11
    * 3:1 non-text-contrast bar against every theme surface, whereas muted fell
-   * below 3:1 in 6 themes and left keyboard focus effectively invisible. */
+   * below 3:1 in 6 themes and left keyboard focus effectively invisible.
+   * The soft outer halo keeps it findable on busy toolbars. */
   outline: 2px solid var(--lx-focus-ring, var(--lx-accent));
   outline-offset: -2px;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lx-accent) 25%, transparent);
 }
+/* Text fields: a calm accent border plus a faint halo instead of the loud 2px
+ * ring (it painted "yellow stripes" around every search box). */
+:where(input, textarea, select):focus-visible {
+  outline: none;
+  border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
+}
+/* The terminal and the editor paint their own focus surfaces. */
 .xterm :where(*):focus-visible,
 .cm-editor :where(*):focus-visible {
   outline: none;
+  box-shadow: none;
 }
+/* This is the ONLY place the global focus ring is defined (it used to be
+ * declared three times further down, each pass partly undoing the last). */
 
 /* ── Accent reaches native controls too ──────────────────────────────────────
  * `accent-color` is an inherited property, so setting it once on the root makes
@@ -645,11 +666,11 @@ summary,
 [role="button"],
 [draggable="true"] {
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease,
-    border-color 0.12s ease,
-    box-shadow 0.14s ease,
-    opacity 0.12s ease;
+    background-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    box-shadow var(--lx-dur-fast) ease,
+    opacity var(--lx-dur-fast) ease;
 }
 .xterm button,
 .xterm a,
@@ -694,9 +715,9 @@ summary,
   border-radius: var(--lx-tab-radius) var(--lx-tab-radius) 0 0;
   background: transparent;
   transition:
-    background-color 0.16s ease,
-    box-shadow 0.16s ease,
-    color 0.16s ease;
+    background-color var(--lx-dur-fast) ease,
+    box-shadow var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease;
 }
 .dockview-theme-dark .dv-tab:hover,
 .dockview-theme-light .dv-tab:hover {
@@ -909,10 +930,10 @@ summary,
   border: 1px solid transparent;
   background: transparent;
   transition:
-    background-color 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease,
-    transform 120ms ease;
+    background-color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease,
+    transform var(--lx-dur-fast) ease;
 }
 .lx-square-btn:hover {
   border-color: transparent;
@@ -1009,7 +1030,7 @@ summary,
 .lx-tooltip[data-open] {
   visibility: visible;
   opacity: 1;
-  animation: lx-tooltip-in 120ms var(--lx-ease, ease-out);
+  animation: lx-tooltip-in var(--lx-dur-fast) var(--lx-ease, ease-out);
 }
 .lx-tooltip[data-side="top"] { --lx-tip-from: 3px; }
 .lx-tooltip[data-side="bottom"] { --lx-tip-from: -3px; }
@@ -1261,7 +1282,7 @@ input[type="range"]::-webkit-slider-thumb {
   border: none;
   background: var(--lx-accent);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.35);
-  transition: transform 120ms ease;
+  transition: transform var(--lx-dur-fast) ease;
 }
 input[type="range"]::-webkit-slider-thumb:hover,
 input[type="range"]:focus-visible::-webkit-slider-thumb {
@@ -1352,10 +1373,10 @@ body,
 .lx-editor-toolbar > label {
   min-height: 26px;
   transition:
-    background-color 0.13s ease,
-    border-color 0.13s ease,
-    color 0.13s ease,
-    box-shadow 0.13s ease;
+    background-color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease,
+    box-shadow var(--lx-dur-fast) ease;
 }
 .lx-editor-toolbar > button:active {
   transform: translateY(0.5px);
@@ -1368,8 +1389,8 @@ body,
 /* Status bar: tighter, calmer, with hover affordance on its inline buttons. */
 .lx-editor-statusbar button {
   transition:
-    background-color 0.12s ease,
-    color 0.12s ease;
+    background-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease;
 }
 
 /* ---------------------------------------------------------------------------
@@ -1588,7 +1609,7 @@ textarea {
  *    disappears, content fades in). Prevents the jarring "pop" when a
  *    heavy panel like Settings or DbPanel first renders. */
 .lx-fade-in {
-  animation: lx-fade-in 0.18s ease-out;
+  animation: lx-fade-in var(--lx-dur-fast) ease-out;
 }
 @keyframes lx-fade-in {
   from { opacity: 0; }
@@ -1607,13 +1628,7 @@ textarea {
 /* 10. High-contrast focus ring for users who need it. The default 2px
  *     outline is good, but on very busy toolbars it can get lost. This
  *     adds a subtle box-shadow halo on focus-visible for the app chrome. */
-:where(button, a, [role="button"], [tabindex]):focus-visible {
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lx-accent) 25%, transparent);
-}
-.xterm :where(*):focus-visible,
-.cm-editor :where(*):focus-visible {
-  box-shadow: none;
-}
+/* (focus halo: merged into the single focus block near the top) */
 
 /* ===========================================================================
  * ANIMATION SYSTEM (audit pass 4)
@@ -1678,7 +1693,7 @@ textarea {
 /* Branded app mark used in the tray popup header (and its settings preview). */
 .lx-brand-mark {
   background: linear-gradient(135deg, var(--lx-accent), var(--lx-accent-2));
-  transition: transform 0.12s ease, filter 0.12s ease;
+  transition: transform var(--lx-dur-fast) ease, filter var(--lx-dur-fast) ease;
 }
 .lx-brand-mark:hover {
   filter: brightness(1.06);
@@ -1722,60 +1737,60 @@ textarea {
 }
 /* NavRail buttons: staggered fade-in (set --lx-i per item for cascade) */
 .lx-anim-nav-item {
-  animation: lx-nav-item-in 0.22s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: lx-nav-item-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1) both;
   animation-delay: calc(var(--lx-i, 0) * 0.04s);
 }
 
 /* Right panel: slides in from the right */
 .lx-anim-panel-right {
-  animation: lx-panel-slide-right 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-panel-slide-right var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Side panel: slides in from the left */
 .lx-anim-panel-left {
-  animation: lx-panel-slide-left 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-panel-slide-left var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Generic panel content: subtle fade + scale on mount */
 .lx-anim-panel {
-  animation: lx-panel-enter 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-panel-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* TopBar: slides down from the top */
 .lx-anim-bar-top {
-  animation: lx-bar-slide-down 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-bar-slide-down var(--lx-dur-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* StatusBar: slides up from the bottom */
 .lx-anim-bar-bottom {
-  animation: lx-bar-slide-up 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-bar-slide-up var(--lx-dur-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Dockview tabs: scale-in when a new tab opens */
 .dv-tab {
-  animation: lx-tab-open 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-tab-open var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: left center;
 }
 
 /* Context menu: pop-in with scale */
 .lx-anim-menu {
-  animation: lx-menu-pop 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-menu-pop var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top left;
 }
 
 /* Dialog / prompt: scale + fade */
 .lx-anim-dialog {
-  animation: lx-dialog-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-dialog-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Toast: slide up + scale (replaces the older lx-slide-in for toasts) */
 .lx-anim-toast {
-  animation: lx-toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-toast-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Dropdown menus: expand from top */
 .lx-anim-dropdown {
-  animation: lx-dropdown-in 0.16s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-dropdown-in var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top;
 }
 
@@ -1826,12 +1841,12 @@ textarea {
 
 /* Settings modal: scale + fade */
 .lx-anim-modal {
-  animation: lx-modal-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-modal-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Command palette / project switcher: slide down + scale */
 .lx-anim-palette {
-  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-palette-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Smooth spinner (replaces ad-hoc border-spin) */
@@ -1877,18 +1892,18 @@ textarea {
 
 /* Context menu overlay */
 .lx-context-menu {
-  animation: lx-menu-pop 0.14s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-menu-pop var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top left;
 }
 
 /* Dialog overlay (confirm/prompt) */
 .lx-dialog-overlay {
-  animation: lx-dialog-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-dialog-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Toast notifications */
 .lx-toast {
-  animation: lx-toast-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-toast-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Toast auto-dismiss countdown: a thin bar that shrinks over the toast's ttl.
@@ -1912,28 +1927,28 @@ textarea {
  * so a click near the window edge missed it and neither dismissed the modal nor
  * was blocked from the app underneath. */
 .lx-settings-modal {
-  animation: lx-backdrop-in 0.24s ease-out;
+  animation: lx-backdrop-in var(--lx-dur) ease-out;
 }
 .lx-settings-modal > div {
-  animation: lx-modal-enter 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-modal-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 .lx-settings-modal.lx-modal-leaving {
-  animation: lx-backdrop-out 0.18s ease-in forwards;
+  animation: lx-backdrop-out var(--lx-dur-fast) ease-in forwards;
 }
 .lx-settings-modal.lx-modal-leaving > div {
-  animation: lx-modal-exit 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-modal-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 @keyframes lx-backdrop-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes lx-backdrop-out { from { opacity: 1; } to { opacity: 0; } }
 
 /* Command palette */
 .lx-command-palette {
-  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-palette-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* Project switcher */
 .lx-project-switcher {
-  animation: lx-palette-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-palette-enter var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ===========================================================================
@@ -1964,12 +1979,12 @@ textarea {
   to   { opacity: 0; transform: translateY(8px) scale(0.92); }
 }
 .lx-toast.lx-toast-leaving {
-  animation: lx-toast-out 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-toast-out var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 /* Hover lift on cards & list rows */
 .lx-hover-lift {
-  transition: transform 0.15s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.15s ease;
+  transition: transform var(--lx-dur-fast) cubic-bezier(0.22, 1, 0.36, 1), box-shadow var(--lx-dur-fast) ease;
 }
 .lx-hover-lift:hover {
   transform: translateY(-2px);
@@ -1985,7 +2000,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 /* Tab hover: subtle lift */
 .dv-tab:not(.dv-active-tab):hover {
   transform: translateY(-1px);
-  transition: transform 0.12s ease;
+  transition: transform var(--lx-dur-fast) ease;
 }
 
 /* Panel content slide-in on tab switch */
@@ -1994,7 +2009,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 1; transform: translateX(0); }
 }
 .dv-content-container > .dv-panel {
-  animation: lx-content-slide 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-content-slide var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* NavRail button hover: icon scale */
@@ -2009,7 +2024,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
    add opacity fade for inner content */
 .lx-anim-right-panel > div,
 .lx-anim-side-panel > div {
-  transition: opacity 0.2s ease;
+  transition: opacity var(--lx-dur) ease;
 }
 
 /* Loading spinner pulse */
@@ -2043,7 +2058,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 1; max-height: 500px; transform: scaleY(1); }
 }
 .lx-anim-expand {
-  animation: lx-expand-down 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: lx-expand-down var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1);
   transform-origin: top;
   overflow: hidden;
 }
@@ -2069,7 +2084,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 1; transform: translateY(0); }
 }
 .lx-anim-widget-in {
-  animation: lx-widget-in 0.24s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation: lx-widget-in var(--lx-dur) cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 /* Per-widget / per-panel accent override: `--lx-accent` is swapped inline on
@@ -2100,9 +2115,8 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--lx-accent) 40%, transparent); }
   50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--lx-accent) 10%, transparent); }
 }
-.lx-anim-focus-glow:focus-visible {
-  animation: lx-focus-glow 1.8s ease-in-out infinite;
-}
+/* .lx-anim-focus-glow: no longer pulses forever while focused — the static
+ * focus ring above is enough and the loop competed with real motion. */
 
 /* ===========================================================================
  * PHASE 2 — Top-bar menu polish
@@ -2191,13 +2205,13 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   to   { opacity: 0; transform: scale(0.95) translateY(4px); }
 }
 .lx-modal-leaving {
-  animation: lx-modal-exit 0.18s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-modal-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .lx-palette-leaving {
-  animation: lx-palette-exit 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-palette-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 .lx-dialog-leaving {
-  animation: lx-dialog-exit 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: lx-dialog-exit var(--lx-dur-fast) cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 /* Ripple effect on quick action button press */
@@ -2261,11 +2275,11 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 .lx-anim-side-panel > section:nth-child(3),
 .lx-anim-right-panel > section:nth-child(3) { animation-delay: 0.10s; }
 .lx-anim-side-panel > section:nth-child(4),
-.lx-anim-right-panel > section:nth-child(4) { animation-delay: 0.14s; }
+.lx-anim-right-panel > section:nth-child(4) { animation-delay: var(--lx-dur-fast); }
 .lx-anim-side-panel > section:nth-child(5),
-.lx-anim-right-panel > section:nth-child(5) { animation-delay: 0.18s; }
+.lx-anim-right-panel > section:nth-child(5) { animation-delay: var(--lx-dur-fast); }
 .lx-anim-side-panel > section:nth-child(6),
-.lx-anim-right-panel > section:nth-child(6) { animation-delay: 0.22s; }
+.lx-anim-right-panel > section:nth-child(6) { animation-delay: var(--lx-dur); }
 
 /* ===========================================================================
  * BRAND POLISH — Unified button system & surface depth
@@ -2629,21 +2643,7 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 input, textarea, select {
   border-color: transparent;
 }
-:where(input, textarea, select):focus-visible {
-  /* Calm, themed focus: a thin accent-tinted border plus a faint 1px halo.
-   * The previous bright 2px solid-accent ring (`var(--lx-accent)`) painted a
-   * loud yellow/amber box around every text field (Settings search, task
-   * filter, preset name, …) which read as garish "yellow stripes". Keyboard
-   * focus stays clearly visible, just no longer shouty. */
-  outline: none;
-  border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge));
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
-}
-.xterm :where(input, textarea):focus-visible,
-.cm-editor :where(*):focus-visible {
-  outline: none;
-  box-shadow: none;
-}
+/* (text-field focus: defined once in the focus block near the top) */
 
 /* Virtualized scroll containers (Files tree, Git history, Search results).
  * `contain: content` isolates their layout/paint from the rest of the page so

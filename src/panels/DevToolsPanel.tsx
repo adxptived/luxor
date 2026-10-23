@@ -111,7 +111,7 @@ export function DevToolsPanel() {
               onClick={() => setTab(tb.id)}
               title={compact ? t(tb.label) : undefined}
               aria-label={t(tb.label)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition duration-150 ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition duration-[var(--lx-dur-fast)] ${
                 active
                   ? "border-accent bg-accent/10 text-accent font-semibold shadow-sm"
                   : "border-edge bg-surface text-muted hover:bg-raised hover:text-strong hover:border-muted"
@@ -387,7 +387,7 @@ function HtmlTab({ root }: { root: string }) {
             <button
               key={f}
               onClick={() => openPreview(f)}
-              className="group flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent/40 hover:bg-raised transition duration-150 shadow-sm"
+              className="group flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent/40 hover:bg-raised transition duration-[var(--lx-dur-fast)] shadow-sm"
             >
               <AppWindow size={14} className="text-accent shrink-0 group-hover:scale-110 transition-transform" />
               <div className="flex-1 min-w-0">
@@ -540,7 +540,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
       </Header>
 
       {lastCommand && (
-        <div className="rounded-lg border border-accent/25 bg-accent/5 p-2 flex items-center justify-between text-xs transition duration-150">
+        <div className="rounded-lg border border-accent/25 bg-accent/5 p-2 flex items-center justify-between text-xs transition duration-[var(--lx-dur-fast)]">
           <div className="flex items-center gap-2 min-w-0">
             <span className="font-semibold text-accent shrink-0">{t("Last command:")}</span>
             <code className="font-mono bg-bar/30 px-1.5 py-0.5 rounded text-strong truncate max-w-sm md:max-w-md">{lastCommand}</code>
@@ -644,7 +644,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
             const profile = exeProfile(exe);
             const rel = relativeExePath(root, exe);
             return (
-              <div key={exe} className="group flex items-center gap-2 rounded-lg border border-edge bg-surface px-2.5 py-2 hover:border-accent/40 hover:bg-raised/80 transition duration-150">
+              <div key={exe} className="group flex items-center gap-2 rounded-lg border border-edge bg-surface px-2.5 py-2 hover:border-accent/40 hover:bg-raised/80 transition duration-[var(--lx-dur-fast)]">
                 <Play size={12} className="shrink-0 text-accent animate-pulse" />
                 <div className="min-w-0 flex-1">
                   <div className="flex min-w-0 items-center gap-1.5">
@@ -708,7 +708,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
                 key={c.cmd}
                 onClick={() => runInTerminal(c.cmd)}
                 title={`${c.hint ? c.hint + " · " : ""}${c.cmd}`}
-                className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 font-mono text-xs hover:border-accent hover:bg-raised transition duration-150 text-strong"
+                className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 font-mono text-xs hover:border-accent hover:bg-raised transition duration-[var(--lx-dur-fast)] text-strong"
               >
                 <Play size={11} className="text-accent" />
                 {c.label}
@@ -1297,7 +1297,7 @@ function ProcsTab() {
 
       <div className="p-2 space-y-1 max-h-[500px] overflow-y-auto select-none">
         {nodes.map((n) => (
-          <div key={n.pid} className="group flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-raised transition duration-150" style={{ paddingLeft: 10 + n.depth * 14 }}>
+          <div key={n.pid} className="group flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-raised transition duration-[var(--lx-dur-fast)]" style={{ paddingLeft: 10 + n.depth * 14 }}>
             <span className="w-12 text-right font-mono text-muted select-text">PID {n.pid}</span>
             <span className="flex-1 truncate text-strong select-text font-medium" title={n.cmd}>{n.name}</span>
             <span className="w-14 text-right font-mono text-muted">{n.cpu_percent.toFixed(1)}%</span>
@@ -1445,7 +1445,7 @@ function CrashesTab() {
           <button
             key={r.name}
             onClick={() => void open(r)}
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent hover:bg-raised transition duration-150"
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg border border-edge bg-surface text-left hover:border-accent hover:bg-raised transition duration-[var(--lx-dur-fast)]"
           >
             <AlertTriangle size={14} className="text-danger shrink-0" />
             <span className="flex-1 truncate font-mono text-xs text-strong">{r.name}</span>

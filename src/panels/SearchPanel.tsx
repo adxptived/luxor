@@ -201,7 +201,7 @@ export function SearchPanel() {
                 id="search-history-list"
                 role="listbox"
                 aria-label={t("Recent searches")}
-                className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-edge bg-raised shadow-lg"
+                className="absolute left-0 right-0 top-full z-[var(--lx-z-local-overlay)] mt-1 overflow-hidden rounded-lg border border-edge bg-raised shadow-lg"
               >
                 <div className="flex items-center justify-between border-b border-edge/60 px-3 py-1.5 text-3xs text-muted">
                   <span className="inline-flex items-center gap-1"><History size={11} /> {t("Recent searches")}</span>
@@ -310,7 +310,7 @@ export function SearchPanel() {
               {/* Opaque bg instead of translucent + backdrop-blur: a per-group
                   sticky blur inside the scroller forced a re-blur of passing
                   content on EVERY scroll frame (very costly on WebView2). */}
-              <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-edge bg-raised px-3 py-2 text-xs">
+              <div className="sticky top-0 z-[var(--lx-z-local)] flex items-center gap-2 border-b border-edge bg-raised px-3 py-2 text-xs">
                 {showReplace && (
                   <input
                     type="checkbox"

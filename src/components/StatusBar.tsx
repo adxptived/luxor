@@ -542,7 +542,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
           this cluster, so the bar's glass stays uniform across its width. */}
       <div
         ref={clusterRef}
-        className="absolute right-2 top-1/2 z-10 flex -translate-y-1/2 items-center gap-1 pl-1"
+        className="absolute right-2 top-1/2 z-[var(--lx-z-local)] flex -translate-y-1/2 items-center gap-1 pl-1"
         data-testid="statusbar-meta"
       >
         <button

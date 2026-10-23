@@ -134,7 +134,7 @@ export function Toggle({ checked, onChange, disabled = false }: { checked: boole
     >
       {/* Transform-based knob animation runs on the compositor (no layout work per frame). */}
       <span
-        className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-bar shadow transition-transform duration-150 ${
+        className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-bar shadow transition-transform duration-[var(--lx-dur-fast)] ${
           checked ? "translate-x-[1.025rem]" : "translate-x-0"
         }`}
       />

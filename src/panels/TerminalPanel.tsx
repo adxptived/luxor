@@ -834,7 +834,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
       {/* Session restore indicator */}
       {sessionRestored && exited === null && (
-        <div className="pointer-events-none absolute bottom-4 right-4 z-10 flex items-center gap-1.5 rounded-full border border-edge bg-bar/90 px-3 py-1 shadow-sm backdrop-blur animate-session-fade">
+        <div className="pointer-events-none absolute bottom-4 right-4 z-[var(--lx-z-local)] flex items-center gap-1.5 rounded-full border border-edge bg-bar/90 px-3 py-1 shadow-sm backdrop-blur animate-session-fade">
           <History size={12} className="text-accent" />
           <span className="text-2xs font-medium text-strong">{t("term.session_restored", "Session restored")}</span>
         </div>
@@ -842,7 +842,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
       {/* Split terminal button */}
       <button
-        className="absolute right-2 top-1 z-10 flex items-center justify-center rounded border border-edge bg-bar/80 p-1 text-muted transition-colors hover:bg-raised hover:text-strong"
+        className="absolute right-2 top-1 z-[var(--lx-z-local)] flex items-center justify-center rounded border border-edge bg-bar/80 p-1 text-muted transition-colors hover:bg-raised hover:text-strong"
         title={t("term.split", "Split terminal")}
         aria-label={t("term.split", "Split terminal")}
         onClick={() => {
@@ -858,7 +858,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           (shell tree has children). Sends Ctrl+C. */}
       {treeStats !== null && treeStats.processes > 1 && exited === null && (
         <button
-          className="absolute right-9 top-1 z-10 flex items-center justify-center rounded border border-danger-soft-strong bg-danger-soft p-1 text-danger transition-colors hover:bg-danger-soft-strong"
+          className="absolute right-9 top-1 z-[var(--lx-z-local)] flex items-center justify-center rounded border border-danger-soft-strong bg-danger-soft p-1 text-danger transition-colors hover:bg-danger-soft-strong"
           title={t("Stop process (Ctrl+C)")}
           aria-label={t("Stop process (Ctrl+C)")}
           onClick={interruptProcess}
@@ -870,7 +870,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       {treeStats && exited === null && (showStats || treeStats.agents.length > 0) && (
         <div
           data-testid="terminal-stats"
-          className="pointer-events-none absolute bottom-1 right-3 z-10 flex items-center gap-1.5 rounded bg-bar/80 px-1.5 py-0.5 font-mono text-3xs text-muted"
+          className="pointer-events-none absolute bottom-1 right-3 z-[var(--lx-z-local)] flex items-center gap-1.5 rounded bg-bar/80 px-1.5 py-0.5 font-mono text-3xs text-muted"
           title={`${t("Shell process tree — processes:")} ${treeStats.processes}`}
         >
           {treeStats.agents.length > 0 && (
@@ -891,7 +891,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       )}
 
       {searchOpen && (
-        <div className="absolute right-2 top-1 z-10 flex items-center gap-1 rounded border border-edge bg-bar px-2 py-1 shadow-lg">
+        <div className="absolute right-2 top-1 z-[var(--lx-z-local)] flex items-center gap-1 rounded border border-edge bg-bar px-2 py-1 shadow-lg">
           <input
             autoFocus
             value={query}
@@ -932,7 +932,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
       {historyOpen && (
         <div
-          className="absolute inset-0 z-20 flex items-start justify-center bg-black/40 pt-8"
+          className="absolute inset-0 z-[var(--lx-z-local-overlay)] flex items-start justify-center bg-black/40 pt-8"
           onClick={() => setHistoryOpen(false)}
         >
           <div
@@ -985,7 +985,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       )}
 
       {exited !== null && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/50">
+        <div className="absolute inset-0 z-[var(--lx-z-local)] flex flex-col items-center justify-center gap-3 bg-black/50">
           <div className="text-sm text-strong">
             {t("Shell exited")}{exited >= 0 ? ` (code ${exited})` : ""}.
           </div>

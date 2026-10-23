@@ -845,7 +845,7 @@ export function SettingsModal() {
                   <button
                     key={s.id}
                     onClick={() => setSection(s.id)}
-                    className={`relative flex w-full flex-col rounded-md px-2 py-2 text-left transition-colors duration-200 ${
+                    className={`relative flex w-full flex-col rounded-md px-2 py-2 text-left transition-colors duration-[var(--lx-dur)] ${
                       section === s.id
                         ? "bg-surface text-strong lx-active-strip"
                         : "text-muted hover:bg-raised/60 hover:text-strong"

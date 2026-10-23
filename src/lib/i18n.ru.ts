@@ -1653,4 +1653,5 @@ export const RU: Record<string, string> = {
   "Type a command…  / files  @ symbols  : panels": "Введите команду…  / файлы  @ символы  : панели",
   "Search…": "Поиск…",
   "Matching sections: {0}": "Подходящих разделов: {0}",
+  "In the command palette, start with / for files, @ for symbols or : for panels.": "В палитре команд начните с / для файлов, @ для символов или : для панелей.",
 };

@@ -1155,7 +1155,7 @@ function Toggle({
       >
         {/* Transform-based knob animation runs on the compositor (no layout work per frame). */}
         <span
-          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-150 ${checked ? "translate-x-4" : "translate-x-0"}`}
+          className={`absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white transition-transform duration-[var(--lx-dur-fast)] ${checked ? "translate-x-4" : "translate-x-0"}`}
         />
       </button>
     </label>

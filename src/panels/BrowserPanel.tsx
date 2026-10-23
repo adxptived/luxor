@@ -533,7 +533,7 @@ function NativeBrowser() {
         {loading && (
           // Thin indeterminate top progress bar — the native webview paints over
           // the panel, so this is the one load cue the host UI can still show.
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 overflow-hidden">
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-[var(--lx-z-local)] h-0.5 overflow-hidden">
             <div className="lx-browser-progress h-full w-1/3 bg-accent" />
           </div>
         )}
