@@ -203,7 +203,7 @@ export function SearchPanel() {
                 aria-label={t("Recent searches")}
                 className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-lg border border-edge bg-raised shadow-lg"
               >
-                <div className="flex items-center justify-between border-b border-edge/60 px-3 py-1.5 text-3xs uppercase tracking-wide text-muted">
+                <div className="flex items-center justify-between border-b border-edge/60 px-3 py-1.5 text-3xs text-muted">
                   <span className="inline-flex items-center gap-1"><History size={11} /> {t("Recent searches")}</span>
                   <button
                     className="rounded px-1.5 py-0.5 hover:bg-surface hover:text-strong"
@@ -270,7 +270,7 @@ export function SearchPanel() {
               disabled={busy || !hasResults || includedFiles === 0}
               className="rounded-lg border border-danger-soft-strong bg-danger-soft px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:opacity-40"
             >
-              Replace selected
+              {t("Replace selected")}
             </button>
             {undoSnapshot && (
               <button

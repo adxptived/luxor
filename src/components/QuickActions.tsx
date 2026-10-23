@@ -241,13 +241,13 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
         </span>
         {ideMenu && (
           <Dropdown anchor={ideRef} side={menuSide} onClose={() => setIdeMenu(false)}>
-            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-3xs font-semibold uppercase tracking-wide text-muted">
-              Open project in…
+            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-3xs font-medium text-muted">
+              {t("Open project in…")}
             </div>
             {ides.map((ide) => (
               <div key={ide.command} className="group flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-raised">
                 <span
-                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-3xs font-bold text-black/80"
+                  className="flex h-5 w-5 shrink-0 items-center justify-center rounded text-3xs font-semibold text-black/80"
                   style={{ backgroundColor: ideColor(ide.command) }}
                 >
                   {ideShort(ide.label)}
@@ -276,7 +276,7 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
                 </button>
               </div>
             ))}
-            {ides.length === 0 && <div className="px-2 py-1 text-xs text-muted">No IDEs found.</div>}
+            {ides.length === 0 && <div className="px-2 py-1 text-xs text-muted">{t("No IDEs found.")}</div>}
           </Dropdown>
         )}
       </span>
@@ -289,8 +289,8 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
         </button>
         {favMenu && project && (
           <Dropdown anchor={favRef} side={menuSide} onClose={() => setFavMenu(false)}>
-            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-3xs font-semibold uppercase tracking-wide text-muted">
-              Favorite commands
+            <div className="mb-1 rounded-lg bg-surface/70 px-2 py-1.5 text-3xs font-medium text-muted">
+              {t("Favorite commands")}
             </div>
             {project.favorite_commands.map((cmd, i) => (
               <div key={`${cmd}-${i}`} className="group flex items-center gap-1 rounded-lg px-2 py-1.5 hover:bg-raised">
@@ -320,7 +320,7 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
               </div>
             ))}
             {project.favorite_commands.length === 0 && (
-              <div className="px-2 py-1 text-xs text-muted">No favorites yet.</div>
+              <div className="px-2 py-1 text-xs text-muted">{t("No favorites yet.")}</div>
             )}
             <button
               className="mt-1 flex w-full items-center gap-1.5 rounded border-t border-edge px-2 py-1.5 text-xs text-muted hover:bg-raised hover:text-strong"
@@ -329,7 +329,7 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
                 void addFavorite();
               }}
             >
-              <Plus size={12} /> Add command…
+              <Plus size={12} /> {t("Add command…")}
             </button>
           </Dropdown>
         )}

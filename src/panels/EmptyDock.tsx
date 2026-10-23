@@ -70,7 +70,7 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
           )}
         </div>
 
-        <div className="mt-4 text-2xs font-semibold uppercase tracking-wide text-muted">{t("Ready-made layouts")}</div>
+        <div className="mt-4 text-2xs font-medium text-muted">{t("Ready-made layouts")}</div>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-3">
           {BUILTIN_LAYOUTS.map((l) => (
             <EmptyAction
@@ -91,7 +91,7 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
            aria-label={t("Open any panel")}>
             <Plus size={14} /> {t("More panels…")}
           </button>
-          <span className="max-w-full truncate rounded-full border border-edge px-2 py-1 text-3xs uppercase tracking-wide text-muted">
+          <span className="max-w-full truncate rounded-full border border-edge px-2 py-1 text-3xs text-muted">
             {t("Tip: right-click tabs, sidebar and status bar for customization.")}
           </span>
         </div>

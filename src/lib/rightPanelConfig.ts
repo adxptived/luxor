@@ -64,7 +64,7 @@ export interface RightPanelConfig {
   /** Panel-wide accent (hex) or null = the app accent color. */
   accent: string | null;
   density: "comfortable" | "compact";
-  /** Show the small uppercase title above each widget (default true). */
+  /** Show the small title above each widget (default true). */
   show_titles: boolean;
   /** Draw separator lines between widgets (default true). */
   dividers: boolean;

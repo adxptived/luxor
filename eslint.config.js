@@ -106,6 +106,19 @@ export default [
           message:
             "Raw Tailwind palette class detected. Use a semantic design token instead (text-danger / text-success / text-warning / text-info, bg-surface/raised/bar, *-soft / *-soft-strong, text-chart-1..6, text-on-accent). See styles.css @theme and themes.ts.",
         },
+        // Typography guard (UI rework): sentence-case labels and two weights.
+        // All-caps labels shouted in every panel and font-bold competed with
+        // headings; use font-medium for labels and font-semibold for titles.
+        {
+          selector: "Literal[value=/(^|\\s)(uppercase|font-bold|font-extrabold|font-black|tracking-wider|tracking-widest)(\\s|$)/]",
+          message:
+            "Typography guard: no all-caps / extra-wide tracking / bold labels. Use sentence case with font-medium (labels) or font-semibold (titles).",
+        },
+        {
+          selector: "TemplateElement[value.raw=/(^|\\s)(uppercase|font-bold|font-extrabold|font-black|tracking-wider|tracking-widest)(\\s|$)/]",
+          message:
+            "Typography guard: no all-caps / extra-wide tracking / bold labels. Use sentence case with font-medium (labels) or font-semibold (titles).",
+        },
       ],
     },
   },

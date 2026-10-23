@@ -172,7 +172,7 @@ function Widget({
     >
       {ui.showTitles && (
         <div
-          className={`flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted ${
+          className={`flex items-center gap-1.5 text-2xs font-medium text-muted ${
             compact ? "mb-1" : "mb-1.5"
           }`}
         >
@@ -676,7 +676,7 @@ function PanelEditor({
             {open && (
               <div className="lx-anim-expand border-t border-edge px-2 py-1.5 text-xs">
                 <div className="mb-1.5">
-                  <div className="mb-1 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Accent")}</div>
+                  <div className="mb-1 text-3xs font-medium text-muted">{t("Accent")}</div>
                   <AccentPicker value={w.accent} onChange={(a) => onChange(setWidgetAccent(cfg, w.id, a))} />
                 </div>
                 <WidgetOptionsEditor
@@ -691,9 +691,9 @@ function PanelEditor({
       })}
 
       <div className="mt-2 rounded-md border border-edge px-2 py-1.5">
-        <div className="mb-1 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Panel accent")}</div>
+        <div className="mb-1 text-3xs font-medium text-muted">{t("Panel accent")}</div>
         <AccentPicker value={cfg.accent} onChange={(a) => onChange({ ...cfg, accent: a })} />
-        <div className="mb-1 mt-2 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Density")}</div>
+        <div className="mb-1 mt-2 text-3xs font-medium text-muted">{t("Density")}</div>
         <div className="flex gap-1">
           {(["comfortable", "compact"] as const).map((d) => (
             <button
@@ -707,7 +707,7 @@ function PanelEditor({
             </button>
           ))}
         </div>
-        <div className="mb-1 mt-2 text-3xs font-semibold uppercase tracking-wide text-muted">{t("Font size")}</div>
+        <div className="mb-1 mt-2 text-3xs font-medium text-muted">{t("Font size")}</div>
         <div className="flex gap-1">
           {(
             [
@@ -1069,7 +1069,7 @@ function RightPanelImpl() {
       case "embed":
         return wrap(
           <div className="flex flex-col border-b border-edge">
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 text-2xs font-medium text-muted">
               <AppWindow size={12} /> {t("Embedded panel")}
             </div>
             {EmbedComp ? (
@@ -1117,7 +1117,7 @@ function RightPanelImpl() {
             enough widgets the "customize" and "hide" buttons used to scroll out
             of reach. */}
         <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-edge bg-bar px-2.5 py-1.5">
-          <span className="text-2xs font-semibold uppercase tracking-wide text-muted">{t("Panel")}</span>
+          <span className="text-2xs font-medium text-muted">{t("Panel")}</span>
           <div className="flex items-center gap-0.5">
             <button
               className={`rounded p-0.5 hover:bg-raised ${editing ? "text-accent" : "text-muted hover:text-strong"}`}

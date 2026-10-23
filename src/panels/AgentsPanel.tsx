@@ -185,7 +185,7 @@ export function AgentsPanel() {
 
       {groups.map(([label, rows]) => (
         <div key={label} className="mb-3">
-          <div className="mb-1 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted">
+          <div className="mb-1 flex items-center gap-2 text-xs font-medium text-muted">
             {label}
             <span className="rounded bg-raised px-1.5 text-3xs">{rows.length}</span>
           </div>

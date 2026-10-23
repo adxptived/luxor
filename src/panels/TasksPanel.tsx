@@ -163,7 +163,7 @@ export function TasksPanel() {
     <div className="flex h-full flex-col bg-surface text-sm" data-testid="tasks-panel">
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-edge px-3 py-2">
         <span className="flex shrink-0 items-center gap-1.5 font-semibold text-strong">
-          <SquareKanban size={15} /> Tasks
+          <SquareKanban size={15} /> {t("Tasks")}
         </span>
         <span className="min-w-0 truncate text-muted">{project ? project.name : "global board"}</span>
         {tasks.length > 0 && (
@@ -203,7 +203,7 @@ export function TasksPanel() {
             disabled={!tasks.some((t) => t.status === "done")}
             onClick={() => void clearDone()}
           >
-            <Eraser size={14} /> Clear done
+            <Eraser size={14} /> {t("Clear done")}
           </button>
           <button
             className="rounded p-1 text-muted hover:bg-raised hover:text-strong"
@@ -245,7 +245,7 @@ export function TasksPanel() {
                 onDrop(col.id, colTasks.length);
               }}
             >
-              <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+              <div className="flex items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-muted">
                 {t(col.label)}
                 <span className="rounded bg-raised px-1.5 text-3xs">{colTasks.length}</span>
               </div>

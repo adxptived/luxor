@@ -79,18 +79,18 @@ export function SkillsPanel() {
             <GraduationCap size={17} />
           </span>
           <div className="min-w-0 flex-1">
-            <div className="font-semibold text-strong">Skills</div>
+            <div className="font-semibold text-strong">{t("Skills")}</div>
             <div className="truncate text-xs text-muted">{project ? project.name : "no project"}</div>
           </div>
-          <span className="rounded-md border border-edge bg-raised px-2 py-1 text-2xs text-muted">Project · Global</span>
+          <span className="rounded-md border border-edge bg-raised px-2 py-1 text-2xs text-muted">{t("Project · Global")}</span>
         </div>
       </div>
       <div className="flex gap-1 overflow-x-auto border-b border-edge bg-bar/30 px-2 py-2 lx-no-scrollbar">
         <TabButton active={tab === "project"} onClick={() => setTab("project")} icon={FolderInput}>
-          Project skills
+          {t("Project skills")}
         </TabButton>
         <TabButton active={tab === "global"} onClick={() => setTab("global")} icon={Globe}>
-          Global skills
+          {t("Global skills")}
         </TabButton>
       </div>
       {tab === "project" && <ManagerTab root={root} scope="project" />}
@@ -180,7 +180,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
           <>{t("Could not resolve the home directory for global skills.")}</>
         ) : (
           <>
-            Open a project folder to manage its agent skills
+            {t("Open a project folder to manage its agent skills")}
             <br />
             (.agents, .claude, .codex, .cursor, …).
           </>
@@ -314,13 +314,13 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
           className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
           onClick={(e) => conventionMenu(e, (c) => void newSkill(c))}
         >
-          <Plus size={12} /> New skill…
+          <Plus size={12} /> {t("New skill…")}
         </button>
         <button
           className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
           onClick={(e) => conventionMenu(e, (c) => void importFile(c))}
         >
-          <FolderInput size={12} /> Import .md file…
+          <FolderInput size={12} /> {t("Import .md file…")}
         </button>
         <div className="relative ml-auto min-w-[140px] flex-1 sm:max-w-[240px]">
           <Search
@@ -372,15 +372,15 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
       {scanned && entries.length === 0 && (
         <div className="rounded-lg border border-dashed border-edge bg-bar/30 px-5 py-8 text-center text-xs text-muted">
           <GraduationCap size={26} className="mx-auto mb-3 text-accent" />
-          <div className="font-medium text-strong">No skills found {scope === "global" ? "in your home directory" : "in this project"} yet.</div>
-          <div className="mt-1">Create one with “New skill…”.</div>
+          <div className="font-medium text-strong">{t("No skills found")} {scope === "global" ? "in your home directory" : "in this project"} yet.</div>
+          <div className="mt-1">{t("Create one with “New skill…”.")}</div>
         </div>
       )}
       {grouped
         .filter((g) => g.skills.length > 0)
         .map((g) => (
           <div key={g.id} className="mb-3 overflow-hidden rounded-lg border border-edge bg-bar/25">
-            <div className="border-b border-edge bg-raised/60 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            <div className="border-b border-edge bg-raised/60 px-3 py-2 text-xs font-medium text-muted">
               {g.dir} <span className="ml-1 rounded-full bg-surface px-2 py-0.5 text-3xs font-normal">{g.skills.length}</span>
             </div>
             {g.skills.map((s) => (
@@ -425,7 +425,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
                   (hashCount.get(s.content_hash) ?? 0) <= 1 && (
                     <span
                       className="rounded bg-raised px-1 text-3xs text-info"
-                      title="A skill with the same name exists elsewhere (different content)"
+                      title={t("A skill with the same name exists elsewhere (different content)")}
                     >
                       duplicate name
                     </span>

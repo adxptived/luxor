@@ -136,7 +136,7 @@ export function ProgramPicker(props: {
           onChange={(e) => props.onChange(e.target.value)}
           className="max-w-44 rounded border border-edge bg-raised px-2 py-1 text-strong outline-none focus:border-muted"
         >
-          <option value="">Default / custom…</option>
+          <option value="">{t("Default / custom…")}</option>
           {props.detected.map((d) => (
             <option key={d.command} value={d.command}>
               {d.label}

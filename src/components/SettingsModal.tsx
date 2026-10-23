@@ -224,7 +224,7 @@ function FontPicker({
             {o.label}
           </option>
         ))}
-        {!known && <option value="__custom__">Custom…</option>}
+        {!known && <option value="__custom__">{t("Custom…")}</option>}
       </select>
       <input
         value={value}
@@ -815,14 +815,14 @@ export function SettingsModal() {
               return (
                 <div className="m-1 rounded-lg border border-dashed border-edge px-3 py-5 text-center text-xs text-muted">
                   <Search size={16} className="mx-auto mb-2 text-muted" />
-                  <div className="font-medium text-strong">No settings match</div>
-                  <div className="mt-1 leading-4">Try another keyword or clear search to browse all sections.</div>
+                  <div className="font-medium text-strong">{t("No settings match")}</div>
+                  <div className="mt-1 leading-4">{t("Try another keyword or clear search to browse all sections.")}</div>
                 </div>
               );
             return (
               <>
                 {q && (
-                  <div className="mb-1 px-2 text-3xs uppercase tracking-wider text-muted">
+                  <div className="mb-1 px-2 text-3xs text-muted">
                     {visible.length} section{visible.length > 1 ? "s" : ""} match
                   </div>
                 )}
@@ -905,7 +905,7 @@ export function SettingsModal() {
             {section === "appearance" && (
               <>
                 <div className="mb-3">
-                  <div className="mb-2 text-muted">Theme</div>
+                  <div className="mb-2 text-muted">{t("Theme")}</div>
                   <div className="grid grid-cols-3 gap-2">
                     {THEMES.map((t) => (
                       <button
@@ -926,7 +926,7 @@ export function SettingsModal() {
                       </button>
                     ))}
                   </div>
-                  <p className="mt-1 text-xs text-muted">System follows the OS light/dark preference.</p>
+                  <p className="mt-1 text-xs text-muted">{t("System follows the OS light/dark preference.")}</p>
                 </div>
                 <Row
                   label="Accent color"
@@ -979,7 +979,7 @@ export function SettingsModal() {
                       onClick={() => set({ accent_color: themeMeta(resolveTheme(draft.theme)).accent })}
                       className="rounded border border-edge px-2 py-1 text-xs text-muted hover:border-accent hover:text-accent"
                     >
-                      Reset
+                      {t("Reset")}
                     </button>
                   </div>
                 </Row>
@@ -1009,32 +1009,32 @@ export function SettingsModal() {
                   </Row>
                 )}
                 {!accentValid && (
-                  <p className="mb-2 text-xs text-danger">Use a hex color like #e8b059.</p>
+                  <p className="mb-2 text-xs text-danger">{t("Use a hex color like #e8b059.")}</p>
                 )}
                 {/* Live preview — updates instantly as the accent changes. */}
                 <div className="mb-3 rounded-lg border border-edge bg-surface/40 p-3">
-                  <div className="mb-2 text-3xs uppercase tracking-wider text-muted">Preview</div>
+                  <div className="mb-2 text-3xs text-muted">{t("Preview")}</div>
                   <div className="flex flex-wrap items-center gap-2.5">
                     <button
                       className="rounded-md px-3 py-1.5 text-xs font-semibold text-on-accent shadow-sm"
                       style={{ background: accentPreview }}
                     >
-                      Primary
+                      {t("Primary")}
                     </button>
                     <button
                       className="rounded-md border bg-transparent px-3 py-1 text-xs font-medium"
                       style={{ borderColor: accentPreview, color: accentPreview }}
                     >
-                      Outline
+                      {t("Outline")}
                     </button>
                     <span
                       className="rounded-md px-2 py-1 text-xs font-semibold"
                       style={{ background: `color-mix(in srgb, ${accentPreview} 16%, transparent)`, color: accentPreview }}
                     >
-                      Badge
+                      {t("Badge")}
                     </span>
                     <span className="cursor-pointer text-xs font-medium underline underline-offset-2" style={{ color: accentPreview }}>
-                      A link
+                      {t("A link")}
                     </span>
                     <span
                       className="relative inline-block h-5 w-9 shrink-0 rounded-full"
@@ -1086,14 +1086,14 @@ export function SettingsModal() {
                       data-testid="settings-export"
                       onClick={() => void exportConfig()}
                     >
-                      <Download size={12} /> Export…
+                      <Download size={12} /> {t("Export…")}
                     </button>
                     <button
                       className="flex items-center gap-1 rounded border border-edge px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
                       data-testid="settings-import"
                       onClick={() => void importConfig()}
                     >
-                      <Upload size={12} /> Import…
+                      <Upload size={12} /> {t("Import…")}
                     </button>
                     <button
                       className="flex items-center gap-1 rounded border border-edge px-2.5 py-1 text-xs text-muted hover:border-accent hover:text-accent"
@@ -1107,7 +1107,7 @@ export function SettingsModal() {
                       onClick={() => void importConfigFromUrl()}
                       title={t("settings.import_url", "Import from URL in clipboard")}
                     >
-                      <Upload size={12} /> From URL
+                      <Upload size={12} /> {t("From URL")}
                     </button>
                   </span>
                 </Row>
@@ -1468,7 +1468,7 @@ export function SettingsModal() {
                       </Row>
                     </div>
                     <div className="shrink-0 md:w-[256px]">
-                      <div className="mb-1.5 text-3xs uppercase tracking-wider text-muted">{t("Preview", "Preview")}</div>
+                      <div className="mb-1.5 text-3xs text-muted">{t("Preview", "Preview")}</div>
                       <div className="pointer-events-none select-none rounded-lg" style={{ width: 256, boxShadow: "var(--lx-shadow-lg)" }}>
                         <TrayMenu
                           config={draft.ui.tray ?? DEFAULT_TRAY}
@@ -1619,10 +1619,9 @@ export function SettingsModal() {
                   />
                 </Row>
 
-                <div className="mb-2 mt-5 font-medium text-strong">Sidebar / nav buttons</div>
+                <div className="mb-2 mt-5 font-medium text-strong">{t("Sidebar / nav buttons")}</div>
                 <p className="mb-2 text-xs text-muted">
-                  Reorder with the arrows, choose whether each visible button lives in the top bar, right corner, or left sidebar rail,
-                  or hide the ones you don&apos;t use. At least one stays visible.
+                  {t("Reorder with the arrows, choose whether each visible button lives in the top bar, right corner, or left sidebar rail, or hide the ones you don't use. At least one stays visible.")}
                 </p>
                 <NavPreview config={draft as AppConfig} />
                 {resolveNavOrder(draft.ui.nav_order ?? []).map((id, i, arr) => {
@@ -1675,13 +1674,13 @@ export function SettingsModal() {
                         onChange={(e) => setPlacement(e.target.value)}
                         className="rounded border border-edge bg-raised px-1.5 py-0.5 text-2xs text-strong outline-none focus:border-muted"
                       >
-                        <option value="topbar-left">Top bar — left</option>
-                        <option value="topbar-center">Top bar — center</option>
-                        <option value="topbar">Top bar — right</option>
-                        <option value="chrome">Window corner</option>
-                        <option value="sidebar">Sidebar</option>
+                        <option value="topbar-left">{t("Top bar — left")}</option>
+                        <option value="topbar-center">{t("Top bar — center")}</option>
+                        <option value="topbar">{t("Top bar — right")}</option>
+                        <option value="chrome">{t("Window corner")}</option>
+                        <option value="sidebar">{t("Sidebar")}</option>
                         <option value="hidden" disabled={!hidden && visibleCount <= 1}>
-                          Hidden
+                          {t("Hidden")}
                         </option>
                       </select>
                       <button
@@ -1808,10 +1807,10 @@ export function SettingsModal() {
                     <p className="mt-1 text-xs text-danger">{shellArgsError}</p>
                   ) : draft.terminal.shell_args.length > 0 ? (
                     <p className="mt-1 text-xs text-muted">
-                      Parsed as {draft.terminal.shell_args.length} argument{draft.terminal.shell_args.length === 1 ? "" : "s"}. Explicit args override the PowerShell profile option above.
+                      {t("Parsed as")} {draft.terminal.shell_args.length} argument{draft.terminal.shell_args.length === 1 ? "" : "s"}. Explicit args override the PowerShell profile option above.
                     </p>
                   ) : (
-                    <p className="mt-1 text-xs text-muted">Leave empty to let the PowerShell profile option above choose safe startup flags.</p>
+                    <p className="mt-1 text-xs text-muted">{t("Leave empty to let the PowerShell profile option above choose safe startup flags.")}</p>
                   )}
                 </Row>
                 <Row
@@ -1912,7 +1911,7 @@ export function SettingsModal() {
                   />
                 </Row>
                 <p className="mt-3 text-xs text-muted">
-                  Font and cursor changes apply to newly opened terminals.
+                  {t("Font and cursor changes apply to newly opened terminals.")}
                 </p>
               </>
             )}
@@ -1952,19 +1951,19 @@ export function SettingsModal() {
                 </Row>
                 <div className="mb-3">
                   <div className="mb-2 flex items-center justify-between">
-                    <span className="text-muted">Custom IDEs / editors</span>
+                    <span className="text-muted">{t("Custom IDEs / editors")}</span>
                     <button
                       className="flex items-center gap-1 rounded border border-edge px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
                       onClick={() =>
                         set({ custom_ides: [...draft.custom_ides, { label: "", command: "" }] })
                       }
                     >
-                      <Plus size={12} /> Add
+                      <Plus size={12} /> {t("Add")}
                     </button>
                   </div>
                   {draft.custom_ides.length === 0 && (
                     <p className="text-xs text-muted">
-                      Add editors that aren't on PATH — pick the .exe and give it a name.
+                      {t("Add editors that aren't on PATH — pick the .exe and give it a name.")}
                     </p>
                   )}
                   {draft.custom_ides.map((ide, i) => (
@@ -2030,7 +2029,7 @@ export function SettingsModal() {
                       onChange={(e) => set({ default_ide: e.target.value || null })}
                       className="w-full rounded border border-edge bg-raised px-2 py-1 text-xs text-strong outline-none focus:border-muted"
                     >
-                      <option value="">Auto (first detected)</option>
+                      <option value="">{t("Auto (first detected)")}</option>
                       {draft.custom_ides
                         .filter((c) => c.command.trim())
                         .map((c) => (
@@ -2045,8 +2044,8 @@ export function SettingsModal() {
                             {d.label}
                           </option>
                         ))}
-                      <option value="__default__">System default app (like Windows "Open with")</option>
-                      <option value="__explorer__">File explorer</option>
+                      <option value="__default__">{t("System default app (like Windows \"Open with\")")}</option>
+                      <option value="__explorer__">{t("File explorer")}</option>
                       {draft.default_ide &&
                         !["__default__", "__explorer__"].includes(draft.default_ide) &&
                         !detectedIdes.some((d) => d.command === draft.default_ide) &&
@@ -2057,7 +2056,7 @@ export function SettingsModal() {
                   </div>
                 </Row>
                 <p className="mt-3 text-xs text-muted">
-                  Per-project favorite commands and pinned executables live in the Launcher panel.
+                  {t("Per-project favorite commands and pinned executables live in the Launcher panel.")}
                 </p>
               </>
             )}
@@ -2110,10 +2109,9 @@ export function SettingsModal() {
                   />
                 </Row>
 
-                <div className="mb-2 mt-5 font-medium text-strong">Segment order</div>
+                <div className="mb-2 mt-5 font-medium text-strong">{t("Segment order")}</div>
                 <p className="mb-2 text-xs text-muted">
-                  Everything before the spacer is left-aligned, everything after — right-aligned. You can also drag
-                  segments directly in the status bar or right-click it for quick toggles.
+                  {t("Everything before the spacer is left-aligned, everything after — right-aligned. You can also drag segments directly in the status bar or right-click it for quick toggles.")}
                 </p>
                 {resolveSegmentOrder(draft.status_bar.segment_order ?? []).map((id, i, arr) => {
                   const toggleKey = SEGMENT_TOGGLES[id];
@@ -2308,7 +2306,7 @@ export function SettingsModal() {
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-2xl font-bold tracking-tight text-strong">Luxor</span>
+                        <span className="text-2xl font-semibold tracking-tight text-strong">Luxor</span>
                         <span className="rounded-full border border-edge bg-bar px-2 py-0.5 font-mono text-2xs text-muted">
                           v{APP_VERSION}
                         </span>

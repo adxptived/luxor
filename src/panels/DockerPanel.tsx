@@ -102,7 +102,7 @@ export function DockerPanel() {
         <div className="rounded-lg border border-edge bg-bar/45 px-5 py-4 text-center shadow-sm">
           <Loader2 size={22} className="mx-auto mb-2 animate-spin text-accent" />
           <div className="font-medium text-strong">{t("Checking Docker…")}</div>
-          <div className="mt-1 text-xs">Looking for the docker CLI.</div>
+          <div className="mt-1 text-xs">{t("Looking for the docker CLI.")}</div>
         </div>
       </div>
     );
@@ -204,7 +204,7 @@ export function DockerPanel() {
             all containers
           </label>
           <button onClick={() => void refresh()} className="flex items-center gap-1.5 rounded-lg border border-edge px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong" disabled={busy}>
-            <RefreshCw size={13} className={busy ? "animate-spin" : ""} /> Refresh
+            <RefreshCw size={13} className={busy ? "animate-spin" : ""} /> {t("Refresh")}
           </button>
         </div>
 

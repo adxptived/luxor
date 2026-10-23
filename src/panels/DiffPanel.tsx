@@ -152,14 +152,14 @@ export function DiffPanel(props: IDockviewPanelProps) {
   if (error) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted">
-        Diff failed: {error}
+        {t("Diff failed:")} {error}
       </div>
     );
   }
   if (binary) {
     return (
       <div className="flex h-full items-center justify-center bg-surface p-6 text-sm text-muted">
-        Binary or oversized file — diff not shown.
+        {t("Binary or oversized file — diff not shown.")}
       </div>
     );
   }

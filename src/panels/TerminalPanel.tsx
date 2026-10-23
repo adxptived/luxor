@@ -976,7 +976,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
                 ))}
               {history.filter((c) => c.toLowerCase().includes(historyFilter.toLowerCase())).length === 0 && (
                 <div className="px-2 py-2 text-xs text-muted">
-                  No commands recorded yet — type something in a terminal first.
+                  {t("No commands recorded yet — type something in a terminal first.")}
                 </div>
               )}
             </div>
@@ -987,13 +987,13 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       {exited !== null && (
         <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-black/50">
           <div className="text-sm text-strong">
-            Shell exited{exited >= 0 ? ` (code ${exited})` : ""}.
+            {t("Shell exited")}{exited >= 0 ? ` (code ${exited})` : ""}.
           </div>
           <button
             className="rounded bg-accent px-4 py-1.5 text-sm text-black hover:opacity-90"
             onClick={() => restartRef.current?.()}
           >
-            Restart shell
+            {t("Restart shell")}
           </button>
         </div>
       )}

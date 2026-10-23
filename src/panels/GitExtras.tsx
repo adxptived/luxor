@@ -48,7 +48,7 @@ export function TagsView({ repo, busy, run }: { repo: string; busy: string | nul
           disabled={!name.trim() || busy !== null}
           className="rounded bg-accent px-2 py-1 text-xs font-medium text-on-accent disabled:opacity-40"
         >
-          Tag HEAD
+          {t("Tag HEAD")}
         </button>
       </div>
       {tags.length === 0 && <div className="py-6 text-center text-xs text-muted">{tr("No tags.")}</div>}
@@ -135,7 +135,7 @@ export function SubmodulesView({ repo, run }: { repo: string; run: RunFn }) {
             className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             onClick={() => void run(tr("Update submodule"), () => ipc.gitSubmoduleUpdate(repo, s.name).then(load), tr("Submodule updated"))}
           >
-            Init / update
+            {t("Init / update")}
           </button>
         </div>
       ))}
@@ -199,14 +199,14 @@ export function ConflictsView({ repo }: { repo: string }) {
               [tr("Theirs (incoming)"), active.theirs],
             ] as const).map(([label, text]) => (
               <div key={label} className="flex min-h-24 flex-col overflow-hidden rounded border border-edge">
-                <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs uppercase tracking-wide text-muted">{label}</div>
+                <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs text-muted">{label}</div>
                 <pre className="min-h-0 flex-1 overflow-auto bg-surface p-2 font-mono text-xs leading-5 text-strong">{text}</pre>
               </div>
             ))}
           </div>
         )}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded border border-edge">
-          <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs uppercase tracking-wide text-muted">{tr("Result (editable)")}</div>
+          <div className="border-b border-edge bg-raised px-2 py-0.5 text-3xs text-muted">{tr("Result (editable)")}</div>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
@@ -224,7 +224,7 @@ export function ConflictsView({ repo }: { repo: string }) {
       {paths.length === 0 && <div className="py-6 text-center text-xs text-muted">{tr("No merge conflicts ✓")}</div>}
       {paths.map((p) => (
         <button key={p} onClick={() => void open(p)} className="flex w-full items-center gap-2 rounded px-2 py-1 text-left hover:bg-raised">
-          <span className="font-mono font-bold text-danger">!</span>
+          <span className="font-mono font-semibold text-danger">!</span>
           <span className="truncate text-strong">{p}</span>
         </button>
       ))}

@@ -32,7 +32,7 @@ function FileIconImpl({ name, isDir = false, expanded = false, size = 16, classN
   return (
     <span
       aria-hidden="true"
-      className={`inline-flex shrink-0 items-center justify-center font-mono font-bold leading-none ${className}`}
+      className={`inline-flex shrink-0 items-center justify-center font-mono font-semibold leading-none ${className}`}
       style={{
         width: size,
         height: size,

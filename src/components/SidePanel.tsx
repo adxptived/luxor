@@ -49,7 +49,7 @@ const WIDGET_PANEL: Record<string, string> = {
 function Widget({ title, icon: Icon, children }: { title: string; icon: React.ComponentType<{ size?: number; className?: string }>; children: React.ReactNode }) {
   return (
     <section className="lx-card m-2 p-2.5" style={{ borderRadius: "var(--lx-radius-lg)" }}>
-      <div className="mb-2 flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
+      <div className="mb-2 flex items-center gap-1.5 text-2xs font-medium text-muted">
         <span className="flex h-5 w-5 items-center justify-center rounded-md bg-raised text-muted">
           <Icon size={12} />
         </span>
@@ -232,7 +232,7 @@ function SidePanelImpl() {
               >
                 <Icon size={15} />
                 {badge && (
-                  <span className="pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--lx-accent)] px-1 text-3xs font-bold leading-none text-black/85 ring-1 ring-[var(--lx-bar)]">
+                  <span className="pointer-events-none absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[var(--lx-accent)] px-1 text-3xs font-semibold leading-none text-black/85 ring-1 ring-[var(--lx-bar)]">
                     {badge}
                   </span>
                 )}
@@ -316,7 +316,7 @@ function SidePanelImpl() {
             </button>
           ))}
           {recents.length === 0 && (
-            <div className="rounded-lg border border-dashed border-edge px-2 py-2 text-muted">No recent projects yet.</div>
+            <div className="rounded-lg border border-dashed border-edge px-2 py-2 text-muted">{t("No recent projects yet.")}</div>
           )}
         </Widget>
       )}

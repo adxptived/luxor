@@ -84,7 +84,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
                 </div>
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-baseline gap-2">
-                    <h1 className="text-3xl font-bold tracking-tight text-strong sm:text-4xl">
+                    <h1 className="text-3xl font-semibold tracking-tight text-strong sm:text-4xl">
                       {blank ? t("Blank workspace") : "Luxor"}
                     </h1>
                     {!blank && (
@@ -149,7 +149,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
           <aside className="grid grid-cols-1 gap-4">
             <section className="rounded-lg border border-edge bg-bar/80 p-3">
               <div className="mb-2 flex items-center justify-between gap-2 px-1">
-                <div className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wide text-muted">
+                <div className="flex items-center gap-1.5 text-2xs font-medium text-muted">
                   <History size={12} /> {t("Recent projects")}
                 </div>
                 {recents.length > 0 && <span className="text-3xs text-muted">{recents.length}</span>}
@@ -184,7 +184,7 @@ function WelcomePanelImpl(props: Partial<IDockviewPanelProps> = {}) {
             </section>
 
             <section className="rounded-lg border border-edge bg-bar/80 px-4 py-3 text-left text-xs text-muted">
-              <div className="mb-1.5 flex items-center gap-1.5 font-semibold uppercase tracking-wide">
+              <div className="mb-1.5 flex items-center gap-1.5 font-medium">
                 <Lightbulb size={12} className="text-muted" /> {t("Tips")}
               </div>
               <ul className="space-y-1.5">
@@ -213,7 +213,7 @@ function FeaturePill(props: { icon: React.ComponentType<{ size?: number; classNa
     <div className="flex min-w-0 items-center gap-2 rounded-lg border border-edge bg-bar/70 px-3 py-2">
       <props.icon size={14} className="shrink-0 text-accent" />
       <span className="min-w-0">
-        <span className="block truncate text-3xs uppercase tracking-wide text-muted">{props.label}</span>
+        <span className="block truncate text-3xs text-muted">{props.label}</span>
         <span className="block truncate text-xs font-medium text-strong">{props.value}</span>
       </span>
     </div>

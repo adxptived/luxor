@@ -363,7 +363,7 @@ function Card({
     <section className="rounded-xl border border-edge bg-bar/40 p-4">
       {(title || right) && (
         <header className="mb-3 flex items-center justify-between gap-2">
-          <h2 className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+          <h2 className="flex items-center gap-1.5 text-xs font-medium text-muted">
             {icon}
             {title}
           </h2>
@@ -378,7 +378,7 @@ function Card({
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-1 flex items-center gap-3">
-      <span className="text-2xs font-semibold uppercase tracking-wider text-muted">{children}</span>
+      <span className="text-2xs font-medium text-muted">{children}</span>
       <span className="h-px flex-1 bg-edge" />
     </div>
   );
@@ -749,7 +749,7 @@ function DetailedTotals({
     <div className="grid grid-cols-2 gap-3 @md:grid-cols-3 @2xl:grid-cols-4">
       {tiles.map((tile) => (
         <div key={tile.label} className="rounded-lg border border-edge bg-surface/50 p-3">
-          <div className="flex items-center gap-1.5 text-2xs font-medium uppercase tracking-wide text-muted">
+          <div className="flex items-center gap-1.5 text-2xs font-medium text-muted">
             <span className="text-muted">{tile.icon}</span>
             <span className="truncate">{tile.label}</span>
           </div>
@@ -1097,7 +1097,7 @@ function ExportShare() {
   return (
     <details className="group rounded-xl border border-edge bg-bar/35 p-3 text-sm">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-muted transition hover:text-strong">
-        <span className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide">
+        <span className="flex items-center gap-2 text-xs font-medium">
           <Share2 size={13} /> {t("Export & Share")}
         </span>
         <span className="text-2xs normal-case opacity-70 group-open:hidden">

@@ -61,7 +61,7 @@ export function PdfPanel(props: IDockviewPanelProps) {
             onClick={() => setReloadKey((k) => k + 1)}
             className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs hover:bg-raised hover:text-strong"
           >
-            <RefreshCw size={13} /> Retry
+            <RefreshCw size={13} /> {t("Retry")}
           </button>
         </div>
       </div>
@@ -95,7 +95,7 @@ export function PdfPanel(props: IDockviewPanelProps) {
           <Copy size={13} />
         </button>
         <span className="hidden items-center gap-1 rounded-full border border-edge bg-surface px-2 py-1 text-3xs sm:flex">
-          <AlertTriangle size={11} className="text-muted" /> Native viewer
+          <AlertTriangle size={11} className="text-muted" /> {t("Native viewer")}
         </span>
       </div>
       <iframe src={src} title={path} className="min-h-0 flex-1 border-0 bg-surface" />

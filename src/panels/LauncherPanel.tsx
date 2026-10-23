@@ -205,7 +205,7 @@ function Section({ title, subtitle, children }: { title: string; subtitle: strin
   return (
     <section className="mb-3 rounded-lg border border-edge bg-bar/70 p-3">
       <div className="mb-2">
-        <div className="text-xs font-semibold uppercase tracking-wide text-muted">{title}</div>
+        <div className="text-xs font-medium text-muted">{title}</div>
         <div className="mt-0.5 text-2xs text-muted">{subtitle}</div>
       </div>
       {children}

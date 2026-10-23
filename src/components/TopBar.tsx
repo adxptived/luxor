@@ -1126,7 +1126,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               )}
               {recents.length > 0 && (
                 <>
-                  <div className="mt-1 flex items-center gap-1.5 border-t border-edge px-2 pb-0.5 pt-1.5 text-3xs font-semibold uppercase tracking-wide text-muted">
+                  <div className="mt-1 flex items-center gap-1.5 border-t border-edge px-2 pb-0.5 pt-1.5 text-3xs font-medium text-muted">
                     <History size={11} /> {t("Recent projects")}
                   </div>
                   {recents.map((r) => (
@@ -1236,7 +1236,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               <div
                 className="lx-pop-in absolute right-0 top-full z-[var(--lx-z-dropdown)] max-h-80 w-56 overflow-y-auto rounded-lg border border-edge bg-bar p-1 shadow-xl"
               >
-                <div className="mb-1 px-2 py-0.5 text-3xs font-semibold uppercase tracking-wide text-muted">
+                <div className="mb-1 px-2 py-0.5 text-3xs font-medium text-muted">
                   {t("All tabs")}
                 </div>
                 {sortedProjects.map((p) => (
@@ -1409,7 +1409,7 @@ function PresetMenu(props: {
         props.vertical ? "bottom-0 left-full ml-1" : "right-0 top-full mt-1"
       }`}
     >
-      <div className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-muted">
+      <div className="mb-1 px-1 text-xs font-medium text-muted">
         {t("Ready-made layouts")}
       </div>
       {BUILTIN_LAYOUTS.map((l) => (
@@ -1422,7 +1422,7 @@ function PresetMenu(props: {
           <span className="text-xs text-muted">{t(l.description)}</span>
         </button>
       ))}
-      <div className="mb-1 mt-2 border-t border-edge px-1 pt-2 text-xs font-semibold uppercase tracking-wide text-muted">
+      <div className="mb-1 mt-2 border-t border-edge px-1 pt-2 text-xs font-medium text-muted">
         {t("Layout presets")}
       </div>
       {props.presets.length === 0 && (

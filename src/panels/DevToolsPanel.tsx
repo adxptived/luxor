@@ -200,12 +200,12 @@ function DiagnosticsTab({ root }: { root: string }) {
         <div className="flex min-w-0 items-start gap-2.5">
           <div className="rounded-lg border border-accent/30 bg-accent/10 p-2 text-accent"><Activity size={17} /></div>
           <div className="min-w-0">
-            <div className="font-semibold text-strong">Developer diagnostics</div>
-            <p className="mt-0.5 max-w-xl text-xs leading-5 text-muted">Read-only health checks for native IPC, project tooling and desktop integrations. Checks never send notifications or modify your project.</p>
+            <div className="font-semibold text-strong">{t("Developer diagnostics")}</div>
+            <p className="mt-0.5 max-w-xl text-xs leading-5 text-muted">{t("Read-only health checks for native IPC, project tooling and desktop integrations. Checks never send notifications or modify your project.")}</p>
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button onClick={() => void copyReport()} disabled={!report || running} className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs text-muted transition hover:border-accent hover:text-accent disabled:opacity-40"><Copy size={12} /> Copy report</button>
+          <button onClick={() => void copyReport()} disabled={!report || running} className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs text-muted transition hover:border-accent hover:text-accent disabled:opacity-40"><Copy size={12} /> {t("Copy report")}</button>
           <button onClick={() => void run()} disabled={running} className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent transition hover:bg-accent/15 disabled:opacity-50"><RefreshCw size={12} className={running ? "animate-spin" : ""} /> {running ? "Checking…" : "Run all"}</button>
         </div>
       </div>
@@ -221,7 +221,7 @@ function DiagnosticsTab({ root }: { root: string }) {
       )}
 
       {!report && running ? (
-        <div className="flex flex-1 items-center justify-center gap-2 py-16 text-sm text-muted"><RefreshCw size={16} className="animate-spin text-accent" /> Inspecting subsystems…</div>
+        <div className="flex flex-1 items-center justify-center gap-2 py-16 text-sm text-muted"><RefreshCw size={16} className="animate-spin text-accent" /> {t("Inspecting subsystems…")}</div>
       ) : (
         <div className="flex flex-col gap-3">
           {DIAGNOSTIC_GROUPS.map((group) => {
@@ -230,7 +230,7 @@ function DiagnosticsTab({ root }: { root: string }) {
             return (
               <section key={group} aria-labelledby={`diagnostic-${group}`} className="overflow-hidden rounded-xl border border-edge bg-surface shadow-sm">
                 <div className="flex items-center justify-between border-b border-edge bg-bar/30 px-3 py-2">
-                  <h3 id={`diagnostic-${group}`} className="text-xs font-semibold uppercase tracking-wide text-muted">{group}</h3>
+                  <h3 id={`diagnostic-${group}`} className="text-xs font-medium capitalize text-muted">{group}</h3>
                   <span className="text-2xs text-muted">{checks.filter((check) => check.state === "pass").length}/{checks.length} passed</span>
                 </div>
                 <div className="divide-y divide-edge/60">
@@ -241,7 +241,7 @@ function DiagnosticsTab({ root }: { root: string }) {
           })}
         </div>
       )}
-      {report && <div className="px-1 text-2xs text-muted">Completed in {report.duration_ms} ms · {report.runtime === "tauri" ? "Native desktop runtime" : "Browser preview (native checks mocked)"}</div>}
+      {report && <div className="px-1 text-2xs text-muted">{t("Completed in")} {report.duration_ms} ms · {report.runtime === "tauri" ? "Native desktop runtime" : "Browser preview (native checks mocked)"}</div>}
     </div>
   );
 }
@@ -358,7 +358,7 @@ function HtmlTab({ root }: { root: string }) {
     <div className="flex h-full flex-col">
       <Header onRefresh={scan} busy={scanning}>
         <AppWindow size={13} className="text-accent" />
-        <span className="font-semibold text-strong">HTML Preview Engine</span>
+        <span className="font-semibold text-strong">{t("HTML Preview Engine")}</span>
         {scanning && <span className="text-xs text-muted animate-pulse ml-1">{t("Scanning…")}</span>}
         <span className="text-xs text-muted ml-1">({files.length} found)</span>
       </Header>
@@ -380,8 +380,8 @@ function HtmlTab({ root }: { root: string }) {
         </div>
       ) : (
         <div className="p-2 space-y-1.5">
-          <div className="px-1 pb-1 text-3xs uppercase tracking-widest font-bold text-muted">
-            Click a page to open it as a preview tab with Source ↔ View toggle and auto-refresh
+          <div className="px-1 pb-1 text-3xs font-medium text-muted">
+            {t("Click a page to open it as a preview tab with Source ↔ View toggle and auto-refresh")}
           </div>
           {files.map((f) => (
             <button
@@ -396,7 +396,7 @@ function HtmlTab({ root }: { root: string }) {
               </div>
               <div className="shrink-0 flex items-center gap-1 text-3xs text-muted">
                 <Eye size={11} className="text-accent opacity-50 group-hover:opacity-100 group-focus-within:opacity-100 transition" />
-                <span className="hidden group-hover:block group-focus-within:block text-accent font-medium">Open preview →</span>
+                <span className="hidden group-hover:block group-focus-within:block text-accent font-medium">{t("Open preview →")}</span>
               </div>
             </button>
           ))}
@@ -557,7 +557,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
       <div className="rounded-lg border border-edge bg-bar/35 p-2.5 shadow-sm">
         <div className="mb-2 flex flex-wrap items-start gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
               <Code2 size={13} className="text-accent" /> {t("IDE workspace actions")}
             </div>
             <div className="mt-1 text-xs leading-5 text-muted">
@@ -608,7 +608,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
       <div className="rounded-lg border border-edge bg-bar/35 p-2.5 shadow-sm">
         <div className="flex flex-wrap items-start gap-2">
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-muted">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted">
               <Search size={13} className="text-accent" /> {t("Find executable")}
             </div>
             <div className="mt-1 text-xs leading-5 text-muted">
@@ -698,7 +698,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
 
       {groups.map((g) => (
         <div key={g.tool} className="rounded-lg border border-edge bg-bar/15 p-2.5">
-          <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-muted flex items-center gap-1.5">
+          <div className="mb-2 px-1 text-xs font-medium text-muted flex items-center gap-1.5">
             <Layers size={12} className="text-accent" />
             {g.tool}
           </div>
@@ -863,7 +863,7 @@ function LogsTab({ root: _root }: { root: string }) {
     <div className="flex h-full flex-col">
       <Header onRefresh={() => setLogs(getLogsFiltered(minLvl))}>
         <ScrollText size={13} className="text-accent" />
-        <span className="font-semibold text-strong">System & Agent Live Console</span>
+        <span className="font-semibold text-strong">{t("System & Agent Live Console")}</span>
         <button
           onClick={() => { clearLogs(); setLogs([]); }}
           className="ml-auto rounded border border-edge px-2 py-0.5 hover:text-strong transition text-2xs"
@@ -888,17 +888,17 @@ function LogsTab({ root: _root }: { root: string }) {
           onChange={(e) => setMinLvl(e.target.value as LogLevel)}
           className="rounded-lg border border-edge bg-surface px-2 py-1 text-xs text-strong outline-none focus:border-accent"
         >
-          <option value="DEBUG">DEBUG & Above</option>
-          <option value="INFO">INFO & Above</option>
-          <option value="WARN">WARN & Above</option>
-          <option value="ERROR">ERROR Only</option>
+          <option value="DEBUG">{t("DEBUG & Above")}</option>
+          <option value="INFO">{t("INFO & Above")}</option>
+          <option value="WARN">{t("WARN & Above")}</option>
+          <option value="ERROR">{t("ERROR Only")}</option>
         </select>
       </div>
 
       {/* Log Feed */}
       <div className="flex-1 overflow-auto bg-surface p-3 font-mono text-2xs space-y-1.5 select-text lx-no-scrollbar leading-relaxed">
         {filteredLogs.length === 0 ? (
-          <div className="text-center text-muted py-8 italic">No logs recorded matching filters.</div>
+          <div className="text-center text-muted py-8 italic">{t("No logs recorded matching filters.")}</div>
         ) : (
           filteredLogs.map((l) => (
             <div key={l.id} className="flex gap-2 items-start hover:bg-raised px-1 py-0.5 rounded transition">
@@ -929,7 +929,7 @@ function DiskTab({ root }: { root: string }) {
     <div>
       <Header onRefresh={load} busy={busy}>
         <HardDrive size={13} className="text-accent" /> 
-        <span className="font-semibold text-strong">Disk Usage Analyzer</span>
+        <span className="font-semibold text-strong">{t("Disk Usage Analyzer")}</span>
         {report && <span className="text-xs text-muted ml-1.5">({fmtBytes(report.total_bytes)} total)</span>}
         {busy && <span className="text-xs text-muted ml-auto animate-pulse">{t("Scanning…")}</span>}
       </Header>
@@ -945,7 +945,7 @@ function DiskTab({ root }: { root: string }) {
             </div>
             <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto">
               <span className="font-semibold text-strong font-mono min-w-[70px] text-right">{fmtBytes(d.bytes)}</span>
-              {d.cleanable && <span className="rounded-full bg-warning-soft border border-warning-soft-strong px-2 py-0.5 text-3xs text-warning font-semibold uppercase tracking-wider shrink-0">cleanable</span>}
+              {d.cleanable && <span className="rounded-full bg-warning-soft border border-warning-soft-strong px-2 py-0.5 text-3xs text-warning font-medium shrink-0">cleanable</span>}
             </div>
           </div>
         ))}
@@ -1033,16 +1033,16 @@ function DepsTab({ root }: { root: string }) {
       {/* Dashboard Metrics */}
       <div className="grid grid-cols-3 gap-2 px-2">
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">{t("Manifests")}</div>
-          <div className="text-base font-bold text-strong">{manifests.length}</div>
+          <div className="text-3xs text-muted mb-0.5">{t("Manifests")}</div>
+          <div className="text-base font-semibold text-strong">{manifests.length}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">{t("Total deps")}</div>
-          <div className="text-base font-bold text-strong">{totalDepsCount}</div>
+          <div className="text-3xs text-muted mb-0.5">{t("Total deps")}</div>
+          <div className="text-base font-semibold text-strong">{totalDepsCount}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">{t("Vulnerable")}</div>
-          <div className={`text-base font-bold ${vulns && vulns.length > 0 ? "text-danger" : vulns ? "text-success" : "text-strong"}`}>
+          <div className="text-3xs text-muted mb-0.5">{t("Vulnerable")}</div>
+          <div className={`text-base font-semibold ${vulns && vulns.length > 0 ? "text-danger" : vulns ? "text-success" : "text-strong"}`}>
             {vulns ? vulns.length : "—"}
           </div>
         </div>
@@ -1052,14 +1052,14 @@ function DepsTab({ root }: { root: string }) {
 
       {vulns && vulns.length > 0 && (
         <div className="mx-2 mb-2 rounded-lg border border-danger-soft-strong bg-danger-soft p-3">
-          <div className="text-xs font-semibold text-danger mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
+          <div className="text-xs font-medium text-danger mb-1.5 flex items-center gap-1.5">
             <AlertTriangle size={13} />
             {t("Known vulnerabilities: {0}").replace("{0}", String(vulns.length))}
           </div>
           <div className="space-y-1.5">
             {vulns.map((v) => (
               <div key={`${v.package}-${v.id}`} className="text-2xs leading-relaxed border-b border-danger-soft pb-1.5 last:border-0 font-mono">
-                <span className="font-bold text-danger bg-danger-soft border border-danger-soft-strong px-1.5 py-0.5 rounded mr-1.5">{v.id}</span>
+                <span className="font-semibold text-danger bg-danger-soft border border-danger-soft-strong px-1.5 py-0.5 rounded mr-1.5">{v.id}</span>
                 <span className="text-strong font-semibold">{v.package}</span>
                 {v.summary && <span className="text-muted font-normal ml-1.5">— {v.summary}</span>}
               </div>
@@ -1073,7 +1073,7 @@ function DepsTab({ root }: { root: string }) {
           <div key={m.path} className="p-3 rounded-lg border border-edge bg-bar/15 shadow-sm">
             <div className="font-semibold text-strong flex items-center justify-between border-b border-edge pb-1.5 mb-2">
               <span className="truncate">{m.path}</span>
-              <span className="rounded-full bg-raised px-2.5 py-0.5 text-3xs font-semibold uppercase tracking-wider text-muted border border-edge">
+              <span className="rounded-full bg-raised px-2.5 py-0.5 text-3xs font-medium text-muted border border-edge">
                 {m.kind} ({m.deps.length})
               </span>
             </div>
@@ -1291,7 +1291,7 @@ function ProcsTab() {
     <div>
       <Header onRefresh={load}>
         <Cpu size={13} className="text-accent animate-spin-slow" /> 
-        <span className="font-semibold text-strong">Runtime Process Explorer</span>
+        <span className="font-semibold text-strong">{t("Runtime Process Explorer")}</span>
       </Header>
       {nodes.length === 0 && <EmptyToolState icon={Cpu} title={t("No processes reported")} text={t("Refresh to read the current process tree again.")} />}
 
@@ -1338,7 +1338,7 @@ function PerfTab() {
     <div>
       <Header onRefresh={() => { setSamples(getPerfSamples()); setSummary(getPerfSummary()); }}>
         <Activity size={13} className="text-accent" /> 
-        <span className="font-semibold text-strong">Live Performance Engine</span>
+        <span className="font-semibold text-strong">{t("Live Performance Engine")}</span>
       </Header>
       <div className="mb-3 flex items-center gap-2 px-3">
         <button
@@ -1374,7 +1374,7 @@ function PerfTab() {
           {/* Simple sparkline for heap usage */}
           {samples.length > 2 && (
             <div className="p-3 rounded-lg border border-edge bg-bar/15 shadow-sm">
-              <div className="mb-2 text-3xs uppercase tracking-wider text-muted font-bold">Heap usage timeline (MB)</div>
+              <div className="mb-2 text-3xs text-muted font-medium">{t("Heap usage timeline (MB)")}</div>
               <svg width="100%" height={80} className="overflow-visible">
                 {(() => {
                   const max = Math.max(...samples.map((s) => s.heapUsedMB), 1);
@@ -1400,8 +1400,8 @@ function PerfTab() {
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-edge bg-bar/15 px-3 py-2 text-center shadow-sm">
-      <div className="text-3xs uppercase tracking-wider text-muted font-bold mb-0.5">{label}</div>
-      <div className="font-mono text-sm text-strong font-bold">{value}</div>
+      <div className="text-3xs text-muted font-medium mb-0.5">{label}</div>
+      <div className="font-mono text-sm text-strong font-semibold">{value}</div>
     </div>
   );
 }
@@ -1424,7 +1424,7 @@ function CrashesTab() {
         <Header>
           <button onClick={() => setActive(null)} className="rounded border border-edge px-2.5 py-0.5 hover:text-strong transition">← Back</button>
           <span className="font-semibold text-strong text-2xs font-mono truncate max-w-sm">{active.name}</span>
-          <button onClick={() => void navigator.clipboard.writeText(content)} className="ml-auto hover:text-strong transition text-xs">Copy</button>
+          <button onClick={() => void navigator.clipboard.writeText(content)} className="ml-auto hover:text-strong transition text-xs">{t("Copy")}</button>
         </Header>
         <pre className="min-h-0 flex-1 overflow-auto whitespace-pre-wrap break-all px-3 py-2 font-mono text-xs text-strong bg-surface select-text leading-relaxed">{content}</pre>
       </div>
@@ -1435,7 +1435,7 @@ function CrashesTab() {
     <div>
       <Header onRefresh={load}>
         <Bug size={13} className="text-danger" /> 
-        <span className="font-semibold text-strong">Crash Diagnostic Logger</span>
+        <span className="font-semibold text-strong">{t("Crash Diagnostic Logger")}</span>
         <span className="text-xs text-muted">({reports.length} files)</span>
       </Header>
       {reports.length === 0 && <EmptyToolState icon={Bug} title={t("No crashes recorded 🎉")} text={t("Crash reports will appear here when the desktop runtime writes one.")} />}

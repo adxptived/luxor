@@ -347,7 +347,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
         /* Source view */
         <div className="min-h-0 flex-1 overflow-auto bg-surface">
           <div className="flex items-center justify-between border-b border-edge bg-raised px-4 py-1.5">
-            <span className="text-3xs uppercase tracking-widest font-bold text-muted flex items-center gap-1.5">
+            <span className="text-3xs font-medium text-muted flex items-center gap-1.5">
               <Code2 size={11} /> {t("HTML source")} — {name}
             </span>
             <button

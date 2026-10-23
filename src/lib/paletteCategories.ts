@@ -109,9 +109,50 @@ export function categoryFromLabel(label: string): string {
   return aliasMap[prefix] ?? "command";
 }
 
-/** Get the category metadata for a label. */
-export function categoryOf(label: string): PaletteCategory {
-  return CATEGORY_MAP.get(categoryFromLabel(label)) ?? CATEGORIES[CATEGORIES.length - 1];
+/** Command-id prefix → category. Ids are stable and never translated, so
+ *  this keeps grouping and icons correct in every UI language (deriving the
+ *  category from the label put every translated command into "Command"). */
+const ID_PREFIX: Record<string, string> = {
+  terminal: "terminal",
+  git: "git",
+  github: "github",
+  files: "files",
+  file: "files",
+  project: "project",
+  layout: "layout",
+  appearance: "appearance",
+  zoom: "view",
+  zen: "view",
+  sidebar: "view",
+  statusbar: "view",
+  settings: "settings",
+  search: "search",
+  session: "session",
+  tab: "tab",
+  snippets: "snippets",
+  http: "http",
+  docker: "docker",
+  devtools: "devtools",
+  activity: "activity",
+  tasks: "tasks",
+  skills: "skills",
+  launcher: "launcher",
+  update: "updates",
+  updates: "updates",
+  db: "database",
+  ai: "ai",
+};
+
+/** Category id for a command: from its id prefix when known, else its label. */
+export function categoryIdFor(item: { id?: string; label: string }): string {
+  const prefix = item.id?.split(".")[0];
+  return (prefix && ID_PREFIX[prefix]) || categoryFromLabel(item.label);
+}
+
+/** Get the category metadata for a command (or a bare label). */
+export function categoryOf(item: string | { id?: string; label: string }): PaletteCategory {
+  const id = typeof item === "string" ? categoryFromLabel(item) : categoryIdFor(item);
+  return CATEGORY_MAP.get(id) ?? CATEGORIES[CATEGORIES.length - 1];
 }
 
 /** Group commands by category, sorted by category order. */
@@ -137,7 +178,7 @@ export function groupByCategory<T extends { label: string }>(
   }
 
   for (const item of restItems) {
-    const catId = categoryFromLabel(item.label);
+    const catId = categoryIdFor(item as { id?: string; label: string });
     if (!groups.has(catId)) groups.set(catId, []);
     groups.get(catId)!.push(item);
   }
