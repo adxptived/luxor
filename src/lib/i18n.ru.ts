@@ -1654,4 +1654,8 @@ export const RU: Record<string, string> = {
   "Search…": "Поиск…",
   "Matching sections: {0}": "Подходящих разделов: {0}",
   "In the command palette, start with / for files, @ for symbols or : for panels.": "В палитре команд начните с / для файлов, @ для символов или : для панелей.",
+  "Animations": "Анимации",
+  "Follow system: when Windows animation effects are off (or in remote desktop), panels fade instead of moving. Always on: full motion everywhere. Off: no animations.": "«Как в системе»: если в Windows выключены эффекты анимации (или вы в удалённом рабочем столе), панели плавно проявляются вместо движения. «Всегда»: полная анимация везде. «Выкл.»: без анимаций.",
+  "Follow system": "Как в системе",
+  "Always on": "Всегда",
 };

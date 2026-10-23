@@ -82,6 +82,9 @@ export interface UiConfig {
   /** Draw a visible outline/border around the active tab (off = selection shown
    *  by background colour only). */
   tab_outline: boolean;
+  /** Animations: "system" follows the OS (gentle fades when it asks to reduce
+   *  motion), "full" always animates, "reduced" turns animations off. */
+  motion?: "system" | "full" | "reduced";
   quick_actions: QuickActionsPlacement;
   /** Custom nav button order (empty = default). */
   nav_order: string[];

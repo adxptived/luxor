@@ -97,8 +97,9 @@ export function crossfadeTheme(
 
   if (animatable.length === 0) return;
 
-  // Check for reduced motion preference.
-  if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+  // A colour crossfade has no movement, so it stays on with the OS "reduce
+  // motion" preference; only Settings → Animations → Off makes it instant.
+  if (document.documentElement.dataset.motion === "reduced") {
     return; // Instant switch, no animation.
   }
 

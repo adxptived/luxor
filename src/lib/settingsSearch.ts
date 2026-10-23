@@ -32,6 +32,7 @@ export const SETTINGS_ITEMS: SettingsItem[] = [
   { section: "appearance", title: "Theme", keywords: "dark light system tokyo catppuccin dracula nord gruvbox one dark solarized rose pine everforest ayu github color scheme" },
   { section: "editor", title: "Code editor theme", keywords: "monaco syntax monokai highlighting colors" },
   { section: "appearance", title: "Accent color", keywords: "highlight hex custom color" },
+  { section: "appearance", title: "Animations", keywords: "motion reduce reduced effects transitions fade анимации движение" },
   { section: "editor", title: "Editor minimap", keywords: "monaco overview map code preview scrollbar" },
   { section: "editor", title: "Editor autosave", keywords: "save automatically auto write file monaco автосохранение" },
   { section: "appearance", title: "Confirm before closing tabs", keywords: "dialog warn project close" },

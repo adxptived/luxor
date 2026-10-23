@@ -1000,6 +1000,17 @@ export function SettingsModal() {
                   </div>
                 </Row>
                 <Row
+                  label="Animations"
+                  help="Follow system: when Windows animation effects are off (or in remote desktop), panels fade instead of moving. Always on: full motion everywhere. Off: no animations."
+                >
+                  <Select
+                    value={draft.ui.motion ?? "system"}
+                    options={["system", "full", "reduced"]}
+                    labels={{ system: t("Follow system"), full: t("Always on"), reduced: t("Off") }}
+                    onChange={(v) => set({ ui: { ...draft.ui, motion: v as "system" | "full" | "reduced" } })}
+                  />
+                </Row>
+                <Row
                   label="Transparent elements"
                   help="Semi-transparent menus, popups, modals and sidebars with a blur behind them. Content panes (terminal, editor) stay opaque."
                 >

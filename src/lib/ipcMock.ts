@@ -117,6 +117,7 @@ function defaultMockConfig(): AppConfig {
       tab_height: 0,
       tab_strip_height: 0,
       tab_outline: false,
+      motion: "system",
       quick_actions: "top",
       nav_order: [],
       nav_hidden: [],

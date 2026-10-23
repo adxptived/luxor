@@ -333,6 +333,11 @@ export function applyAppearance(config: AppConfig) {
   // on = visible border + soft lift. Toggled in Settings → Interface.
   root.dataset.tabOutline = ui?.tab_outline ? "on" : "off";
 
+  // Animations (Settings → Appearance): system | full | reduced. styles.css
+  // keys the reduce-motion handling off this attribute.
+  const motion = ui?.motion;
+  root.dataset.motion = motion === "full" || motion === "reduced" ? motion : "system";
+
   // Glass mode (Settings → Appearance): semi-transparent UI surfaces with
   // backdrop blur. The CSS keys off `data-glass="on"` and reads the strength
   // from `--lx-glass-alpha` (surface opacity, derived from the 0–60% slider).

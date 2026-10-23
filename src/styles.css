@@ -1045,9 +1045,6 @@ summary,
   from { opacity: 0; translate: -3px 0; }
   to   { opacity: 1; translate: 0 0; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .lx-tooltip[data-open] { animation: none; }
-}
 
 /* ── Caption buttons (Phase 1) ─────────────────────────────────────
  * Full-height, no rounding, no gaps — Windows-style window controls.
@@ -2275,11 +2272,11 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
 .lx-anim-side-panel > section:nth-child(3),
 .lx-anim-right-panel > section:nth-child(3) { animation-delay: 0.10s; }
 .lx-anim-side-panel > section:nth-child(4),
-.lx-anim-right-panel > section:nth-child(4) { animation-delay: var(--lx-dur-fast); }
+.lx-anim-right-panel > section:nth-child(4) { animation-delay: 0.14s; }
 .lx-anim-side-panel > section:nth-child(5),
-.lx-anim-right-panel > section:nth-child(5) { animation-delay: var(--lx-dur-fast); }
+.lx-anim-right-panel > section:nth-child(5) { animation-delay: 0.18s; }
 .lx-anim-side-panel > section:nth-child(6),
-.lx-anim-right-panel > section:nth-child(6) { animation-delay: var(--lx-dur); }
+.lx-anim-right-panel > section:nth-child(6) { animation-delay: 0.22s; }
 
 /* ===========================================================================
  * BRAND POLISH — Unified button system & surface depth
@@ -2560,50 +2557,92 @@ button:not(.xterm *):not(.cm-editor *):not([disabled]):active {
   height: 0 !important;
   display: none !important;
 }
-/* --- Reduced motion --------------------------------------------------------
+/* --- Motion preference -----------------------------------------------------
  *
- * INVERTED on purpose. This used to be a hand-maintained allowlist of ~45 class
- * names, which meant every new animation was unprotected until someone
- * remembered to add it — and several already had been missed: Tailwind's
- * `animate-pulse` (skeletons in DevTools/Editor/HtmlPreview) and `animate-spin`
- * (23 sites) were never in the list, so they kept moving under `reduce`.
+ * Settings → Appearance → Animations sets <html data-motion>:
+ *   "system"  (default) follow the OS. With "reduce motion" on — which Windows
+ *             turns on whenever "Animation effects" is off, and in most remote
+ *             desktop / VM sessions — movement becomes gentle fades instead of
+ *             every animation silently switching off. Before, that blanket
+ *             0.01ms rule made it look like Luxor had no animations at all.
+ *   "full"    always animate as designed.
+ *   "reduced" stop everything (the old reduce-motion behaviour).
  *
- * Now everything is stopped by default and the few animations that carry
- * MEANING rather than decoration opt back in below. Adding a new animation can
- * no longer silently bypass the preference.
- *
- * `0.01ms` rather than `none`: it lets `animationend` / `transitionend` still
- * fire, so components that wait for a transition to finish before unmounting
- * (see `useEnterExit`) do not hang. */
+ * `0.01ms` rather than `none` where things stop: it lets `animationend` /
+ * `transitionend` still fire, so components that wait for a transition before
+ * unmounting (see `useEnterExit`) do not hang. */
+@keyframes lx-motion-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes lx-motion-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* "reduced": everything stops; only meaningful spinners keep turning. */
+:root[data-motion="reduced"] *,
+:root[data-motion="reduced"] *::before,
+:root[data-motion="reduced"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0s !important;
+  scroll-behavior: auto !important;
+}
+:root[data-motion="reduced"] :is(.animate-spin, .lx-anim-spin, .lx-spinner) {
+  /* A spinner's rotation IS the "still working" signal; a frozen glyph reads
+   * as a hung app. Kept slow and steady. */
+  animation-duration: 1.2s !important;
+  animation-iteration-count: infinite !important;
+}
+
+/* "system" + OS reduce-motion: keep the feedback, drop the movement. */
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
+  :root:not([data-motion="full"]):not([data-motion="reduced"]) :is(
+      [class*="lx-anim-"]:not([class*="-out"]):not(.lx-anim-spin):not(.lx-anim-pulse),
+      .lx-slide-in,
+      .lx-pop-in,
+      .lx-fade-in,
+      .lx-empty-icon,
+      .lx-tooltip[data-open]
+    ) {
+    animation-name: lx-motion-fade-in !important;
     animation-delay: 0s !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    transition-delay: 0s !important;
-    scroll-behavior: auto !important;
   }
-
-  /* Opt-outs: a spinner's rotation IS the "still working" signal. Removing it
-   * leaves a frozen glyph that reads as a hung app, which is worse for the
-   * users this preference exists to help. Kept slow and steady. */
-  .animate-spin,
-  .lx-anim-spin,
-  .lx-spinner {
-    animation-duration: 1.2s !important;
-    animation-iteration-count: infinite !important;
+  :root:not([data-motion="full"]):not([data-motion="reduced"]) :is(
+      [class*="lx-anim-"][class*="-out"],
+      .lx-modal-leaving,
+      .lx-palette-leaving,
+      .lx-dialog-leaving
+    ) {
+    animation-name: lx-motion-fade-out !important;
   }
+  /* Hover lifts and press nudges are movement too. */
+  :root:not([data-motion="full"]):not([data-motion="reduced"]) :is(.lx-hover-lift, .lx-square-btn, button):is(:hover, :active) {
+    transform: none !important;
+  }
+  :root:not([data-motion="full"]) {
+    scroll-behavior: auto;
+  }
+}
 
-  /* Purely decorative looping accents stay off entirely. */
-  .lx-empty-icon,
-  .lx-browser-progress,
-  .lx-status-dot::after {
+/* Purely decorative loops stay off whenever motion is reduced (by the OS
+ * without an explicit "full", or by the "reduced" setting). */
+:root[data-motion="reduced"] :is(.lx-browser-progress, .animate-pulse, .lx-anim-pulse),
+:root[data-motion="reduced"] .lx-status-dot::after {
+  animation: none !important;
+}
+:root[data-motion="reduced"] .lx-status-dot::after {
+  display: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) :is(.lx-browser-progress, .animate-pulse, .lx-anim-pulse),
+  :root:not([data-motion="full"]) .lx-status-dot::after {
     animation: none !important;
   }
-  .lx-status-dot::after {
+  :root:not([data-motion="full"]) .lx-status-dot::after {
     display: none;
   }
 }
