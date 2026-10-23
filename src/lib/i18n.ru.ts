@@ -1540,4 +1540,5 @@ export const RU: Record<string, string> = {
   // Title-bar command bar
   "Search commands, files and panels": "Поиск команд, файлов и панелей",
   "Search or run a command…": "Найти или выполнить…",
+  "{0} agents": "Агентов: {0}",
 };

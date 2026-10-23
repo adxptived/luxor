@@ -404,12 +404,13 @@ Click: Git explorer · right-click: fetch / pull / push`}
         return (
           <button
             data-testid="status-agents"
-            className="flex items-center gap-1 hover:text-strong"
+            className="flex h-[18px] items-center gap-1.5 rounded-sm bg-accent/12 px-1.5 text-accent transition-colors hover:bg-accent/20"
             title={`${t("Running AI agents:")}\n${detail}\n\n${t("Click to open the Agents panel")}`}
             onClick={() => openPanel("agents")}
           >
-            <Bot size={11} />
-            {total === 1 ? agents[0].label : `${total} agents`} · {fmtCpu(cpu)} ·{" "}
+            <span aria-hidden className="lx-anim-pulse h-1.5 w-1.5 rounded-full bg-accent" />
+            <Bot size={11} aria-hidden />
+            {total === 1 ? agents[0].label : t("{0} agents").replace("{0}", String(total))} · {fmtCpu(cpu)} ·{" "}
             {fmtMem(mem)}
           </button>
         );
