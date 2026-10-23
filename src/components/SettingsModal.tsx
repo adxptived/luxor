@@ -34,6 +34,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
@@ -86,6 +87,7 @@ import {
   Row,
   Select,
   Toggle,
+  SettingsSearchContext,
 } from "./settings/controls";
 import { latestStartup, subscribeLogs } from "@/lib/logBuffer";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
@@ -371,6 +373,7 @@ export function SettingsModal() {
   // matching CommandPalette/ProjectSwitcher. Initial focus goes to search.
   const dialogRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   useFocusTrap(dialogRef, open, { initialFocus: searchRef });
   // Phase 21: Settings profiles. MUST be declared before the early return below
   // so the hook count is identical on every render — otherwise React throws
@@ -520,6 +523,16 @@ export function SettingsModal() {
     }
      
   }, [search]);
+
+  // Bring the first matching row into view while searching (rows mark
+  // themselves with data-setting-hit via SettingsSearchContext).
+  useEffect(() => {
+    if (search.trim().length < 2) return;
+    const id = requestAnimationFrame(() => {
+      bodyRef.current?.querySelector<HTMLElement>("[data-setting-hit]")?.scrollIntoView({ block: "center", behavior: "smooth" });
+    });
+    return () => cancelAnimationFrame(id);
+  }, [search, section]);
 
   if (!mounted || !draft) return null;
 
@@ -813,17 +826,19 @@ export function SettingsModal() {
             });
             if (q && visible.length === 0)
               return (
-                <div className="m-1 rounded-lg border border-dashed border-edge px-3 py-5 text-center text-xs text-muted">
-                  <Search size={16} className="mx-auto mb-2 text-muted" />
-                  <div className="font-medium text-strong">{t("No settings match")}</div>
-                  <div className="mt-1 leading-4">{t("Try another keyword or clear search to browse all sections.")}</div>
-                </div>
+                <EmptyState
+                  className="px-2"
+                  tone="muted"
+                  icon={<Search size={18} />}
+                  title={t("No settings match")}
+                  text={t("Try another keyword or clear search to browse all sections.")}
+                />
               );
             return (
               <>
                 {q && (
                   <div className="mb-1 px-2 text-3xs text-muted">
-                    {visible.length} section{visible.length > 1 ? "s" : ""} match
+                    {t("Matching sections: {0}").replace("{0}", String(visible.length))}
                   </div>
                 )}
                 {visible.map((s) => (
@@ -889,7 +904,8 @@ export function SettingsModal() {
         {/* Section body — keyed on `section` so switching tabs replays a quick
             fade/slide entrance instead of an abrupt content swap. */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <div key={section} className="lx-anim-fade-in min-h-0 flex-1 overflow-auto p-4">
+          <SettingsSearchContext.Provider value={search}>
+          <div key={section} ref={bodyRef} className="lx-anim-fade-in min-h-0 flex-1 overflow-auto p-4">
             {/* Compact section heading: a boxed card here wasted a full row of
                 vertical space before the first setting appeared. */}
             <div className="mb-3 border-b border-edge/50 px-2 pb-3">
@@ -2372,6 +2388,7 @@ export function SettingsModal() {
               </>
             )}
           </div>
+          </SettingsSearchContext.Provider>
         </div>
       </div>
     </div>

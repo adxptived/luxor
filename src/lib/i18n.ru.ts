@@ -1652,4 +1652,5 @@ export const RU: Record<string, string> = {
   "Ctrl+G also opens symbols": "Символы также открывает Ctrl+G",
   "Type a command…  / files  @ symbols  : panels": "Введите команду…  / файлы  @ символы  : панели",
   "Search…": "Поиск…",
+  "Matching sections: {0}": "Подходящих разделов: {0}",
 };

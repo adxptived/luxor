@@ -10,6 +10,7 @@
  */
 
 import { type LucideIcon } from "lucide-react";
+import { createContext, useContext } from "react";
 
 import { t } from "@/lib/i18n";
 import type { DetectedProgram } from "@/lib/types";
@@ -36,6 +37,17 @@ export function AboutLink(props: {
   );
 }
 
+/** Current settings search query, so rows can highlight themselves. */
+export const SettingsSearchContext = createContext("");
+
+/** True when a settings row (label/help, English or translated) matches `query`. */
+export function rowMatches(query: string, label: string, help?: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (q.length < 2) return false;
+  const hay = [label, t(label), help ?? "", help ? t(help) : ""].join("\n").toLowerCase();
+  return hay.includes(q);
+}
+
 export function Row({
   label,
   help,
@@ -52,9 +64,15 @@ export function Row({
   // control on the right, hairline divider between rows. Help used to hide
   // behind an ⓘ tooltip, which made every setting a guessing game; showing
   // it as a subtitle is the standard, scannable settings pattern.
+  const query = useContext(SettingsSearchContext);
+  const hit = rowMatches(query, label, help);
+  const hitCls = hit ? " lx-setting-hit" : "";
   if (wide) {
     return (
-      <div className="group flex flex-col gap-2 border-b border-edge/50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-raised/40">
+      <div
+        data-setting-hit={hit || undefined}
+        className={`group flex flex-col gap-2 border-b border-edge/50 px-2 py-2.5 transition-colors last:border-b-0 hover:bg-raised/40${hitCls}`}
+      >
         <span className="flex min-w-0 flex-col gap-0.5">
           <span className="text-pretty leading-snug text-strong">{t(label)}</span>
           {help && <span className="text-pretty text-2xs leading-4 text-muted">{t(help)}</span>}
@@ -64,7 +82,10 @@ export function Row({
     );
   }
   return (
-    <div className="group grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-center gap-x-4 border-b border-edge/50 px-2 py-2 transition-colors last:border-b-0 hover:bg-raised/40">
+    <div
+      data-setting-hit={hit || undefined}
+      className={`group grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] items-center gap-x-4 border-b border-edge/50 px-2 py-2 transition-colors last:border-b-0 hover:bg-raised/40${hitCls}`}
+    >
       <span className="flex min-w-0 flex-col gap-0.5">
         <span className="text-pretty leading-snug text-strong">{t(label)}</span>
         {help && <span className="text-pretty text-2xs leading-4 text-muted">{t(help)}</span>}
