@@ -1537,4 +1537,7 @@ export const RU: Record<string, string> = {
   "Search packages…": "Поиск пакетов…",
   "Total deps": "Всего зависимостей",
   "Vulnerable": "Уязвимые",
+  // Title-bar command bar
+  "Search commands, files and panels": "Поиск команд, файлов и панелей",
+  "Search or run a command…": "Найти или выполнить…",
 };

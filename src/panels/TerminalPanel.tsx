@@ -29,6 +29,7 @@ import {
   saveTerminalState,
   terminalStateId,
 } from "@/lib/terminalState";
+import { resolveCssColor } from "@/lib/cssColor";
 import { formatDateTime } from "@/lib/format";
 import { activityOf } from "@/lib/terminalActivity";
 import { useTerminalStatus } from "@/state/terminalStatus";
@@ -54,12 +55,14 @@ function formatDuration(secs: number): string {
   return `${Math.max(1, Math.floor(secs))}s`;
 }
 
-/** Build the xterm theme from the live CSS variables of the active app theme. */
-function xtermTheme() {
+/** Build the xterm theme from the live CSS variables of the active app theme.
+ *  The background is resolved from inside the panel (`scope`), so it follows
+ *  the layered dock surface instead of the root surface colour. */
+function xtermTheme(scope: Element | null = null) {
   const css = getComputedStyle(document.documentElement);
   const v = (name: string, fallback: string) => css.getPropertyValue(name).trim() || fallback;
   return {
-    background: v("--lx-surface", "#101014"),
+    background: resolveCssColor(scope, "var(--lx-surface)", v("--lx-surface", "#101014")),
     foreground: v("--lx-strong", "#d6d6dd"),
     cursor: v("--lx-strong", "#d6d6dd"),
     selectionBackground: `${v("--lx-accent", "#e8b059")}55`,
@@ -157,7 +160,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       cursorStyle: cfg?.cursor_style === "underline" ? "underline" : cfg?.cursor_style === "bar" ? "bar" : "block",
       cursorBlink: cfg?.cursor_blink ?? true,
       allowProposedApi: true,
-      theme: xtermTheme(),
+      theme: xtermTheme(el),
       // ConPTY reflows the screen itself on resize; letting xterm reflow too
       // is what made prompt/output lines get duplicated on Windows.
       ...(isWindows ? { windowsPty: { backend: "conpty" as const } } : {}),
@@ -599,7 +602,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       if (state.config?.theme !== prev.config?.theme || state.config?.accent_color !== prev.config?.accent_color) {
         // Wait a tick so the DOM data-theme attribute is updated first.
         setTimeout(() => {
-          term.options.theme = xtermTheme();
+          term.options.theme = xtermTheme(containerRef.current);
         }, 0);
       }
     });

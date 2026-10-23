@@ -69,7 +69,7 @@ import { confirmDestructive, openContextMenu, useUiStore, type MenuItem } from "
 import { useProjectsStore } from "@/state/projectsStore";
 import { useTabGroups } from "@/state/tabGroupsStore";
 import { QuickActions } from "./QuickActions";
-import { ChromeQuickActions, WindowControls } from "./WindowChrome";
+import { ChromeQuickActions, CommandBarButton, WindowControls } from "./WindowChrome";
 
 /** Accent colors selectable per project tab. */
 const TAB_COLORS: { label: string; value: string | null }[] = [
@@ -916,7 +916,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       {activeId === p.id && (
         <span
           aria-hidden
-          className={`pointer-events-none absolute rounded-full bg-muted ${
+          className={`pointer-events-none absolute rounded-full bg-accent/80 ${
             vertical ? "bottom-2 left-1 top-2 w-[2px]" : "bottom-1 left-2 right-2 h-[2px]"
           }`}
         />
@@ -1273,6 +1273,8 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
             )}
           </span>
         )}
+        {/* Wide windows only: project tabs keep priority on narrow ones. */}
+        {!vertical && <CommandBarButton className="mx-1 hidden w-72 min-[1440px]:flex" />}
         {!vertical && <ChromeQuickActions compact />}
         {quickActionsHere && <QuickActions vertical={vertical} expanded={vertical && !leftCollapsed} />}
         {barNavShown.map((def) => renderNavBtn(def, "topbar"))}

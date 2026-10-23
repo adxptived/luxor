@@ -2644,3 +2644,144 @@ input, textarea, select {
 .animate-session-fade {
   animation: lx-session-fade 2.2s ease-in-out forwards;
 }
+
+/* ===========================================================================
+ * Layered surfaces (UI rework, direction "A")
+ * ---------------------------------------------------------------------------
+ * Before: chrome (title bar, nav rail, tab strips, status bar) and the work
+ * area (terminals, Git, Files…) were nearly the same colour and every zone was
+ * fenced with a 1px border, so nothing told the eye where the work is.
+ * Now depth is carried by brightness instead of lines:
+ *   chrome  — one step darker than the theme's bar colour (`--lx-chrome`)
+ *   work    — the dock content, one step lighter than the surface (`--lx-work`)
+ * Panels are re-scoped (surface/raised/bar/edge are lifted together), so every
+ * existing `bg-surface` / `bg-raised` / `border-edge` keeps its relative order
+ * and all 15 themes follow automatically. Light themes invert the recipe
+ * (white work area, slightly greyer chrome).
+ * Opt-out hook: <html data-surfaces="flat"> restores the old flat look.
+ * =========================================================================== */
+:root {
+  --lx-chrome: color-mix(in srgb, var(--lx-bar) 62%, #000 38%);
+  --lx-work: color-mix(in srgb, var(--lx-surface) 93%, var(--lx-strong) 7%);
+  --lx-work-raised: color-mix(in srgb, var(--lx-raised) 91%, var(--lx-strong) 9%);
+  --lx-work-bar: color-mix(in srgb, var(--lx-bar) 91%, var(--lx-strong) 9%);
+  --lx-work-edge: color-mix(in srgb, var(--lx-edge) 84%, var(--lx-strong) 16%);
+}
+:root[data-theme="light"],
+:root[data-theme="catppuccin_latte"],
+:root[data-theme="solarized_light"],
+:root[data-theme="github_light"] {
+  --lx-chrome: color-mix(in srgb, var(--lx-raised) 82%, var(--lx-strong) 4%);
+  --lx-work: color-mix(in srgb, var(--lx-surface) 30%, #fff 70%);
+  --lx-work-raised: var(--lx-raised);
+  --lx-work-bar: var(--lx-bar);
+  --lx-work-edge: var(--lx-edge);
+}
+
+/* Chrome zones: darker base; anything "raised" inside them (active project
+ * tab, hovered buttons, right-panel widgets) lifts toward the work colour. */
+:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+  --lx-bar: var(--lx-chrome);
+  --color-bar: var(--lx-chrome);
+  --lx-glass-bg: var(--lx-chrome);
+  --lx-surface: var(--lx-work);
+  --color-surface: var(--lx-work);
+  --lx-raised: var(--lx-work-raised);
+  --color-raised: var(--lx-work-raised);
+  --lx-edge: var(--lx-work-edge);
+  --color-edge: var(--lx-work-edge);
+  background-color: var(--lx-chrome);
+}
+/* Zone boundaries are drawn by the brightness step, not by lines. */
+:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+  border-color: transparent;
+}
+:root:not([data-surfaces="flat"]) body,
+:root:not([data-surfaces="flat"]) #root > div {
+  background-color: var(--lx-chrome);
+}
+
+/* Dock: dark tab strips, lifted content; the active tab takes the work colour
+ * and melts into its panel (same idea as before, now with real contrast). */
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) {
+  --dv-tabs-and-actions-container-background-color: var(--lx-chrome);
+  --dv-group-view-background-color: var(--lx-work);
+  --dv-separator-border: var(--lx-chrome);
+  --dv-paneview-header-border-color: transparent;
+}
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) .dv-active-tab {
+  background: var(--lx-work) !important;
+}
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) .dv-active-tab :is(svg, .lucide) {
+  color: var(--lx-accent);
+}
+:root:not([data-surfaces="flat"]) :is(.dockview-theme-dark, .dockview-theme-light) .dv-tab:not(.dv-active-tab):hover {
+  background: color-mix(in srgb, var(--lx-work) 55%, transparent);
+}
+:root:not([data-surfaces="flat"]) .dv-content-container {
+  --lx-surface: var(--lx-work);
+  --color-surface: var(--lx-work);
+  --lx-raised: var(--lx-work-raised);
+  --color-raised: var(--lx-work-raised);
+  --lx-bar: var(--lx-work-bar);
+  --color-bar: var(--lx-work-bar);
+  --lx-edge: var(--lx-work-edge);
+  --color-edge: var(--lx-work-edge);
+  background-color: var(--lx-work);
+}
+/* The work area reads as one sheet: soften its top-left corner where it
+ * meets the nav rail and the tab strip. */
+:root:not([data-surfaces="flat"]) .dv-dockview {
+  background-color: var(--lx-chrome);
+}
+
+/* Active nav-rail item: tinted chip + accent icon instead of a bare bar. */
+:root:not([data-surfaces="flat"]) .lx-nav-rail button.is-active,
+:root:not([data-surfaces="flat"]) .lx-nav-rail button[data-active="true"] {
+  background: color-mix(in srgb, var(--lx-strong) 8%, transparent);
+  border-radius: var(--lx-radius-md);
+}
+:root:not([data-surfaces="flat"]) .lx-nav-rail button.is-active svg,
+:root:not([data-surfaces="flat"]) .lx-nav-rail button[data-active="true"] svg {
+  color: var(--lx-accent);
+}
+:root:not([data-surfaces="flat"]) .lx-nav-rail button.is-active::before,
+:root:not([data-surfaces="flat"]) .lx-nav-rail button[data-active="true"]::before {
+  height: 50%;
+  border-radius: 0 3px 3px 0;
+}
+
+/* ── Command bar (title bar) ─────────────────────────────────────────────── */
+.lx-command-bar {
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(420px, 100%);
+  height: 24px;
+  padding: 0 6px 0 10px;
+  border-radius: var(--lx-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--lx-strong) 9%, transparent);
+  background: color-mix(in srgb, var(--lx-strong) 4%, transparent);
+  color: var(--lx-muted);
+  font-size: var(--text-2xs);
+  cursor: pointer;
+  transition:
+    background-color var(--lx-dur-fast) ease,
+    border-color var(--lx-dur-fast) ease,
+    color var(--lx-dur-fast) ease;
+}
+.lx-command-bar:hover {
+  background: color-mix(in srgb, var(--lx-strong) 8%, transparent);
+  border-color: color-mix(in srgb, var(--lx-strong) 16%, transparent);
+  color: var(--lx-strong);
+}
+.lx-command-bar-kbd {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: var(--lx-radius-xs);
+  background: color-mix(in srgb, var(--lx-strong) 8%, transparent);
+  font-family: var(--lx-font-mono);
+  font-size: var(--text-3xs);
+  color: var(--lx-muted);
+}
