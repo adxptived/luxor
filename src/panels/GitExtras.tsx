@@ -48,7 +48,7 @@ export function TagsView({ repo, busy, run }: { repo: string; busy: string | nul
           disabled={!name.trim() || busy !== null}
           className="rounded bg-accent px-2 py-1 text-xs font-medium text-on-accent disabled:opacity-40"
         >
-          {t("Tag HEAD")}
+          {tr("Tag HEAD")}
         </button>
       </div>
       {tags.length === 0 && <div className="py-6 text-center text-xs text-muted">{tr("No tags.")}</div>}
@@ -135,7 +135,7 @@ export function SubmodulesView({ repo, run }: { repo: string; run: RunFn }) {
             className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             onClick={() => void run(tr("Update submodule"), () => ipc.gitSubmoduleUpdate(repo, s.name).then(load), tr("Submodule updated"))}
           >
-            {t("Init / update")}
+            {tr("Init / update")}
           </button>
         </div>
       ))}

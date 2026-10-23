@@ -656,8 +656,11 @@ mod tests {
         let own = process_cwd(std::process::id());
         // Some sandboxes hide /proc/self/cwd; when it is visible it must match.
         if let Some(dir) = own {
-            let expected = std::env::current_dir().unwrap();
-            assert_eq!(std::path::PathBuf::from(dir), expected);
+            // Canonicalize both sides: macOS reports /private/var for /var,
+            // Windows may differ in drive-letter case.
+            let canon = |p: std::path::PathBuf| std::fs::canonicalize(&p).unwrap_or(p);
+            let expected = canon(std::env::current_dir().unwrap());
+            assert_eq!(canon(std::path::PathBuf::from(dir)), expected);
         }
     }
 
