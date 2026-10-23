@@ -35,6 +35,11 @@ jobs:
         run: cargo check --workspace
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Tests (annotated probe)
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          cargo test --workspace --no-fail-fast 2>&1 | grep -E "FAILED|panicked at|^---- |left:|right:|Error|error\[" | head -50 | sed 's/^/::warning::/' || true
       - name: Tests
         run: cargo test --workspace
 
@@ -106,6 +111,11 @@ jobs:
           workspaces: ". -> target"
       - name: Install cargo audit and cargo deny
         run: cargo install cargo-audit cargo-deny --locked
+      - name: Audits (annotated probe)
+        shell: bash
+        run: |
+          cargo audit 2>&1 | grep -E "Crate:|Version:|Title:|ID:|Solution:|^error|^warning" | head -60 | sed 's/^/::warning::audit /' || true
+          cargo deny check 2>&1 | grep -E "error\[|warning\[|├|─ " | head -30 | sed 's/^/::warning::deny /' || true
       - name: cargo audit
         run: cargo audit
       - name: cargo deny
