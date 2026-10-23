@@ -271,7 +271,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
             <>
               <button
                 type="button"
-                className="fixed inset-0 z-40 cursor-default"
+                className="fixed inset-0 z-[var(--lx-z-backdrop)] cursor-default"
                 aria-label={t("Close refresh interval menu")}
                 onClick={() => setShowIntervalPicker(false)}
               />
