@@ -178,7 +178,7 @@ export function LauncherPanel() {
               </button>
               <button
                 className="rounded p-1 text-muted opacity-70 hover:bg-danger-soft hover:text-danger sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
-                title={t("Remove")}
+                title={t("Remove")} aria-label={t("Remove")}
                 onClick={() =>
                   void updateProject({
                     ...project,

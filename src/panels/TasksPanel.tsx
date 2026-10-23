@@ -190,7 +190,7 @@ export function TasksPanel() {
             {filter && (
               <button
                 className="absolute right-1 top-1/2 -translate-y-1/2 rounded text-muted hover:text-strong"
-                title={t("Clear filter")}
+                title={t("Clear filter")} aria-label={t("Clear filter")}
                 onClick={() => setFilter("")}
               >
                 <X size={12} />
@@ -207,7 +207,7 @@ export function TasksPanel() {
           </button>
           <button
             className="rounded p-1 text-muted hover:bg-raised hover:text-strong"
-            title={t("Reload tasks")}
+            title={t("Reload tasks")} aria-label={t("Reload tasks")}
             onClick={() => void reload()}
           >
             <RefreshCw size={14} />
@@ -396,7 +396,7 @@ function TaskCard(props: {
         <span className="flex shrink-0 gap-0.5">
           <button
             className="rounded p-0.5 text-muted hover:text-strong disabled:opacity-20"
-            title={t("Move left")}
+            title={t("Move left")} aria-label={t("Move left")}
             disabled={!props.canLeft}
             onClick={(e) => {
               e.stopPropagation();
@@ -407,7 +407,7 @@ function TaskCard(props: {
           </button>
           <button
             className="rounded p-0.5 text-muted hover:text-strong disabled:opacity-20"
-            title={t("Move right (⇧ Click card)")}
+            title={t("Move right (⇧ Click card)")} aria-label={t("Move right (⇧ Click card)")}
             disabled={!props.canRight}
             onClick={(e) => {
               e.stopPropagation();
@@ -418,7 +418,7 @@ function TaskCard(props: {
           </button>
           <button
             className="rounded p-0.5 text-muted hover:text-accent"
-            title={t("Copy as agent prompt")}
+            title={t("Copy as agent prompt")} aria-label={t("Copy as agent prompt")}
             onClick={(e) => {
               e.stopPropagation();
               props.onCopyPrompt();
@@ -428,7 +428,7 @@ function TaskCard(props: {
           </button>
           <button
             className="rounded p-0.5 text-muted hover:text-accent"
-            title={t("Edit task")}
+            title={t("Edit task")} aria-label={t("Edit task")}
             onClick={(e) => {
               e.stopPropagation();
               props.onEdit();

@@ -1147,7 +1147,7 @@ export function FilesPanel() {
             </button>
           )}
           {filter && (
-            <button className="shrink-0 rounded p-0.5 text-muted transition-colors hover:bg-surface hover:text-strong" title={t("Clear filter")} onClick={() => setFilter("")}>
+            <button className="shrink-0 rounded p-0.5 text-muted transition-colors hover:bg-surface hover:text-strong" title={t("Clear filter")} aria-label={t("Clear filter")} onClick={() => setFilter("")}>
               <X size={12} />
             </button>
           )}
@@ -1172,10 +1172,10 @@ export function FilesPanel() {
             ))}
           </div>
           <div className="flex shrink-0 items-center gap-0.5 rounded-lg border border-edge/60 bg-surface/60 p-0.5">
-            <button className={TOOLBAR_BTN} title={t("New file")} onClick={() => void newEntry(root, false)}>
+            <button className={TOOLBAR_BTN} title={t("New file")} aria-label={t("New file")} onClick={() => void newEntry(root, false)}>
               <FilePlus size={14} />
             </button>
-            <button className={TOOLBAR_BTN} title={t("New folder")} onClick={() => void newEntry(root, true)}>
+            <button className={TOOLBAR_BTN} title={t("New folder")} aria-label={t("New folder")} onClick={() => void newEntry(root, true)}>
               <FolderPlus size={14} />
             </button>
             <span aria-hidden className="mx-0.5 h-4 w-px bg-edge/70" />
@@ -1305,10 +1305,10 @@ export function FilesPanel() {
                   <AppWindow size={12} />
                   <span className="hidden lg:inline">{defaultIdeLabel}</span>
                 </button>
-                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => openFile(embeddedPath)} title={t("Open in editor tab")}>
+                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => openFile(embeddedPath)} title={t("Open in editor tab")} aria-label={t("Open in editor tab")}>
                   <ExternalLink size={12} />
                 </button>
-                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => void closeExplorerEditor()} title={t("Close editor")}>
+                <button className="rounded-lg p-1.5 text-muted transition-colors hover:bg-raised hover:text-strong" onClick={() => void closeExplorerEditor()} title={t("Close editor")} aria-label={t("Close editor")}>
                   <X size={12} />
                 </button>
               </div>

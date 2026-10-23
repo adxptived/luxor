@@ -160,7 +160,7 @@ function SnippetsTab() {
               </button>
               {s.lang && <span className="rounded-full bg-raised px-2 py-0.5 text-3xs text-muted">{s.lang}</span>}
               <button
-                title={tr("Copy to clipboard")}
+                title={tr("Copy to clipboard")} aria-label={tr("Copy to clipboard")}
                 className="rounded p-1 text-muted hover:bg-raised hover:text-strong sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
                 onClick={() => {
                   void navigator.clipboard.writeText(s.body);

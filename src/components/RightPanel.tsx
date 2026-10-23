@@ -659,7 +659,7 @@ function PanelEditor({
                 <button
                   className={`rounded p-0.5 hover:bg-raised ${open ? "text-accent" : "text-muted hover:text-strong"}`}
                   onClick={() => setOpenId(open ? null : w.id)}
-                  title={t("Widget settings")}
+                  title={t("Widget settings")} aria-label={t("Widget settings")}
                   aria-expanded={open}
                 >
                   <Settings2 size={13} />
@@ -668,7 +668,7 @@ function PanelEditor({
               <button
                 className="rounded p-0.5 text-muted hover:bg-raised hover:text-strong"
                 onClick={() => onChange(setWidgetEnabled(cfg, w.id, !w.enabled))}
-                title={w.enabled ? t("Hide widget") : t("Show widget")}
+                title={w.enabled ? t("Hide widget") : t("Show widget")} aria-label={w.enabled ? t("Hide widget") : t("Show widget")}
               >
                 {w.enabled ? <Eye size={13} /> : <EyeOff size={13} />}
               </button>
@@ -1121,7 +1121,7 @@ function RightPanelImpl() {
           <div className="flex items-center gap-0.5">
             <button
               className={`rounded p-0.5 hover:bg-raised ${editing ? "text-accent" : "text-muted hover:text-strong"}`}
-              title={editing ? t("Done editing") : t("Customize panel")}
+              title={editing ? t("Done editing") : t("Customize panel")} aria-label={editing ? t("Done editing") : t("Customize panel")}
               onClick={() => setEditing((v) => !v)}
               aria-pressed={editing}
             >

@@ -935,7 +935,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       {activeId === p.id && !p.pinned && !leftCollapsed && (
         <button
           className="rounded p-0.5 text-muted hover:bg-raised hover:text-danger"
-          title={t("Close tab")}
+          title={t("Close tab")} aria-label={t("Close tab")}
           onClick={(e) => {
             e.stopPropagation();
             void closeTab(p.id);
@@ -995,6 +995,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       }`}
       style={vertical ? { width: leftOpen ? (leftCollapsed ? collapsedSidebarWidth : "var(--lx-sidebar-w, " + sidebarWidth + "px)") : 0 } : { height: topbarSize }}
       data-testid="topbar"
+      data-tip-side={vertical ? "right" : undefined}
       aria-hidden={vertical && !leftOpen}
       role={!vertical ? "tablist" : undefined}
       aria-label={!vertical ? t("Project tabs and navigation") : undefined}
@@ -1083,7 +1084,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
               setAddMenuPos({ top: Math.max(8, top), left });
               setAddMenu((v) => !v);
             }}
-            title={t("Add tab")}
+            title={t("Add tab")} aria-label={t("Add tab")}
             // Fixed size in the vertical sidebar: a `display: flex` button with
             // `width: auto` stretches to the full width of its block container,
             // which turned this into a sidebar-wide strip.
@@ -1149,7 +1150,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
                       </button>
                       <button
                         className="shrink-0 text-muted opacity-0 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
-                        title={t("Remove from recents")}
+                        title={t("Remove from recents")} aria-label={t("Remove from recents")}
                         onClick={() => {
                           void ipc.recentDelete(r.path).then(() =>
                             setRecents((list) => list.filter((x) => x.path !== r.path)),
@@ -1433,7 +1434,7 @@ function PresetMenu(props: {
           <button
             className="hidden text-danger group-hover:block"
             onClick={() => props.onDelete(p.id)}
-            title={t("Delete preset")}
+            title={t("Delete preset")} aria-label={t("Delete preset")}
           >
             <X size={13} />
           </button>

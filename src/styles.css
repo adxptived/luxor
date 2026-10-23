@@ -941,7 +941,7 @@ summary,
     opacity var(--lx-dur) var(--lx-ease);
 }
 
-/* ── NavRail hover: subtle background, no accent color �����─────────────────── */
+/* ── NavRail hover: subtle background, no accent color ──────────────────── */
 .lx-active-strip {
   position: relative;
 }
@@ -962,30 +962,52 @@ summary,
   color: var(--lx-strong);
 }
 
-/* ── NavRail tooltip on hover: small floating label ─────────────────────── */
-.lx-nav-rail button[data-nav-id]:hover::after,
-.lx-nav-rail button[data-nav-more]:hover::after {
-  content: attr(title);
-  position: absolute;
-  left: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 4px 10px;
-  background: var(--lx-raised);
-  color: var(--lx-strong);
-  font-size: 11px;
-  font-weight: 500;
-  border-radius: var(--lx-radius-sm);
-  border: 1px solid var(--lx-edge);
-  box-shadow: var(--lx-shadow-md);
-  white-space: nowrap;
-  pointer-events: none;
+/* ── Tooltips (src/lib/tooltip.ts) ─────────────────────────────────────────
+ * One themed tooltip replaces the slow, unstyled native `title` popup for the
+ * whole app (and the old NavRail-only ::after label, which doubled up with the
+ * native one). Positioned by JS; this only owns the look and the entrance. */
+.lx-tooltip {
+  position: fixed;
+  left: 0;
+  top: 0;
   z-index: var(--lx-z-tooltip);
-  opacity: 1;
+  max-width: min(320px, calc(100vw - 12px));
+  padding: 4px 8px;
+  border-radius: var(--lx-radius-sm);
+  border: 1px solid color-mix(in srgb, var(--lx-edge) 80%, var(--lx-strong) 20%);
+  background: color-mix(in srgb, var(--lx-raised) 94%, var(--lx-strong) 6%);
+  color: var(--lx-strong);
+  box-shadow: var(--lx-shadow-md);
+  font-family: var(--lx-font-ui);
+  font-size: var(--text-3xs);
+  font-weight: 500;
+  line-height: 1.35;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
 }
+.lx-tooltip[data-open] {
+  visibility: visible;
+  opacity: 1;
+  animation: lx-tooltip-in 120ms var(--lx-ease, ease-out);
+}
+.lx-tooltip[data-side="top"] { --lx-tip-from: 3px; }
+.lx-tooltip[data-side="bottom"] { --lx-tip-from: -3px; }
 @keyframes lx-tooltip-in {
-  from { opacity: 0; transform: translateY(-50%) translateX(-4px); }
-  to   { opacity: 1; transform: translateY(-50%) translateX(0); }
+  from { opacity: 0; translate: 0 var(--lx-tip-from, 0); }
+  to   { opacity: 1; translate: 0 0; }
+}
+.lx-tooltip[data-side="right"][data-open] {
+  animation-name: lx-tooltip-in-right;
+}
+@keyframes lx-tooltip-in-right {
+  from { opacity: 0; translate: -3px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lx-tooltip[data-open] { animation: none; }
 }
 
 /* ── Caption buttons (Phase 1) ─────────────────────────────────────

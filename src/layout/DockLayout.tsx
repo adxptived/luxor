@@ -512,7 +512,7 @@ function GroupActions(props: IDockviewHeaderActionsProps) {
     <div className="flex h-full shrink-0 items-center gap-0.5 px-1 text-muted" data-testid="group-actions">
       <button
         className={btn}
-        title={t("Split right with a new terminal")}
+        title={t("Split right with a new terminal")} aria-label={t("Split right with a new terminal")}
         onClick={() =>
           addTerminalPanel(props.containerApi, {}, { referenceGroup: props.group.id, direction: "right" })
         }
@@ -521,7 +521,7 @@ function GroupActions(props: IDockviewHeaderActionsProps) {
       </button>
       <button
         className={btn}
-        title={t("Split down with a new terminal")}
+        title={t("Split down with a new terminal")} aria-label={t("Split down with a new terminal")}
         onClick={() =>
           addTerminalPanel(props.containerApi, {}, { referenceGroup: props.group.id, direction: "below" })
         }

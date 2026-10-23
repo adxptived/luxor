@@ -203,7 +203,7 @@ function SidePanelImpl() {
         <div className={`lx-nav-rail flex h-full flex-col items-center gap-1 p-1.5 ${iconRailJustify}`}>
           <button
             className="lx-square-btn flex h-8 w-8 items-center justify-center text-muted hover:text-strong"
-            title={t("Expand left sidebar")}
+            title={t("Expand left sidebar")} aria-label={t("Expand left sidebar")}
             onClick={() => config && void saveConfig({ ...config, ui: { ...config.ui, left_sidebar_collapsed: false } })}
           >
             <PanelLeft size={15} />

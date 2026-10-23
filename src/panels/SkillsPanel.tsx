@@ -337,7 +337,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
           {query && (
             <button
               className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted hover:text-strong"
-              title={t("Clear search")}
+              title={t("Clear search")} aria-label={t("Clear search")}
               onClick={() => setQuery("")}
             >
               <X size={13} />
@@ -348,7 +348,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
           className={`rounded-lg border p-1.5 ${
             favOnly ? "border-warning-soft-strong bg-warning-soft text-warning" : "border-edge bg-surface text-muted hover:bg-raised hover:text-strong"
           }`}
-          title={t("Show favorites only")}
+          title={t("Show favorites only")} aria-label={t("Show favorites only")}
           aria-pressed={favOnly}
           onClick={() => setFavOnly((v) => !v)}
         >
@@ -356,7 +356,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
         </button>
         <button
           className="rounded-lg border border-edge bg-surface p-1.5 text-muted hover:bg-raised hover:text-strong"
-          title={scope === "global" ? t("Rescan home directory") : t("Rescan project")}
+          title={scope === "global" ? t("Rescan home directory") : t("Rescan project")} aria-label={scope === "global" ? t("Rescan home directory") : t("Rescan project")}
           onClick={() => void reload()}
         >
           <RefreshCw size={14} />
@@ -402,7 +402,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
                       ? "text-warning"
                       : "text-muted opacity-0 hover:text-warning group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
                   }`}
-                  title={favorites.has(s.path) ? t("Remove from favorites") : t("Add to favorites")}
+                  title={favorites.has(s.path) ? t("Remove from favorites") : t("Add to favorites")} aria-label={favorites.has(s.path) ? t("Remove from favorites") : t("Add to favorites")}
                   onClick={(e) => {
                     e.stopPropagation();
                     toggleFavorite(s.path);
@@ -437,7 +437,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
                   className={`rounded p-1 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 ${
                     s.enabled ? "text-success hover:text-warning" : "text-muted hover:text-success opacity-100"
                   }`}
-                  title={s.enabled ? t("Disable skill (agents will skip it)") : t("Enable skill")}
+                  title={s.enabled ? t("Disable skill (agents will skip it)") : t("Enable skill")} aria-label={s.enabled ? t("Disable skill (agents will skip it)") : t("Enable skill")}
                   onClick={(e) => {
                     e.stopPropagation();
                     void setEnabled(s, !s.enabled);

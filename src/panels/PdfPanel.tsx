@@ -83,14 +83,14 @@ export function PdfPanel(props: IDockviewPanelProps) {
         <button
           onClick={() => setReloadKey((k) => k + 1)}
           className="rounded-lg border border-edge px-2 py-1.5 hover:bg-raised hover:text-strong"
-          title={t("Reload")}
+          title={t("Reload")} aria-label={t("Reload")}
         >
           <RefreshCw size={13} />
         </button>
         <button
           onClick={() => void navigator.clipboard.writeText(path).then(() => toast(t("Copied"), "success"))}
           className="rounded-lg border border-edge px-2 py-1.5 hover:bg-raised hover:text-strong"
-          title={t("Copy path")}
+          title={t("Copy path")} aria-label={t("Copy path")}
         >
           <Copy size={13} />
         </button>

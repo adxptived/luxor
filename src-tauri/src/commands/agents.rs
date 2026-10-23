@@ -1,5 +1,7 @@
 //! Detection of running AI CLI agents and per-terminal process-tree stats.
 
+use std::collections::{HashMap, HashSet};
+
 use luxor_core::agents::{AgentInfo, TreeStats};
 use luxor_core::Error;
 use tauri::State;
@@ -62,7 +64,17 @@ pub fn pty_tree_stats(state: State<'_, AppState>, pid: u32) -> Result<Option<Tre
 pub fn agents_processes(
     state: State<'_, AppState>,
 ) -> Result<Vec<luxor_core::agents::AgentProcess>, Error> {
-    let pty_dirs: std::collections::HashMap<u32, String> = state
+    let pty_dirs = pty_spawn_dirs(&state);
+    Ok(state
+        .agents
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .agent_processes(&pty_dirs))
+}
+
+/// Luxor terminal shell pid → the directory its session was spawned in.
+fn pty_spawn_dirs(state: &AppState) -> HashMap<u32, String> {
+    state
         .pty
         .list()
         .into_iter()
@@ -70,10 +82,21 @@ pub fn agents_processes(
             (Some(pid), Some(cwd)) if !cwd.is_empty() => Some((pid, cwd)),
             _ => None,
         })
-        .collect();
-    Ok(state
-        .agents
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .agent_processes(&pty_dirs))
+        .collect()
+}
+
+/// Current working directory of a Luxor terminal's shell.
+///
+/// Fallback for shells that never report their directory via OSC 7 (cmd.exe,
+/// PowerShell without Luxor's prompt hook, …): the terminal panel polls this
+/// while saving its snapshot so a restart reopens in the same folder. Only
+/// answers for pids owned by Luxor PTY sessions; `None` for anything else.
+#[tauri::command(async)]
+pub fn pty_cwd(state: State<'_, AppState>, pid: u32) -> Result<Option<String>, Error> {
+    let pty_pids: HashSet<u32> = state.pty.list().into_iter().filter_map(|s| s.pid).collect();
+    Ok(luxor_core::agents::terminal_cwd(
+        pid,
+        &pty_pids,
+        &pty_spawn_dirs(&state),
+    ))
 }

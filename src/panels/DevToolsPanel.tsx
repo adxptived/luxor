@@ -7,6 +7,7 @@ import { formatTime, formatUnixDateTime } from "@/lib/format";
 import {
   AlertCircle,
   AlertTriangle,
+  ArrowUpRight,
   AppWindow,
   CheckCircle2,
   CircleDashed,
@@ -27,7 +28,10 @@ import {
   Rocket,
   ScrollText,
   Search,
+  ShieldCheck,
   TerminalSquare,
+  Download,
+  X,
   Activity,
   Square,
   Sparkles,
@@ -50,6 +54,7 @@ import type {
   DiskUsageReport,
   EnvFile,
   ProcessNode,
+  RegistryPackage,
   VulnAdvisory,
 } from "@/lib/types";
 import { errorMessage } from "@/lib/types";
@@ -657,22 +662,22 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
                   {!compact && <div className="truncate font-mono text-2xs text-muted" title={rel}>{rel}</div>}
                 </div>
                 <div className="flex items-center gap-0.5">
-                  <button onClick={() => void runExe(exe)} title={t("Run detached")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
+                  <button onClick={() => void runExe(exe)} title={t("Run detached")} aria-label={t("Run detached")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
                     <Play size={14} />
                   </button>
-                  <button onClick={() => void openExe(exe)} title={t("Open with default app")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
+                  <button onClick={() => void openExe(exe)} title={t("Open with default app")} aria-label={t("Open with default app")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-accent transition">
                     <ExternalLink size={14} />
                   </button>
                   {!compact && (
-                    <button onClick={() => runInTerminal(quotePath(exe))} title={t("Run in a new terminal tab")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
+                    <button onClick={() => runInTerminal(quotePath(exe))} title={t("Run in a new terminal tab")} aria-label={t("Run in a new terminal tab")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
                       <TerminalSquare size={14} />
                     </button>
                   )}
-                  <button onClick={() => openFolder(exe)} title={t("Open containing folder")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
+                  <button onClick={() => openFolder(exe)} title={t("Open containing folder")} aria-label={t("Open containing folder")} className="shrink-0 rounded-lg p-1 text-muted hover:bg-surface hover:text-strong transition">
                     <FolderOpen size={14} />
                   </button>
                   {!compact && (
-                    <button onClick={() => void copyPath(exe)} title={t("Copy full path")} className="shrink-0 rounded-lg p-1 text-muted opacity-60 hover:bg-surface hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition">
+                    <button onClick={() => void copyPath(exe)} title={t("Copy full path")} aria-label={t("Copy full path")} className="shrink-0 rounded-lg p-1 text-muted opacity-60 hover:bg-surface hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100 transition">
                       <Copy size={14} />
                     </button>
                   )}
@@ -974,7 +979,7 @@ function DepsTab({ root }: { root: string }) {
         if (names.length) next[kind] = await ipc.latestVersions(kind, names.slice(0, 60));
       }
       setLatest(next);
-      toast("Latest versions fetched", "success");
+      toast(t("Latest versions fetched"), "success");
     } catch (e) {
       toast(errorMessage(e), "error");
     } finally {
@@ -994,7 +999,10 @@ function DepsTab({ root }: { root: string }) {
         if (pkgs.length) found.push(...(await ipc.osvCheck(kind, pkgs.slice(0, 100))));
       }
       setVulns(found);
-      toast(found.length ? `${found.length} known vulnerabilities` : "No known vulnerabilities (OSV)", found.length ? "error" : "success");
+      toast(
+        found.length ? t("Known vulnerabilities: {0}").replace("{0}", String(found.length)) : t("No known vulnerabilities (OSV)"),
+        found.length ? "error" : "success",
+      );
     } catch (e) {
       toast(errorMessage(e), "error");
     } finally {
@@ -1014,32 +1022,34 @@ function DepsTab({ root }: { root: string }) {
   return (
     <div className="space-y-3">
       <Header onRefresh={load}>
-        <Package size={13} className="text-accent" /> 
-        <span className="font-semibold text-strong">Dependencies & Vulnerability Dashboard</span>
+        <Package size={13} className="text-accent" />
+        <span className="font-semibold text-strong">{t("Dependencies")}</span>
       </Header>
 
       <div className="px-2 flex flex-wrap gap-1.5">
-        <button onClick={() => void checkUpdates()} disabled={busy} className="flex-1 min-w-[120px] rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-accent hover:text-accent disabled:opacity-40 transition">
-          🔍 Check updates
+        <button onClick={() => void checkUpdates()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-accent hover:text-accent disabled:opacity-40 transition">
+          <RefreshCw size={13} className={busy ? "lx-anim-spin" : undefined} /> {t("Check updates")}
         </button>
-        <button onClick={() => void checkVulns()} disabled={busy} className="flex-1 min-w-[120px] rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-danger hover:text-danger disabled:opacity-40 transition">
-          🛡️ Check vulnerability index (OSV)
+        <button onClick={() => void checkVulns()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-danger hover:text-danger disabled:opacity-40 transition">
+          <ShieldCheck size={13} /> {t("Check vulnerabilities (OSV)")}
         </button>
       </div>
+
+      <PackageSearch defaultKind={(manifests[0]?.kind as RegistryKind | undefined) ?? "npm"} />
 
       {/* Dashboard Metrics */}
       <div className="grid grid-cols-3 gap-2 px-2">
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Manifests</div>
+          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">{t("Manifests")}</div>
           <div className="text-base font-bold text-strong">{manifests.length}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Total Deps</div>
+          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">{t("Total deps")}</div>
           <div className="text-base font-bold text-strong">{totalDepsCount}</div>
         </div>
         <div className="rounded-lg border border-edge bg-bar/25 px-2.5 py-2 text-center">
-          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">Vulnerable</div>
-          <div className={`text-base font-bold ${vulns && vulns.length > 0 ? "text-danger animate-pulse" : "text-success"}`}>
+          <div className="text-3xs uppercase tracking-wider text-muted mb-0.5">{t("Vulnerable")}</div>
+          <div className={`text-base font-bold ${vulns && vulns.length > 0 ? "text-danger" : vulns ? "text-success" : "text-strong"}`}>
             {vulns ? vulns.length : "—"}
           </div>
         </div>
@@ -1051,11 +1061,11 @@ function DepsTab({ root }: { root: string }) {
         <div className="mx-2 mb-2 rounded-lg border border-danger-soft-strong bg-danger-soft p-3">
           <div className="text-xs font-semibold text-danger mb-1.5 flex items-center gap-1.5 uppercase tracking-wide">
             <AlertTriangle size={13} />
-            {vulns.length} SECURITY VULNERABILITIES FOUND
+            {t("Known vulnerabilities: {0}").replace("{0}", String(vulns.length))}
           </div>
           <div className="space-y-1.5">
             {vulns.map((v) => (
-              <div key={`${v.package}-${v.id}`} className="text-2xs leading- relaxed border-b border-danger-soft pb-1.5 last:border-0 font-mono">
+              <div key={`${v.package}-${v.id}`} className="text-2xs leading-relaxed border-b border-danger-soft pb-1.5 last:border-0 font-mono">
                 <span className="font-bold text-danger bg-danger-soft border border-danger-soft-strong px-1.5 py-0.5 rounded mr-1.5">{v.id}</span>
                 <span className="text-strong font-semibold">{v.package}</span>
                 {v.summary && <span className="text-muted font-normal ml-1.5">— {v.summary}</span>}
@@ -1084,7 +1094,7 @@ function DepsTab({ root }: { root: string }) {
                     {d.dev && <span className="text-muted/60 text-3xs bg-raised px-1 rounded">dev</span>}
                     {newer && (
                       <span className="text-warning flex items-center gap-1 shrink-0 bg-warning-soft border border-warning-soft-strong px-1 rounded text-3xs">
-                        ➔ {newer}
+                        <ArrowUpRight size={10} aria-hidden /> {newer}
                       </span>
                     )}
                   </div>
@@ -1095,6 +1105,174 @@ function DepsTab({ root }: { root: string }) {
         ))}
       </div>
     </div>
+  );
+}
+
+type RegistryKind = "npm" | "cargo" | "pip";
+const REGISTRY_KINDS: { id: RegistryKind; label: string }[] = [
+  { id: "npm", label: "npm" },
+  { id: "cargo", label: "crates.io" },
+  { id: "pip", label: "PyPI" },
+];
+
+/** Shell command that adds `name` to a project of the given registry kind. */
+function installCommand(kind: RegistryKind, name: string): string {
+  if (kind === "cargo") return `cargo add ${name}`;
+  if (kind === "pip") return `pip install ${name}`;
+  return `npm install ${name}`;
+}
+
+function compactCount(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}k`;
+  return String(n);
+}
+
+/**
+ * Package lookup across npm / crates.io / PyPI (backed by the `registry_search`
+ * IPC command). Debounced as-you-type; each hit can be opened on its registry
+ * page or copied as an install command.
+ */
+function PackageSearch({ defaultKind }: { defaultKind: RegistryKind }) {
+  const toast = useAppStore((s) => s.toast);
+  const [kind, setKind] = useState<RegistryKind>(defaultKind);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<RegistryPackage[] | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const seq = useRef(0);
+
+  useEffect(() => setKind(defaultKind), [defaultKind]);
+
+  useEffect(() => {
+    const q = query.trim();
+    const id = ++seq.current;
+    if (!q) {
+      setResults(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const timer = window.setTimeout(() => {
+      ipc
+        .registrySearch(kind, q, 12)
+        .then((r) => {
+          if (id !== seq.current) return;
+          setResults(r);
+          setError(null);
+        })
+        .catch((e) => {
+          if (id !== seq.current) return;
+          setResults([]);
+          setError(errorMessage(e));
+        })
+        .finally(() => {
+          if (id === seq.current) setLoading(false);
+        });
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [kind, query]);
+
+  const copyInstall = (name: string) => {
+    const cmd = installCommand(kind, name);
+    void navigator.clipboard
+      .writeText(cmd)
+      .then(() => toast(t("Copied: {0}").replace("{0}", cmd), "success"))
+      .catch(() => toast(t("Copy failed"), "error"));
+  };
+
+  return (
+    <section className="mx-2 rounded-lg border border-edge bg-bar/25 p-2.5" aria-label={t("Find a package")}>
+      <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-strong">
+        <Search size={13} className="text-accent" />
+        {t("Find a package")}
+      </div>
+      <div className="flex flex-wrap gap-1.5">
+        <div className="flex shrink-0 rounded-lg border border-edge bg-surface p-0.5" role="radiogroup" aria-label={t("Registry")}>
+          {REGISTRY_KINDS.map((r) => (
+            <button
+              key={r.id}
+              role="radio"
+              aria-checked={kind === r.id}
+              onClick={() => setKind(r.id)}
+              className={`rounded-md px-2 py-1 text-2xs font-semibold transition ${
+                kind === r.id ? "bg-accent/15 text-accent" : "text-muted hover:text-strong"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+        <div className="relative min-w-[160px] flex-1">
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setQuery("");
+            }}
+            placeholder={kind === "pip" ? t("Exact package name…") : t("Search packages…")}
+            aria-label={t("Search packages…")}
+            spellCheck={false}
+            className="w-full rounded-lg border border-edge bg-surface py-1.5 pl-2.5 pr-7 font-mono text-xs text-strong outline-none focus:border-accent"
+          />
+          {query && (
+            <button
+              onClick={() => setQuery("")}
+              className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted hover:text-strong"
+              title={t("Clear")}
+              aria-label={t("Clear")}
+            >
+              <X size={12} />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {query.trim() && (
+        <div className="mt-2 space-y-1" aria-live="polite" aria-busy={loading}>
+          {loading && !results && <div className="px-1 py-2 text-2xs text-muted">{t("Searching…")}</div>}
+          {error && <div className="rounded-md bg-danger-soft px-2 py-1.5 text-2xs text-danger">{error}</div>}
+          {results && results.length === 0 && !error && !loading && (
+            <div className="px-1 py-2 text-2xs text-muted">{t("No packages found")}</div>
+          )}
+          {results?.map((p) => (
+            <div key={p.name} className="group flex items-start gap-2 rounded-md px-2 py-1.5 transition hover:bg-raised/60">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="truncate font-mono text-xs font-semibold text-strong">{p.name}</span>
+                  {p.version && <span className="shrink-0 font-mono text-3xs text-muted">{p.version}</span>}
+                  {p.downloads > 0 && (
+                    <span className="flex shrink-0 items-center gap-0.5 text-3xs text-muted" title={t("Downloads")}>
+                      <Download size={10} /> {compactCount(p.downloads)}
+                    </span>
+                  )}
+                </div>
+                {p.description && <div className="line-clamp-2 text-2xs leading-4 text-muted">{p.description}</div>}
+              </div>
+              <div className="flex shrink-0 gap-0.5 opacity-70 transition group-hover:opacity-100 group-focus-within:opacity-100">
+                <button
+                  onClick={() => copyInstall(p.name)}
+                  className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-accent"
+                  title={installCommand(kind, p.name)}
+                  aria-label={t("Copy install command for {0}").replace("{0}", p.name)}
+                >
+                  <Copy size={12} />
+                </button>
+                <button
+                  onClick={() => void ipc.openUrl(p.url)}
+                  className="rounded-md p-1.5 text-muted hover:bg-surface hover:text-accent"
+                  title={p.url}
+                  aria-label={t("Open {0} in the registry").replace("{0}", p.name)}
+                >
+                  <ExternalLink size={12} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
   );
 }
 

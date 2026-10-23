@@ -475,6 +475,8 @@ Click: Git explorer · right-click: fetch / pull / push`}
       ref={barRef}
       onContextMenu={barMenu}
       data-testid="statusbar"
+      data-tip-side="top"
+      data-native-title
       title={t("Right-click to customize the status bar (segments, order, alignment)")}
     >
       <div
@@ -553,7 +555,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
           className={`shrink-0 rounded p-0.5 hover:bg-raised hover:text-strong ${
             config?.ui.right_panel_enabled ? "text-strong" : "text-muted"
           }`}
-          title={t("Toggle right panel")}
+          title={t("Toggle right panel")} aria-label={t("Toggle right panel")}
           onClick={() =>
             config && void saveConfig({ ...config, ui: { ...config.ui, right_panel_enabled: !config.ui.right_panel_enabled } })
           }

@@ -7,7 +7,7 @@
 use std::collections::{BTreeMap, HashMap, HashSet, VecDeque};
 
 use serde::Serialize;
-use sysinfo::{Pid, ProcessesToUpdate, System};
+use sysinfo::{Pid, ProcessRefreshKind, ProcessesToUpdate, System, UpdateKind};
 
 /// Known AI coding agents: `(binary stem, id, label)`. The stem is compared
 /// case-insensitively against the process name (and against script arguments
@@ -354,6 +354,54 @@ pub fn pty_cwd_for(
     None
 }
 
+/// Live working directory of a single process as the OS reports it, or `None`
+/// when the process is gone or the OS hides it.
+///
+/// The bulk sampler refreshes processes without the `cwd` kind (it is the most
+/// expensive field to read on Windows, where it means walking the target's
+/// PEB), so this does a targeted one-pid refresh that asks for it explicitly.
+/// Cheap enough to call every few seconds for a handful of terminals.
+pub fn process_cwd(pid: u32) -> Option<String> {
+    let pid = Pid::from_u32(pid);
+    let mut sys = System::new();
+    sys.refresh_processes_specifics(
+        ProcessesToUpdate::Some(&[pid]),
+        false,
+        ProcessRefreshKind::nothing().with_cwd(UpdateKind::Always),
+    );
+    sys.process(pid)
+        .and_then(|p| p.cwd())
+        .map(|c| c.to_string_lossy().to_string())
+        .filter(|s| !s.is_empty())
+}
+
+/// Working directory of a Luxor terminal's shell (`pid`), for restoring the
+/// terminal in the same folder when the shell never reported one via OSC 7.
+///
+/// Prefers the live OS-reported cwd ([`process_cwd`]) and falls back to the
+/// directory recorded for the PTY session ([`pty_cwd_for`] over `pty_dirs`,
+/// shell pid → spawn cwd). `None` for pids that are not Luxor terminals, so
+/// this can't be used to probe arbitrary processes.
+pub fn terminal_cwd(
+    pid: u32,
+    pty_pids: &HashSet<u32>,
+    pty_dirs: &HashMap<u32, String>,
+) -> Option<String> {
+    terminal_cwd_with(pid, pty_pids, pty_dirs, process_cwd)
+}
+
+fn terminal_cwd_with(
+    pid: u32,
+    pty_pids: &HashSet<u32>,
+    pty_dirs: &HashMap<u32, String>,
+    live: impl FnOnce(u32) -> Option<String>,
+) -> Option<String> {
+    if !pty_pids.contains(&pid) {
+        return None;
+    }
+    live(pid).or_else(|| pty_cwd_for(pid, &HashMap::new(), pty_dirs))
+}
+
 /// Stateful process sampler. Keep one instance alive: per-process CPU usage
 /// is a delta between consecutive refreshes.
 pub struct AgentSampler {
@@ -582,6 +630,35 @@ mod tests {
         pids.sort();
         assert_eq!(pids, vec![1, 2, 3, 4]);
         assert_eq!(descendants(99, &HashMap::new()), vec![99]);
+    }
+
+    #[test]
+    fn terminal_cwd_prefers_live_cwd_and_falls_back_to_spawn_dir() {
+        let pids: HashSet<u32> = [10].into_iter().collect();
+        let dirs: HashMap<u32, String> = [(10, "C:/proj".to_string())].into_iter().collect();
+        assert_eq!(
+            terminal_cwd_with(10, &pids, &dirs, |_| Some("C:/proj/src".into())).as_deref(),
+            Some("C:/proj/src")
+        );
+        assert_eq!(
+            terminal_cwd_with(10, &pids, &dirs, |_| None).as_deref(),
+            Some("C:/proj")
+        );
+        // Not a Luxor terminal: never read, never answered.
+        assert_eq!(
+            terminal_cwd_with(99, &pids, &dirs, |_| panic!("must not probe foreign pids")),
+            None
+        );
+    }
+
+    #[test]
+    fn process_cwd_reads_own_process() {
+        let own = process_cwd(std::process::id());
+        // Some sandboxes hide /proc/self/cwd; when it is visible it must match.
+        if let Some(dir) = own {
+            let expected = std::env::current_dir().unwrap();
+            assert_eq!(std::path::PathBuf::from(dir), expected);
+        }
     }
 
     #[test]

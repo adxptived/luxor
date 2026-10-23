@@ -264,7 +264,7 @@ export function HttpPanel() {
                   <button
                     onClick={() => setHeaders((h) => h.filter((_, j) => j !== i))}
                     className="rounded-lg px-2 text-muted hover:bg-danger-soft hover:text-danger"
-                    title={t("Delete")}
+                    title={t("Delete")} aria-label={t("Delete")}
                   >
                     <Trash2 size={13} />
                   </button>

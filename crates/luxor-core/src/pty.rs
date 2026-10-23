@@ -9,6 +9,7 @@ use std::sync::mpsc;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+use base64::Engine as _;
 use portable_pty::{native_pty_system, ChildKiller, CommandBuilder, PtySize};
 use serde::{Deserialize, Serialize};
 
@@ -169,7 +170,7 @@ fn default_shell_args(
     if !is_powershell {
         return Vec::new();
     }
-    if fast_powershell_startup {
+    let mut args: Vec<String> = if fast_powershell_startup {
         // Fast start: skip the user profile and hide the banner.
         vec!["-NoLogo".into(), "-NoProfile".into()]
     } else {
@@ -177,7 +178,46 @@ fn default_shell_args(
         // aliases, functions) just like Windows Terminal does. `-NoLogo` only
         // hides the startup banner; it does NOT affect profile loading.
         vec!["-NoLogo".into()]
-    }
+    };
+    // Stay interactive and install the cwd-reporting prompt hook. It runs
+    // after the profile, so it wraps whatever prompt the profile defined.
+    args.extend([
+        "-NoExit".into(),
+        "-EncodedCommand".into(),
+        encode_powershell_command(POWERSHELL_OSC7_HOOK),
+    ]);
+    args
+}
+
+/// PowerShell prompt hook that reports the current location with OSC 7
+/// (`ESC ] 7 ; file://localhost/C:/path BEL`), the same sequence bash/zsh/fish
+/// emit, so the terminal panel can reopen a restarted shell in the folder the
+/// user had `cd`'d into.
+///
+/// PowerShell needs this because `Set-Location` does not change the process's
+/// OS working directory, so reading the shell's cwd from the OS (the
+/// `pty_cwd` command) only ever sees the folder it started in. The original
+/// prompt runs first so `$?`-aware prompts (oh-my-posh, starship) still see the
+/// previous command's status.
+const POWERSHELL_OSC7_HOOK: &str = r#"$global:__LuxorPrompt = $function:prompt
+function global:prompt {
+  $out = if ($global:__LuxorPrompt) { & $global:__LuxorPrompt } else { "PS $($executionContext.SessionState.Path.CurrentLocation)$('>' * ($nestedPromptLevel + 1)) " }
+  $loc = $executionContext.SessionState.Path.CurrentLocation
+  if ($loc.Provider.Name -eq 'FileSystem') {
+    $p = $loc.ProviderPath -replace '\', '/'
+    if (-not $p.StartsWith('/')) { $p = '/' + $p }
+    $p = $p -replace '%', '%25' -replace ' ', '%20'
+    "$([char]27)]7;file://localhost$p$([char]7)$out"
+  } else {
+    $out
+  }
+}"#;
+
+/// Encode a script for `powershell -EncodedCommand` (base64 of UTF-16LE).
+/// Sidesteps Windows command-line quoting entirely.
+fn encode_powershell_command(script: &str) -> String {
+    let utf16: Vec<u8> = script.encode_utf16().flat_map(u16::to_le_bytes).collect();
+    base64::engine::general_purpose::STANDARD.encode(utf16)
 }
 
 /// Manages all live PTY sessions.
@@ -566,24 +606,35 @@ mod tests {
 
     #[test]
     fn powershell_fast_startup_adds_default_args_only_when_safe() {
+        let with_hook = |base: &[&str]| -> Vec<String> {
+            base.iter()
+                .map(|s| s.to_string())
+                .chain([
+                    "-NoExit".to_string(),
+                    "-EncodedCommand".to_string(),
+                    encode_powershell_command(POWERSHELL_OSC7_HOOK),
+                ])
+                .collect()
+        };
         assert_eq!(
             default_shell_args("powershell.exe", &[], true),
-            vec!["-NoLogo".to_string(), "-NoProfile".to_string()]
+            with_hook(&["-NoLogo", "-NoProfile"])
         );
         assert_eq!(
             default_shell_args("C:/Program Files/PowerShell/7/pwsh.exe", &[], true),
-            vec!["-NoLogo".to_string(), "-NoProfile".to_string()]
+            with_hook(&["-NoLogo", "-NoProfile"])
         );
         // Profile mode (fast startup off): load the profile but still hide the
         // banner with -NoLogo (and crucially NOT -NoProfile).
         assert_eq!(
             default_shell_args("pwsh", &[], false),
-            vec!["-NoLogo".to_string()]
+            with_hook(&["-NoLogo"])
         );
         assert_eq!(
             default_shell_args("powershell.exe", &[], false),
-            vec!["-NoLogo".to_string()]
+            with_hook(&["-NoLogo"])
         );
+        // Explicit user arguments win: no injected flags, no hook.
         assert_eq!(
             default_shell_args("powershell.exe", &["-NoLogo".into()], true),
             vec!["-NoLogo".to_string()]
@@ -591,6 +642,23 @@ mod tests {
         assert_eq!(default_shell_args("bash", &[], true), Vec::<String>::new());
         // Non-PowerShell shells get no injected args in either mode.
         assert_eq!(default_shell_args("bash", &[], false), Vec::<String>::new());
+    }
+
+    #[test]
+    fn powershell_encoded_command_is_base64_utf16le() {
+        // `powershell -EncodedCommand` of "ls" is the well-known "bABzAA==".
+        assert_eq!(encode_powershell_command("ls"), "bABzAA==");
+        let hook = encode_powershell_command(POWERSHELL_OSC7_HOOK);
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(hook)
+            .unwrap();
+        let units: Vec<u16> = bytes
+            .chunks_exact(2)
+            .map(|c| u16::from_le_bytes([c[0], c[1]]))
+            .collect();
+        let decoded = String::from_utf16(&units).unwrap();
+        assert_eq!(decoded, POWERSHELL_OSC7_HOOK);
+        assert!(decoded.contains("]7;file://localhost"));
     }
 
     #[test]

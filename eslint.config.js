@@ -1,6 +1,13 @@
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
+import iconButtonLabel from "./eslint-rules/icon-button-label.js";
+
+// eslint-plugin-jsx-a11y is picked up automatically once it is installed
+// (`bun add -d eslint-plugin-jsx-a11y`). Until then the local
+// `luxor/icon-button-label` rule below still guards the most common
+// regression the audit found: icon-only buttons with no accessible name.
+const jsxA11y = await import("eslint-plugin-jsx-a11y").then((m) => m.default ?? m).catch(() => null);
 
 // Focused flat config. The heavy lifting (types, unused vars) is owned by
 // `tsc --noEmit`; ESLint here exists primarily to enforce the React Hooks
@@ -32,6 +39,40 @@ export default [
       "react-hooks/rules-of-hooks": "error",
       // Stale-closure / missing-dependency hints (non-fatal).
       "react-hooks/exhaustive-deps": "warn",
+    },
+  },
+  // ── Accessibility guard (audit P5) ───────────────────────────────────────
+  // Icon-only <button>s must carry aria-label: `title` is only a tooltip and is
+  // not reliably announced by screen readers. See eslint-rules/.
+  {
+    files: ["src/**/*.tsx"],
+    ignores: ["src/**/*.test.tsx"],
+    plugins: {
+      luxor: { rules: { "icon-button-label": iconButtonLabel } },
+      ...(jsxA11y ? { "jsx-a11y": jsxA11y } : {}),
+    },
+    rules: {
+      "luxor/icon-button-label": "error",
+      ...(jsxA11y
+        ? {
+            // Structural ARIA mistakes are hard errors; the interaction rules
+            // start as warnings so they can be burned down without blocking CI.
+            "jsx-a11y/aria-props": "error",
+            "jsx-a11y/aria-proptypes": "error",
+            "jsx-a11y/aria-role": "error",
+            "jsx-a11y/role-has-required-aria-props": "error",
+            "jsx-a11y/role-supports-aria-props": "error",
+            "jsx-a11y/alt-text": "error",
+            "jsx-a11y/iframe-has-title": "error",
+            "jsx-a11y/tabindex-no-positive": "error",
+            "jsx-a11y/control-has-associated-label": [
+              "warn",
+              { ignoreElements: ["input", "textarea", "select", "td", "th", "tr"], depth: 4 },
+            ],
+            "jsx-a11y/click-events-have-key-events": "warn",
+            "jsx-a11y/no-static-element-interactions": "warn",
+          }
+        : {}),
     },
   },
   // ── Design-system guard (audit S1) ───────────────────────────────────────

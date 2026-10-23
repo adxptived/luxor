@@ -232,7 +232,7 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
           <button
             className="lx-square-btn flex h-7 w-7 shrink-0 items-center justify-center text-muted hover:text-strong disabled:opacity-30"
             disabled={ides.length === 0}
-            title={t("Choose IDE")}
+            title={t("Choose IDE")} aria-label={t("Choose IDE")}
             data-testid="ide-chevron"
             onClick={() => setIdeMenu((v) => !v)}
           >
@@ -269,7 +269,7 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
                       ? "text-accent"
                       : "text-muted opacity-0 hover:text-accent group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
                   }`}
-                  title={t("Set as default IDE")}
+                  title={t("Set as default IDE")} aria-label={t("Set as default IDE")}
                   onClick={() => setDefault(ide.command)}
                 >
                   <Star size={13} fill={(config?.default_ide ?? null) === ide.command ? "currentColor" : "none"} />
@@ -307,7 +307,7 @@ function QuickActionsImpl({ vertical, expanded = false }: { vertical: boolean; e
                 </button>
                 <button
                   className="shrink-0 rounded p-0.5 text-muted hover:bg-danger-soft hover:text-danger sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100 focus-visible:opacity-100"
-                  title={t("Remove favorite")}
+                  title={t("Remove favorite")} aria-label={t("Remove favorite")}
                   onClick={() =>
                     void updateProject({
                       ...project,

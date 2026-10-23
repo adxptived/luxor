@@ -88,23 +88,23 @@ export function ImagePanel(props: IDockviewPanelProps) {
           </span>
         )}
         <div className="flex shrink-0 items-center gap-1 rounded-lg border border-edge bg-surface/70 p-1">
-          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Zoom out")} onClick={() => zoomBy(1 / 1.25)}>
+          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Zoom out")} aria-label={t("Zoom out")} onClick={() => zoomBy(1 / 1.25)}>
             <ZoomOut size={13} />
           </button>
           <span className="w-12 text-center font-mono text-2xs">{zoomLabel}</span>
-          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Zoom in")} onClick={() => zoomBy(1.25)}>
+          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Zoom in")} aria-label={t("Zoom in")} onClick={() => zoomBy(1.25)}>
             <ZoomIn size={13} />
           </button>
-          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Fit / 100%")} onClick={() => setZoom((z) => (z === "fit" ? 1 : "fit"))}>
+          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Fit / 100%")} aria-label={t("Fit / 100%")} onClick={() => setZoom((z) => (z === "fit" ? 1 : "fit"))}>
             <Maximize size={13} />
           </button>
-          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Reset zoom")} onClick={() => setZoom("fit")}>
+          <button className="rounded-lg p-1.5 hover:bg-raised hover:text-strong" title={t("Reset zoom")} aria-label={t("Reset zoom")} onClick={() => setZoom("fit")}>
             <RotateCcw size={13} />
           </button>
         </div>
         <button
           className="rounded-lg border border-edge px-2 py-1.5 text-muted hover:bg-raised hover:text-strong"
-          title={t("Copy path")}
+          title={t("Copy path")} aria-label={t("Copy path")}
           onClick={() => void navigator.clipboard.writeText(path).then(() => toast(t("Copied"), "success"))}
         >
           <Copy size={13} />

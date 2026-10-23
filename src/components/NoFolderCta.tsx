@@ -84,7 +84,7 @@ export function NoFolderCta({ hint }: { hint: string }) {
           <button
             className="rounded-lg bg-raised p-1.5 text-muted hover:text-accent disabled:opacity-30"
             disabled={!path.trim()}
-            title={t("Attach folder")}
+            title={t("Attach folder")} aria-label={t("Attach folder")}
             onClick={() => void attach(path)}
           >
             <ArrowRight size={14} />

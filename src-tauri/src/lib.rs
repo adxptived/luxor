@@ -887,6 +887,7 @@ pub fn run() {
             commands::agents::agents_sample,
             commands::agents::agents_processes,
             commands::agents::pty_tree_stats,
+            commands::agents::pty_cwd,
             // CLI bridge
             commands::cli::cli_poll_requests,
             // window

@@ -1686,7 +1686,7 @@ export function SettingsModal() {
                       </select>
                       <button
                         className="rounded p-1 text-muted hover:bg-raised hover:text-strong disabled:opacity-30"
-                        title={t("Move up")}
+                        title={t("Move up")} aria-label={t("Move up")}
                         disabled={i === 0}
                         onClick={() => set({ ui: { ...draft.ui, nav_order: nudgeNavButton(draft.ui.nav_order ?? [], id, -1) } })}
                       >
@@ -1694,7 +1694,7 @@ export function SettingsModal() {
                       </button>
                       <button
                         className="rounded p-1 text-muted hover:bg-raised hover:text-strong disabled:opacity-30"
-                        title={t("Move down")}
+                        title={t("Move down")} aria-label={t("Move down")}
                         disabled={i === arr.length - 1}
                         onClick={() => set({ ui: { ...draft.ui, nav_order: nudgeNavButton(draft.ui.nav_order ?? [], id, 1) } })}
                       >
@@ -1702,7 +1702,7 @@ export function SettingsModal() {
                       </button>
                       <button
                         className="rounded p-1 text-muted hover:bg-raised hover:text-strong disabled:opacity-30"
-                        title={hidden ? t("Show button") : t("Hide button")}
+                        title={hidden ? t("Show button") : t("Hide button")} aria-label={hidden ? t("Show button") : t("Hide button")}
                         disabled={!hidden && visibleCount <= 1}
                         onClick={() =>
                           set({
@@ -2012,7 +2012,7 @@ export function SettingsModal() {
                       </button>
                       <button
                         className="rounded p-1 text-muted hover:text-danger"
-                        title={t("Remove")}
+                        title={t("Remove")} aria-label={t("Remove")}
                         onClick={() =>
                           set({ custom_ides: draft.custom_ides.filter((_, j) => j !== i) })
                         }
@@ -2128,7 +2128,7 @@ export function SettingsModal() {
                       <span className="min-w-0 flex-1 truncate text-strong">{segmentLabel(id)}</span>
                       <button
                         className="rounded p-1 text-muted hover:bg-raised hover:text-strong disabled:opacity-30"
-                        title={t("Move left/up")}
+                        title={t("Move left/up")} aria-label={t("Move left/up")}
                         disabled={i === 0}
                         onClick={() =>
                           set({ status_bar: { ...draft.status_bar, segment_order: nudgeSegment(draft.status_bar.segment_order ?? [], id, -1) } })
@@ -2138,7 +2138,7 @@ export function SettingsModal() {
                       </button>
                       <button
                         className="rounded p-1 text-muted hover:bg-raised hover:text-strong disabled:opacity-30"
-                        title={t("Move right/down")}
+                        title={t("Move right/down")} aria-label={t("Move right/down")}
                         disabled={i === arr.length - 1}
                         onClick={() =>
                           set({ status_bar: { ...draft.status_bar, segment_order: nudgeSegment(draft.status_bar.segment_order ?? [], id, 1) } })
@@ -2149,7 +2149,7 @@ export function SettingsModal() {
                       {toggleKey && (
                         <button
                           className="rounded p-1 text-muted hover:bg-raised hover:text-strong"
-                          title={shown ? "Hide segment" : "Show segment"}
+                          title={shown ? "Hide segment" : "Show segment"} aria-label={shown ? "Hide segment" : "Show segment"}
                           onClick={() => set({ status_bar: { ...draft.status_bar, [toggleKey]: !shown } })}
                         >
                           {shown ? <Eye size={13} /> : <EyeOff size={13} />}

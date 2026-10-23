@@ -222,7 +222,7 @@ export function AgentsPanel() {
                   <button
                     onClick={() => openHere(p)}
                     className="shrink-0 rounded p-1 text-muted hover:bg-raised hover:text-accent"
-                    title={t("agents.open_terminal", "Open terminal in this directory")}
+                    title={t("agents.open_terminal", "Open terminal in this directory")} aria-label={t("agents.open_terminal", "Open terminal in this directory")}
                     data-testid={`agent-term-${p.pid}`}
                   >
                     <TerminalSquare size={14} />
@@ -231,7 +231,7 @@ export function AgentsPanel() {
                     onClick={() => void ipc.openPath(p.cwd)}
                     disabled={!p.cwd}
                     className="shrink-0 rounded p-1 text-muted hover:bg-raised hover:text-strong disabled:opacity-30"
-                    title={t("agents.reveal", "Reveal working directory")}
+                    title={t("agents.reveal", "Reveal working directory")} aria-label={t("agents.reveal", "Reveal working directory")}
                     data-testid={`agent-reveal-${p.pid}`}
                   >
                     <FolderOpen size={14} />
@@ -240,7 +240,7 @@ export function AgentsPanel() {
                     onClick={() => void kill(p)}
                     disabled={killing.has(p.pid)}
                     className="shrink-0 rounded p-1 text-muted hover:bg-danger-soft hover:text-danger disabled:opacity-40"
-                    title={t("agents.kill_title", "Stop agent?")}
+                    title={t("agents.kill_title", "Stop agent?")} aria-label={t("agents.kill_title", "Stop agent?")}
                     data-testid={`agent-kill-${p.pid}`}
                   >
                     {killing.has(p.pid) ? (

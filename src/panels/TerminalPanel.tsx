@@ -44,7 +44,7 @@ import { useProjectsStore } from "@/state/projectsStore";
 import type { TerminalPanelParams } from "@/layout/dockStore";
 import { useDockStore } from "@/layout/dockStore";
 import { useDockKey } from "@/layout/DockKeyContext";
-import { ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, Play, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
+import { Bot, ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, Play, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
 import { loadProfiles } from "@/lib/shellProfiles";
 
 /** "1h 4m" / "2m 5s" / "42s" for notification bodies. */
@@ -385,11 +385,33 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         /* persistence is best effort */
       }
     };
+    // cwd fallback for shells that never emit OSC 7 (cmd.exe, PowerShell with
+    // custom launch args, …): ask the backend for the shell's OS-reported
+    // working directory right before each throttled save. The flush-on-unload
+    // path stays synchronous and simply uses the last value fetched here.
+    let shellPid: number | null = null;
+    let osc7Seen = false;
+    const refreshCwdThenSave = () => {
+      saveTimer = null;
+      if (disposed) return;
+      if (osc7Seen || shellPid === null || !isRestoreEnabled()) {
+        saveNow();
+        return;
+      }
+      const pidAtCall = shellPid;
+      void ipc
+        .ptyCwd(pidAtCall)
+        .then((dir) => {
+          if (dir && !osc7Seen && shellPid === pidAtCall) liveCwd = dir;
+        })
+        .catch(() => {})
+        .finally(saveNow);
+    };
     // Throttle, not debounce: a long build streams output continuously and a
     // debounce would never fire.
     const scheduleSave = () => {
       if (saveTimer || disposed) return;
-      saveTimer = setTimeout(saveNow, 2500);
+      saveTimer = setTimeout(refreshCwdThenSave, 2500);
     };
     const unregisterFlush = registerTerminalFlush(saveNow);
 
@@ -438,6 +460,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         sessionId = info.session_id;
         sessionRef.current = sessionId;
         setPid(info.pid ?? null);
+        shellPid = info.pid ?? null;
         setExited(null);
 
         // Check if this is a restored session (pty bus had buffered output)
@@ -468,6 +491,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               logActivity("terminal", `Shell exited (code ${exitCode ?? 0})`);
               if (!disposed) {
                 setPid(null);
+                shellPid = null;
                 setExited(exitCode ?? 0);
               }
             },
@@ -513,7 +537,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     // iTerm-style hook) let a restart reopen in the same directory.
     const osc7Dispose = term.parser.registerOscHandler(7, (data) => {
       const dir = parseOsc7Cwd(data);
-      if (dir) liveCwd = dir;
+      if (dir) {
+        liveCwd = dir;
+        osc7Seen = true; // the shell reports its own cwd; skip the OS fallback
+      }
       return false;
     });
     // Agent-idle detection: an output burst followed by silence means the
@@ -846,10 +873,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           {treeStats.agents.length > 0 && (
             <span
               data-testid="terminal-agent-badge"
-              className="text-accent"
+              className="inline-flex items-center gap-1 text-accent"
               title={t("term.agent_running", "AI agent running in this terminal")}
             >
-              ⚡ {treeStats.agents.join(", ")}
+              <Bot size={11} aria-hidden /> {treeStats.agents.join(", ")}
             </span>
           )}
           {showStats && (

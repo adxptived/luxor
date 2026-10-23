@@ -36,6 +36,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  Lock,
 } from "lucide-react";
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -1217,8 +1218,9 @@ function PrivacyControls() {
         onChange={(v) => updatePrefs({ ...prefs, mask_projects: v })}
       />
 
-      <p className="rounded-md border border-edge bg-bar/60 px-3 py-2 text-xs text-muted">
-        🔒 {t("All statistics are stored locally in local_stats.db and are NEVER sent to any server.")}
+      <p className="flex items-start gap-2 rounded-md border border-edge bg-bar/60 px-3 py-2 text-xs text-muted">
+        <Lock size={13} className="mt-px shrink-0 text-success" aria-hidden />
+        {t("All statistics are stored locally in local_stats.db and are NEVER sent to any server.")}
       </p>
 
       <div className="flex flex-wrap gap-2">

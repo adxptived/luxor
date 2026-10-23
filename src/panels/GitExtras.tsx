@@ -60,14 +60,14 @@ export function TagsView({ repo, busy, run }: { repo: string; busy: string | nul
           {t.message && <span className="flex-1 truncate text-xs text-muted">{t.message}</span>}
           {!t.message && <span className="flex-1" />}
           <button
-            title={tr("Push tag to remote")}
+            title={tr("Push tag to remote")} aria-label={tr("Push tag to remote")}
             className="text-muted opacity-0 hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             onClick={() => void run(tr("Push tag"), () => ipc.gitPushTag(repo, t.name), `${tr("Pushed")} ${t.name}`)}
           >
             <UploadCloud size={13} />
           </button>
           <button
-            title={tr("Delete tag")}
+            title={tr("Delete tag")} aria-label={tr("Delete tag")}
             className="text-muted opacity-0 hover:text-danger group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             onClick={() =>
               void confirmDestructive({ title: tr("Delete tag"), message: `${tr("Delete tag")} ${t.name}? ${tr("(local only)")}` }).then(
@@ -101,7 +101,7 @@ export function ReflogView({ repo, run }: { repo: string; run: RunFn }) {
           <span className="flex-1 truncate text-strong">{e.message}</span>
           <span className="shrink-0 text-muted">{formatUnixDateTime(e.time)}</span>
           <button
-            title={tr("Cherry-pick this commit onto HEAD")}
+            title={tr("Cherry-pick this commit onto HEAD")} aria-label={tr("Cherry-pick this commit onto HEAD")}
             className="shrink-0 text-muted opacity-0 hover:text-strong group-hover:opacity-100 group-focus-within:opacity-100 focus-visible:opacity-100"
             onClick={() =>
               void run(tr("Cherry-pick"), () => ipc.gitCherryPick(repo, e.id), `${tr("Cherry-picked")} ${e.short_id}`)

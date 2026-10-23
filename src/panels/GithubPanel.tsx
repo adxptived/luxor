@@ -234,7 +234,7 @@ export function GithubPanel() {
           <button
             onClick={() => void ipc.openUrl(run.html_url)}
             className="ml-auto text-muted hover:text-strong"
-            title={t("common.openInBrowser", "Open in browser")}
+            title={t("common.openInBrowser", "Open in browser")} aria-label={t("common.openInBrowser", "Open in browser")}
           >
             <ExternalLink size={14} />
           </button>
@@ -271,7 +271,7 @@ export function GithubPanel() {
           <button
             onClick={() => void ipc.openUrl(item.html_url)}
             className="ml-auto text-muted hover:text-strong"
-            title={t("common.openInBrowser", "Open in browser")}
+            title={t("common.openInBrowser", "Open in browser")} aria-label={t("common.openInBrowser", "Open in browser")}
           >
             <ExternalLink size={14} />
           </button>
@@ -370,7 +370,7 @@ export function GithubPanel() {
               {t("github.newPr", "New PR")}
             </button>
           )}
-          <button onClick={() => void refresh()} className="text-muted hover:text-strong" title={t("common.refresh", "Refresh")}>
+          <button onClick={() => void refresh()} className="text-muted hover:text-strong" title={t("common.refresh", "Refresh")} aria-label={t("common.refresh", "Refresh")}>
             <RefreshCw size={14} className={busy ? "animate-spin" : ""} />
           </button>
         </div>

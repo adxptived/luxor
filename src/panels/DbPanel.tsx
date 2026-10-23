@@ -110,11 +110,11 @@ export function DbPanel(props: IDockviewPanelProps) {
           <button
             className={`rounded p-0.5 hover:bg-raised hover:text-strong ${sqlMode ? "text-accent" : ""}`}
             onClick={() => setSqlMode((v) => !v)}
-            title={t("SQL console")}
+            title={t("SQL console")} aria-label={t("SQL console")}
           >
             <TerminalSquare size={12} />
           </button>
-          <button className="rounded p-0.5 hover:bg-raised hover:text-strong" onClick={() => void loadTables()} title={t("Refresh")}>
+          <button className="rounded p-0.5 hover:bg-raised hover:text-strong" onClick={() => void loadTables()} title={t("Refresh")} aria-label={t("Refresh")}>
             <RefreshCw size={12} />
           </button>
         </div>
@@ -361,7 +361,7 @@ function DataView({ path, table, onChanged }: { path: string; table: string; onC
             className="w-40 rounded border border-edge bg-raised py-0.5 pl-6 pr-5 text-xs text-strong outline-none focus:border-accent"
           />
           {filterInput && (
-            <button onClick={() => setFilterInput("")} className="absolute right-1 top-1/2 -translate-y-1/2 hover:text-strong" title={t("Clear")}>
+            <button onClick={() => setFilterInput("")} className="absolute right-1 top-1/2 -translate-y-1/2 hover:text-strong" title={t("Clear")} aria-label={t("Clear")}>
               <X size={11} />
             </button>
           )}

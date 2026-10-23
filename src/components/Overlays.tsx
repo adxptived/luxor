@@ -408,7 +408,7 @@ function Toasts() {
               <button
                 onClick={() => dismiss(toast.id)}
                 className="shrink-0 rounded p-0.5 text-muted hover:bg-raised hover:text-strong"
-                title={t("Dismiss")}
+                title={t("Dismiss")} aria-label={t("Dismiss")}
               >
                 <X size={13} />
               </button>

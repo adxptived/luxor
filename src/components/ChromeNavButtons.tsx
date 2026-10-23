@@ -87,7 +87,7 @@ export const ChromeNavButtons = ({ config }: { config: AppConfig | null }) => {
           className={`lx-square-btn lx-toolbar-item flex h-7 w-7 items-center justify-center text-muted hover:text-strong ${
             navDragOverId === b.id ? "border-l-accent" : ""
           } ${navDragId === b.id ? "opacity-30" : ""}`}
-          title={b.title}
+          title={b.title} aria-label={b.title}
           onClick={(e) => {
             if (e.detail > 1) return; // ignore double clicks
             getNavAction(b.id)();
