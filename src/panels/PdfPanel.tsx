@@ -59,7 +59,7 @@ export function PdfPanel(props: IDockviewPanelProps) {
           <div className="mt-3 truncate rounded-lg border border-edge bg-surface px-2 py-1 font-mono text-2xs" title={path}>{path}</div>
           <button
             onClick={() => setReloadKey((k) => k + 1)}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs hover:bg-raised hover:text-strong"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs hover:bg-raised hover:text-strong"
           >
             <RefreshCw size={13} /> Retry
           </button>

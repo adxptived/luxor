@@ -3,6 +3,7 @@
  * (update + vulnerability check), process viewer, HTML preview and crash reports.
  */
 
+import { EmptyState } from "@/components/EmptyState";
 import { formatTime, formatUnixDateTime } from "@/lib/format";
 import {
   AlertCircle,
@@ -110,7 +111,7 @@ export function DevToolsPanel() {
               onClick={() => setTab(tb.id)}
               title={compact ? t(tb.label) : undefined}
               aria-label={t(tb.label)}
-              className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs transition duration-150 ${
+              className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs transition duration-150 ${
                 active
                   ? "border-accent bg-accent/10 text-accent font-semibold shadow-sm"
                   : "border-edge bg-surface text-muted hover:bg-raised hover:text-strong hover:border-muted"
@@ -204,8 +205,8 @@ function DiagnosticsTab({ root }: { root: string }) {
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
-          <button onClick={() => void copyReport()} disabled={!report || running} className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs text-muted transition hover:border-accent hover:text-accent disabled:opacity-40"><Copy size={12} /> Copy report</button>
-          <button onClick={() => void run()} disabled={running} className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-2.5 py-1.5 text-xs font-semibold text-accent transition hover:bg-accent/15 disabled:opacity-50"><RefreshCw size={12} className={running ? "animate-spin" : ""} /> {running ? "Checking…" : "Run all"}</button>
+          <button onClick={() => void copyReport()} disabled={!report || running} className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs text-muted transition hover:border-accent hover:text-accent disabled:opacity-40"><Copy size={12} /> Copy report</button>
+          <button onClick={() => void run()} disabled={running} className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-2.5 py-1 text-xs font-semibold text-accent transition hover:bg-accent/15 disabled:opacity-50"><RefreshCw size={12} className={running ? "animate-spin" : ""} /> {running ? "Checking…" : "Run all"}</button>
         </div>
       </div>
 
@@ -372,7 +373,7 @@ function HtmlTab({ root }: { root: string }) {
           <button
             onClick={() => void createDemo()}
             disabled={creatingDemo}
-            className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-4 py-2 text-xs font-semibold text-accent hover:bg-accent/15 transition disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg border border-accent/35 bg-accent/10 px-4 py-1 text-xs font-semibold text-accent hover:bg-accent/15 transition disabled:opacity-40"
           >
             <Sparkles size={13} /> {creatingDemo ? t("Creating…") : t("Generate demo.html")}
           </button>
@@ -402,7 +403,7 @@ function HtmlTab({ root }: { root: string }) {
           <button
             onClick={() => void createDemo()}
             disabled={creatingDemo}
-            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-edge px-3 py-2 text-xs text-muted hover:border-accent hover:text-accent transition disabled:opacity-40 mt-2"
+            className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-edge px-3 py-1 text-xs text-muted hover:border-accent hover:text-accent transition disabled:opacity-40 mt-2"
           >
             <Sparkles size={12} /> {creatingDemo ? t("Creating…") : t("Add demo.html template")}
           </button>
@@ -569,35 +570,35 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
             onClick={() => openIde()}
             disabled={!defaultIde}
             title={`${t("Open project in")} ${defaultIdeLabel}`}
-            className="flex items-center gap-1 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent hover:bg-accent/15 disabled:opacity-40"
+            className="flex items-center gap-1 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent hover:bg-accent/15 disabled:opacity-40"
           >
             <AppWindow size={13} /> {t("Open in")} {defaultIdeLabel}
           </button>
-          <button onClick={() => openPanel("files")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => openPanel("files")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <FolderOpen size={13} /> {t("Files")}
           </button>
-          <button onClick={() => openPanel("search")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => openPanel("search")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <Search size={13} /> {t("Search")}
           </button>
-          <button onClick={() => openPanel("git")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => openPanel("git")} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <GitBranch size={13} /> {t("Git")}
           </button>
-          <button onClick={() => addTerminal({ cwd: root })} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => addTerminal({ cwd: root })} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <TerminalSquare size={13} /> {t("Terminal tab")}
           </button>
-          <button onClick={openExternalTerminal} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={openExternalTerminal} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <ExternalLink size={13} /> {t("External terminal")}
           </button>
-          <button onClick={() => void ipc.launcherOpenFileManager(root).catch((e: unknown) => toast(errorMessage(e), "error"))} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+          <button onClick={() => void ipc.launcherOpenFileManager(root).catch((e: unknown) => toast(errorMessage(e), "error"))} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
             <FolderOpen size={13} /> {t("Explorer")}
           </button>
           {visibleIdeActions.slice(0, compact ? 2 : 5).map((ide) => (
-            <button key={ide.command} onClick={() => openIde(ide.command)} title={ide.command} className="flex items-center gap-1 rounded-lg border border-accent/25 bg-accent/10 px-2.5 py-1.5 text-xs text-accent hover:bg-accent/15">
+            <button key={ide.command} onClick={() => openIde(ide.command)} title={ide.command} className="flex items-center gap-1 rounded-lg border border-accent/25 bg-accent/10 px-2.5 py-1 text-xs text-accent hover:bg-accent/15">
               <Code2 size={13} /> {ide.label}
             </button>
           ))}
           {ideActions.length === 0 && !defaultIde && (
-            <button onClick={() => openIde()} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent">
+            <button onClick={() => openIde()} className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent">
               <Code2 size={13} /> {t("Open IDE")}
             </button>
           )}
@@ -617,7 +618,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
           <button
             onClick={() => void scan()}
             disabled={scanning}
-            className="shrink-0 rounded-lg border border-edge bg-surface px-2.5 py-1.5 text-xs hover:border-accent hover:text-accent disabled:opacity-40 transition"
+            className="shrink-0 rounded-lg border border-edge bg-surface px-2.5 py-1 text-xs hover:border-accent hover:text-accent disabled:opacity-40 transition"
           >
             {scanning ? t("Scanning…") : t("Rescan EXE")}
           </button>
@@ -707,7 +708,7 @@ function RunTab({ root, compact }: { root: string; compact: boolean }) {
                 key={c.cmd}
                 onClick={() => runInTerminal(c.cmd)}
                 title={`${c.hint ? c.hint + " · " : ""}${c.cmd}`}
-                className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1.5 font-mono text-xs hover:border-accent hover:bg-raised transition duration-150 text-strong"
+                className="flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-2.5 py-1 font-mono text-xs hover:border-accent hover:bg-raised transition duration-150 text-strong"
               >
                 <Play size={11} className="text-accent" />
                 {c.label}
@@ -769,15 +770,7 @@ function Header({
 }
 
 function EmptyToolState({ icon: Icon, title, text }: { icon: LucideIcon; title: string; text?: string }) {
-  return (
-    <div className="m-2 rounded-lg border border-dashed border-edge bg-bar/30 px-5 py-8 text-center text-xs text-muted">
-      <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-        <Icon size={22} />
-      </div>
-      <div className="font-medium text-strong">{title}</div>
-      {text && <div className="mx-auto mt-1 max-w-md leading-5">{text}</div>}
-    </div>
-  );
+  return <EmptyState icon={<Icon size={20} />} title={title} text={text} />;
 }
 
 function EnvTab({ root }: { root: string }) {
@@ -1027,10 +1020,10 @@ function DepsTab({ root }: { root: string }) {
       </Header>
 
       <div className="px-2 flex flex-wrap gap-1.5">
-        <button onClick={() => void checkUpdates()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-accent hover:text-accent disabled:opacity-40 transition">
+        <button onClick={() => void checkUpdates()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1 text-xs font-semibold text-strong hover:border-accent hover:text-accent disabled:opacity-40 transition">
           <RefreshCw size={13} className={busy ? "lx-anim-spin" : undefined} /> {t("Check updates")}
         </button>
-        <button onClick={() => void checkVulns()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs font-semibold text-strong hover:border-danger hover:text-danger disabled:opacity-40 transition">
+        <button onClick={() => void checkVulns()} disabled={busy || manifests.length === 0} className="flex flex-1 min-w-[120px] items-center justify-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1 text-xs font-semibold text-strong hover:border-danger hover:text-danger disabled:opacity-40 transition">
           <ShieldCheck size={13} /> {t("Check vulnerabilities (OSV)")}
         </button>
       </div>
@@ -1214,7 +1207,7 @@ function PackageSearch({ defaultKind }: { defaultKind: RegistryKind }) {
             placeholder={kind === "pip" ? t("Exact package name…") : t("Search packages…")}
             aria-label={t("Search packages…")}
             spellCheck={false}
-            className="w-full rounded-lg border border-edge bg-surface py-1.5 pl-2.5 pr-7 font-mono text-xs text-strong outline-none focus:border-accent"
+            className="w-full rounded-lg border border-edge bg-surface py-1 pl-2.5 pr-7 font-mono text-xs text-strong outline-none focus:border-accent"
           />
           {query && (
             <button
@@ -1350,7 +1343,7 @@ function PerfTab() {
       <div className="mb-3 flex items-center gap-2 px-3">
         <button
           onClick={toggleCollection}
-          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+          className={`flex items-center gap-1.5 rounded-lg border px-3 py-1 text-xs font-semibold transition ${
             collecting 
               ? "border-danger-soft-strong bg-danger-soft text-danger hover:bg-danger-soft-strong animate-pulse" 
               : "border-accent/40 bg-accent/10 text-accent hover:bg-accent/15"
@@ -1361,7 +1354,7 @@ function PerfTab() {
         </button>
         <button
           onClick={() => { clearPerfSamples(); setSamples([]); setSummary(null); }}
-          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-3 py-1.5 text-xs text-strong hover:text-accent hover:border-accent transition font-semibold"
+          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-3 py-1 text-xs text-strong hover:text-accent hover:border-accent transition font-semibold"
         >
           <RefreshCw size={12} /> {t("Clear")}
         </button>

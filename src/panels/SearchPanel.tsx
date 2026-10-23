@@ -1,5 +1,6 @@
 /** Project-wide search & replace with per-file selection and preview. */
 
+import { EmptyState as SharedEmptyState } from "@/components/EmptyState";
 import { CaseSensitive, CheckCircle2, FileText, FolderSearch, History, Loader2, Regex, Replace, Search, Undo2, X } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { VList } from "virtua";
@@ -267,7 +268,7 @@ export function SearchPanel() {
             <button
               onClick={() => void applyReplace()}
               disabled={busy || !hasResults || includedFiles === 0}
-              className="rounded-lg border border-danger-soft-strong bg-danger-soft px-3 py-2 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:opacity-40"
+              className="rounded-lg border border-danger-soft-strong bg-danger-soft px-3 py-1 text-xs font-medium text-danger hover:bg-danger-soft-strong disabled:opacity-40"
             >
               Replace selected
             </button>
@@ -275,7 +276,7 @@ export function SearchPanel() {
               <button
                 onClick={() => void undoReplace()}
                 disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-2 text-xs font-medium text-strong hover:bg-raised disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-edge bg-surface px-3 py-1 text-xs font-medium text-strong hover:bg-raised disabled:opacity-40"
                 title={t("Restore the files changed by the last replace")}
               >
                 <Undo2 size={13} />
@@ -404,13 +405,5 @@ function Toggle({
 }
 
 function EmptyState({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
-  return (
-    <div className="flex h-full min-h-48 items-center justify-center p-4 lx-fade-in">
-      <div className="max-w-md rounded-lg border border-dashed border-edge bg-bar/30 px-6 py-8 text-center text-muted">
-        <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">{icon}</div>
-        <div className="font-medium text-strong">{title}</div>
-        <div className="mt-1 text-xs leading-5">{text}</div>
-      </div>
-    </div>
-  );
+  return <SharedEmptyState fill className="lx-fade-in" icon={icon} title={title} text={text} />;
 }

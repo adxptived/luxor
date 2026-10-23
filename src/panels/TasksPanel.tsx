@@ -185,7 +185,7 @@ export function TasksPanel() {
               }}
               placeholder={t("Filter tasks…")}
               data-testid="task-filter"
-              className="w-36 rounded border border-edge bg-surface py-0.5 pl-6 pr-5 text-xs text-strong outline-none placeholder:text-muted focus:border-muted/60"
+              className="w-36 rounded border border-edge bg-surface py-1 pl-6 pr-5 text-xs text-strong outline-none placeholder:text-muted focus:border-muted/60"
             />
             {filter && (
               <button
@@ -346,7 +346,7 @@ function TaskCard(props: {
         />
         <div className="flex gap-1.5">
           <button
-            className="rounded bg-raised border border-edge px-2 py-0.5 text-xs font-medium text-strong hover:bg-surface disabled:opacity-40"
+            className="rounded bg-raised border border-edge px-2 py-1 text-xs font-medium text-strong hover:bg-surface disabled:opacity-40"
             disabled={!title.trim()}
             onClick={() => {
               props.onSave({ ...task, title: title.trim(), description });
@@ -356,7 +356,7 @@ function TaskCard(props: {
             {t("Save")}
           </button>
           <button
-            className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong"
+            className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             onClick={props.onCloseEdit}
           >
             {t("common.cancel", "Cancel")}
@@ -452,7 +452,7 @@ function AddCard(props: { onAdd: (title: string) => void }) {
   if (!open) {
     return (
       <button
-        className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-edge px-2 py-1.5 text-left text-xs text-muted hover:bg-raised hover:text-strong"
+        className="flex items-center justify-center gap-1 rounded-lg border border-dashed border-edge px-2 py-1 text-left text-xs text-muted hover:bg-raised hover:text-strong"
         onClick={() => setOpen(true)}
       >
         <Plus size={13} /> {t("Add task")}

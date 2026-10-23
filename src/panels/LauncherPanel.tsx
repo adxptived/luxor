@@ -123,7 +123,7 @@ export function LauncherPanel() {
 
         <Section title={t("Project executables")} subtitle={t("Discover and launch runnable files from this folder.")}>
           <button
-            className="mb-2 flex items-center gap-1.5 rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20 disabled:opacity-50"
+            className="mb-2 flex items-center gap-1.5 rounded-lg border border-accent bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20 disabled:opacity-50"
             disabled={scanning}
             onClick={() => void scan()}
           >
@@ -158,7 +158,7 @@ export function LauncherPanel() {
             className="min-w-52 flex-1 rounded-lg border border-edge bg-raised px-2.5 py-1.5 text-strong outline-none focus:border-accent"
           />
           <button
-            className="flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs text-muted hover:border-accent hover:text-accent disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs text-muted hover:border-accent hover:text-accent disabled:opacity-40"
             disabled={!newCommand.trim()}
             onClick={addFavorite}
           >

@@ -1,5 +1,6 @@
 /** REST scratch pad: fire HTTP requests without leaving the cockpit. */
 
+import { EmptyState } from "@/components/EmptyState";
 import { formatNumber } from "@/lib/format";
 import { ChevronDown, ChevronRight, Copy, History, Loader2, Plus, Send, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -148,7 +149,7 @@ export function HttpPanel() {
           <select
             value={method}
             onChange={(e) => setMethod(e.target.value)}
-            className="rounded-lg border border-edge bg-raised px-2 py-2 font-mono text-xs font-semibold text-strong outline-none focus:border-accent/70"
+            className="rounded-lg border border-edge bg-raised px-2 py-1 font-mono text-xs font-semibold text-strong outline-none focus:border-accent/70"
           >
             {METHODS.map((m) => (
               <option key={m}>{m}</option>
@@ -159,7 +160,7 @@ export function HttpPanel() {
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && void send()}
             placeholder="https://api.example.com/v1/…"
-            className="min-w-0 rounded-lg border border-edge bg-raised px-3 py-2 font-mono text-xs text-strong outline-none placeholder:text-muted focus:border-accent/70"
+            className="min-w-0 rounded-lg border border-edge bg-raised px-3 py-1 font-mono text-xs text-strong outline-none placeholder:text-muted focus:border-accent/70"
           />
           <button
             onClick={() => void send()}
@@ -253,13 +254,13 @@ export function HttpPanel() {
                     value={k}
                     onChange={(e) => setHeaders((h) => h.map((p, j) => (j === i ? [e.target.value, p[1]] : p)))}
                     placeholder={t("Header")}
-                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1.5 font-mono text-xs text-strong outline-none focus:border-accent/70"
+                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1 font-mono text-xs text-strong outline-none focus:border-accent/70"
                   />
                   <input
                     value={v}
                     onChange={(e) => setHeaders((h) => h.map((p, j) => (j === i ? [p[0], e.target.value] : p)))}
                     placeholder={t("Value")}
-                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1.5 font-mono text-xs text-strong outline-none focus:border-accent/70"
+                    className="min-w-0 rounded-lg border border-edge bg-raised px-2 py-1 font-mono text-xs text-strong outline-none focus:border-accent/70"
                   />
                   <button
                     onClick={() => setHeaders((h) => h.filter((_, j) => j !== i))}
@@ -293,15 +294,12 @@ export function HttpPanel() {
 
       <div className="min-h-0 flex-1 overflow-auto p-3">
         {!response && !busy && (
-          <div className="flex h-full min-h-48 items-center justify-center rounded-lg border border-dashed border-edge bg-bar/30 p-6 text-center text-muted">
-            <div>
-              <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-                <Send size={20} />
-              </div>
-              <div className="font-medium text-strong">{t("Send a request to see the response here")}</div>
-              <div className="mt-1 max-w-xs text-xs leading-5">Headers, status, timing and body preview will appear in this panel.</div>
-            </div>
-          </div>
+          <EmptyState
+            fill
+            icon={<Send size={20} />}
+            title={t("Send a request to see the response here")}
+            text={t("Headers, status, timing and body preview will appear in this panel.")}
+          />
         )}
         {busy && (
           <div className="flex h-full min-h-48 items-center justify-center rounded-lg border border-edge bg-bar/30 p-6 text-center text-muted">

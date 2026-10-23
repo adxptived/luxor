@@ -85,7 +85,7 @@ export const ChromeNavButtons = ({ config }: { config: AppConfig | null }) => {
         <button
           key={b.id}
           className={`lx-square-btn lx-toolbar-item flex h-7 w-7 items-center justify-center text-muted hover:text-strong ${
-            navDragOverId === b.id ? "border-l-accent" : ""
+            navDragOverId === b.id ? "shadow-[inset_2px_0_0_0_var(--lx-accent)]" : ""
           } ${navDragId === b.id ? "opacity-30" : ""}`}
           title={b.title} aria-label={b.title}
           onClick={(e) => {

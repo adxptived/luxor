@@ -132,7 +132,7 @@ export function SubmodulesView({ repo, run }: { repo: string; run: RunFn }) {
             </div>
           </div>
           <button
-            className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong"
+            className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             onClick={() => void run(tr("Update submodule"), () => ipc.gitSubmoduleUpdate(repo, s.name).then(load), tr("Submodule updated"))}
           >
             Init / update

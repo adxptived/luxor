@@ -492,7 +492,7 @@ function OptNumber({
         min={min}
         max={max}
         onChange={(e) => onChange(Number(e.target.value))}
-        className="w-14 rounded border border-edge bg-raised px-1 py-0.5 text-right text-xs text-strong outline-none focus:border-accent"
+        className="w-14 rounded border border-edge bg-raised px-1 py-1 text-right text-xs text-strong outline-none focus:border-accent"
       />
     </label>
   );
@@ -535,7 +535,7 @@ function WidgetOptionsEditor({
                 .filter((n) => Number.isFinite(n) && n > 0);
               onPatch({ presets });
             }}
-            className="rounded border border-edge bg-raised px-1.5 py-0.5 text-xs text-strong outline-none focus:border-accent"
+            className="rounded border border-edge bg-raised px-1.5 py-1 text-xs text-strong outline-none focus:border-accent"
           />
         </label>
       );

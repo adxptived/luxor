@@ -827,7 +827,7 @@ function Btn(props: {
     <button
       onClick={props.onClick}
       disabled={Boolean(props.busy) || props.disabled}
-      className={`rounded px-2 py-0.5 text-xs transition-colors disabled:opacity-40 ${
+      className={`rounded px-2 py-1 text-xs transition-colors disabled:opacity-40 ${
         props.primary
           ? "bg-accent text-on-accent hover:opacity-90"
           : props.danger

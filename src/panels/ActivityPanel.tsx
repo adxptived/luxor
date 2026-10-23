@@ -3,6 +3,7 @@
  * this session (commits, terminal events, saves, errors, …).
  */
 
+import { EmptyState } from "@/components/EmptyState";
 import { formatDate, formatTime } from "@/lib/format";
 import { Activity, Eraser, ScrollText, Search, X } from "lucide-react";
 import { useState, useSyncExternalStore } from "react";
@@ -97,7 +98,7 @@ export function ActivityPanel() {
               })
             }
             title={t("Clear the activity log")}
-            className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1.5 text-xs text-muted hover:bg-raised hover:text-strong"
+            className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
           >
             <Eraser size={12} /> {t("Clear")}
           </button>
@@ -138,32 +139,29 @@ export function ActivityPanel() {
 
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {visible.length === 0 && (
-          <div className="flex h-full min-h-48 items-center justify-center p-4">
-            <div className="max-w-md rounded-lg border border-dashed border-edge bg-bar/30 px-6 py-8 text-center text-xs text-muted">
-              <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-                <Activity size={26} />
-              </div>
-              <div className="font-medium text-strong">
-                {events.length === 0 ? t("Nothing logged yet") : t("No events match the current filter")}
-              </div>
-              <div className="mt-1 leading-5">
-                {events.length === 0
-                  ? t("Commits, terminal events, saves and errors will show up here.")
-                  : t("Clear search or disable a kind chip to bring events back.")}
-              </div>
-              {activeFilters > 0 && (
+          <EmptyState
+            fill
+            icon={<Activity size={20} />}
+            title={events.length === 0 ? t("Nothing logged yet") : t("No events match the current filter")}
+            text={
+              events.length === 0
+                ? t("Commits, terminal events, saves and errors will show up here.")
+                : t("Clear search or disable a kind chip to bring events back.")
+            }
+            action={
+              activeFilters > 0 && (
                 <button
                   onClick={() => {
                     setQuery("");
                     setKinds(new Set());
                   }}
-                  className="mt-3 rounded-lg border border-edge px-2 py-1 hover:bg-raised hover:text-strong"
+                  className="rounded-lg border border-edge px-3 py-1 text-xs hover:bg-raised hover:text-strong"
                 >
                   {t("Clear filters")}
                 </button>
-              )}
-            </div>
-          </div>
+              )
+            }
+          />
         )}
         <div className="space-y-1">
           {visible.map((e) => (

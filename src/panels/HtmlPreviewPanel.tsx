@@ -185,7 +185,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
           <div className="mt-3 truncate rounded border border-edge bg-surface px-2 py-1 font-mono text-2xs">{path}</div>
           <button
             onClick={handleManualRefresh}
-            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs hover:bg-raised hover:text-strong transition"
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs hover:bg-raised hover:text-strong transition"
           >
             <RefreshCw size={13} /> {t("Retry")}
           </button>
@@ -356,7 +356,7 @@ export function HtmlPreviewPanel(props: IDockviewPanelProps) {
                   toast(t("Source copied to clipboard"), "success"),
                 );
               }}
-              className="text-xs text-muted hover:text-strong transition flex items-center gap-1 px-2 py-0.5 rounded border border-edge hover:border-muted"
+              className="text-xs text-muted hover:text-strong transition flex items-center gap-1 px-2 py-1 rounded border border-edge hover:border-muted"
             >
               <Code2 size={11} /> {t("Copy")}
             </button>

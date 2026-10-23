@@ -107,7 +107,7 @@ function TabButton(props: {
 }) {
   return (
     <button
-      className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs ${
+      className={`flex shrink-0 items-center gap-1.5 rounded-lg border px-3 py-1 text-xs ${
         props.active
           ? "border-muted bg-raised text-strong"
           : "border-edge bg-surface text-muted hover:bg-raised hover:text-strong"
@@ -311,13 +311,13 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
     <div className="min-h-0 flex-1 overflow-auto p-2" data-testid="skills-manager">
       <div className="mb-2 flex flex-wrap gap-1.5 rounded-lg border border-edge bg-bar/30 p-2">
         <button
-          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1.5 text-xs text-muted hover:bg-raised hover:text-strong"
+          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
           onClick={(e) => conventionMenu(e, (c) => void newSkill(c))}
         >
           <Plus size={12} /> New skill…
         </button>
         <button
-          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1.5 text-xs text-muted hover:bg-raised hover:text-strong"
+          className="flex items-center gap-1 rounded-lg border border-edge bg-surface px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
           onClick={(e) => conventionMenu(e, (c) => void importFile(c))}
         >
           <FolderInput size={12} /> Import .md file…
@@ -328,7 +328,7 @@ function ManagerTab(props: { root: string | null; scope: "project" | "global" })
             className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-muted"
           />
           <input
-            className="w-full rounded-lg border border-edge bg-surface pl-7 pr-7 py-1.5 text-xs text-strong outline-none focus:border-accent"
+            className="w-full rounded-lg border border-edge bg-surface pl-7 pr-7 py-1 text-xs text-strong outline-none focus:border-accent"
             placeholder={t("Search installed skills…")}
             value={query}
             onChange={(e) => setQuery(e.target.value)}

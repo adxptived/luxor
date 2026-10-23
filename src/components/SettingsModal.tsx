@@ -1022,7 +1022,7 @@ export function SettingsModal() {
                       Primary
                     </button>
                     <button
-                      className="rounded-md border bg-transparent px-3 py-1.5 text-xs font-medium"
+                      className="rounded-md border bg-transparent px-3 py-1 text-xs font-medium"
                       style={{ borderColor: accentPreview, color: accentPreview }}
                     >
                       Outline
@@ -1517,7 +1517,7 @@ export function SettingsModal() {
                                   },
                                 })
                               }
-                              className={`rounded border px-2 py-0.5 text-xs ${
+                              className={`rounded border px-2 py-1 text-xs ${
                                 on
                                   ? "border-accent text-accent"
                                   : "border-edge text-muted hover:text-strong"
@@ -1573,7 +1573,7 @@ export function SettingsModal() {
                                   },
                                 });
                               }}
-                              className={`rounded border px-2 py-0.5 text-xs ${
+                              className={`rounded border px-2 py-1 text-xs ${
                                 on ? "border-accent text-accent" : "border-edge text-muted hover:text-strong"
                               }`}
                             >
@@ -1954,7 +1954,7 @@ export function SettingsModal() {
                   <div className="mb-2 flex items-center justify-between">
                     <span className="text-muted">Custom IDEs / editors</span>
                     <button
-                      className="flex items-center gap-1 rounded border border-edge px-2 py-0.5 text-xs text-muted hover:bg-raised hover:text-strong"
+                      className="flex items-center gap-1 rounded border border-edge px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong"
                       onClick={() =>
                         set({ custom_ides: [...draft.custom_ides, { label: "", command: "" }] })
                       }
@@ -2208,11 +2208,11 @@ export function SettingsModal() {
                               });
                               setRecording(null);
                             }}
-                            className="w-32 rounded border border-accent bg-raised px-2 py-0.5 text-center font-mono text-xs text-accent outline-none"
+                            className="w-32 rounded border border-accent bg-raised px-2 py-1 text-center font-mono text-xs text-accent outline-none"
                           />
                         ) : (
                           <button
-                            className="rounded border border-edge bg-raised px-2 py-0.5 font-mono text-xs hover:border-accent"
+                            className="rounded border border-edge bg-raised px-2 py-1 font-mono text-xs hover:border-accent"
                             title={t("Click to record a new hotkey")}
                             onClick={() => setRecording(hk.id)}
                           >

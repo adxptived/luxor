@@ -1101,7 +1101,7 @@ export function FilesPanel() {
             </div>
           </div>
           <button
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1.5 text-xs font-medium text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1 text-xs font-medium text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-40"
             disabled={!defaultIde}
             title={`${t("Open project in")} ${defaultIdeLabel}`}
             onClick={() => openInDefaultIde(root)}

@@ -358,7 +358,7 @@ function DataView({ path, table, onChanged }: { path: string; table: string; onC
             onChange={(e) => setFilterInput(e.target.value)}
             placeholder={t("Filter rows…")}
             spellCheck={false}
-            className="w-40 rounded border border-edge bg-raised py-0.5 pl-6 pr-5 text-xs text-strong outline-none focus:border-accent"
+            className="w-40 rounded border border-edge bg-raised py-1 pl-6 pr-5 text-xs text-strong outline-none focus:border-accent"
           />
           {filterInput && (
             <button onClick={() => setFilterInput("")} className="absolute right-1 top-1/2 -translate-y-1/2 hover:text-strong" title={t("Clear")} aria-label={t("Clear")}>
@@ -387,7 +387,7 @@ function DataView({ path, table, onChanged }: { path: string; table: string; onC
           <select
             value={pageSize}
             onChange={(e) => setPageSize(Number(e.target.value))}
-            className="rounded border border-edge bg-raised px-1 py-0.5 text-xs text-strong outline-none"
+            className="rounded border border-edge bg-raised px-1 py-1 text-xs text-strong outline-none"
             title={t("Rows per page")}
           >
             {PAGE_SIZES.map((n) => (
@@ -549,7 +549,7 @@ function CellEditor({
         }
       }}
       spellCheck={false}
-      className="w-full rounded border border-accent bg-surface px-1 py-0.5 font-mono text-xs text-strong outline-none"
+      className="w-full rounded border border-accent bg-surface px-1 py-1 font-mono text-xs text-strong outline-none"
     />
   );
 }

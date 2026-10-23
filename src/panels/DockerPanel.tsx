@@ -1,5 +1,6 @@
 /** Docker panel: containers, images, logs and lifecycle actions via the docker CLI. */
 
+import { EmptyState } from "@/components/EmptyState";
 import { Box, Container, FileText, Loader2, Play, RefreshCw, RotateCw, Search, Square, TerminalSquare, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
@@ -109,17 +110,18 @@ export function DockerPanel() {
 
   if (version === null) {
     return (
-      <div className="flex h-full flex-col items-center justify-center bg-surface p-6 text-center text-muted">
-        <div className="max-w-md rounded-lg border border-edge bg-bar/40 p-5 shadow-sm">
-          <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-            <Container size={28} />
-          </div>
-          <div className="text-sm font-medium text-strong">{t("Docker CLI not found")}</div>
-          <div className="mt-1 text-xs leading-5">{t("Install Docker Desktop / Podman and make `docker` available in PATH")}</div>
-          <button onClick={() => void refresh()} className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1.5 text-xs hover:bg-raised hover:text-strong">
-            <RefreshCw size={13} /> {t("Try again")}
-          </button>
-        </div>
+      <div className="h-full bg-surface">
+        <EmptyState
+          fill
+          icon={<Container size={22} />}
+          title={t("Docker CLI not found")}
+          text={t("Install Docker Desktop / Podman and make `docker` available in PATH")}
+          action={
+            <button onClick={() => void refresh()} className="inline-flex items-center gap-1.5 rounded-lg border border-edge px-3 py-1 text-xs hover:bg-raised hover:text-strong">
+              <RefreshCw size={13} /> {t("Try again")}
+            </button>
+          }
+        />
       </div>
     );
   }
@@ -167,7 +169,7 @@ export function DockerPanel() {
             onKeyDown={(e) => { if (e.key === "Enter") void runExec(); }}
             placeholder={t("docker.exec_placeholder", "e.g. sh -c 'ls -la'")}
             disabled={execBusy}
-            className="flex-1 rounded-lg border border-edge bg-surface px-2 py-1.5 font-mono text-xs text-strong outline-none focus:border-accent disabled:opacity-50"
+            className="flex-1 rounded-lg border border-edge bg-surface px-2 py-1 font-mono text-xs text-strong outline-none focus:border-accent disabled:opacity-50"
           />
           <button
             onClick={() => void runExec()}
@@ -201,7 +203,7 @@ export function DockerPanel() {
             <input type="checkbox" checked={showAll} onChange={(e) => setShowAll(e.target.checked)} className="accent-accent" />
             all containers
           </label>
-          <button onClick={() => void refresh()} className="flex items-center gap-1.5 rounded-lg border border-edge px-2 py-1.5 text-xs text-muted hover:bg-raised hover:text-strong" disabled={busy}>
+          <button onClick={() => void refresh()} className="flex items-center gap-1.5 rounded-lg border border-edge px-2 py-1 text-xs text-muted hover:bg-raised hover:text-strong" disabled={busy}>
             <RefreshCw size={13} className={busy ? "animate-spin" : ""} /> Refresh
           </button>
         </div>
@@ -224,7 +226,7 @@ export function DockerPanel() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={tab === "containers" ? t("Search containers…") : t("Search images…")}
-              className="w-full rounded-lg border border-edge bg-surface py-1.5 pl-7 pr-7 text-xs text-strong outline-none placeholder:text-muted focus:border-accent/70"
+              className="w-full rounded-lg border border-edge bg-surface py-1 pl-7 pr-7 text-xs text-strong outline-none placeholder:text-muted focus:border-accent/70"
             />
             {query && (
               <button className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-strong" onClick={() => setQuery("")} aria-label={t("Clear search")} title={t("Clear search")}>
@@ -351,11 +353,5 @@ function IconBtn({
 }
 
 function Empty({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-edge bg-bar/30 px-5 py-10 text-center text-muted">
-      <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">{icon}</div>
-      <div className="font-medium text-strong">{title}</div>
-      <div className="mx-auto mt-1 max-w-xs text-xs leading-5">{text}</div>
-    </div>
-  );
+  return <EmptyState icon={icon} title={title} text={text} />;
 }

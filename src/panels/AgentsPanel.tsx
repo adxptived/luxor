@@ -1,4 +1,5 @@
 import { Bot, FolderOpen, RefreshCw, Skull, TerminalSquare } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
 import { useEffect, useMemo, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
@@ -171,18 +172,15 @@ export function AgentsPanel() {
 
 
           {procs !== null && procs.length === 0 && (
-        <div className="mt-4 rounded-lg border border-dashed border-edge bg-bar/30 px-5 py-10 text-center text-muted">
-          <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
-            <Bot size={28} />
-          </div>
-          <div className="font-medium text-strong">{t("agents.empty", "No AI agents running")}</div>
-          <div className="mx-auto mt-1 max-w-md text-xs leading-5 opacity-70">
-            {t(
-              "agents.empty_hint",
-              "Start claude, codex, gemini, opencode, devin… in any terminal and they will show up here automatically.",
-            )}
-          </div>
-        </div>
+        <EmptyState
+          className="mt-4"
+          icon={<Bot size={20} />}
+          title={t("agents.empty", "No AI agents running")}
+          text={t(
+            "agents.empty_hint",
+            "Start claude, codex, gemini, opencode, devin… in any terminal and they will show up here automatically.",
+          )}
+        />
       )}
 
       {groups.map(([label, rows]) => (

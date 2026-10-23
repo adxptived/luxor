@@ -1541,4 +1541,5 @@ export const RU: Record<string, string> = {
   "Search commands, files and panels": "Поиск команд, файлов и панелей",
   "Search or run a command…": "Найти или выполнить…",
   "{0} agents": "Агентов: {0}",
+  "Headers, status, timing and body preview will appear in this panel.": "Здесь появятся заголовки, статус, время и тело ответа.",
 };

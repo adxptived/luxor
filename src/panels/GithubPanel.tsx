@@ -223,7 +223,7 @@ export function GithubPanel() {
     return (
       <div className="flex h-full min-w-0 flex-col bg-surface text-sm">
         <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-edge p-2">
-          <button onClick={() => setDetail(null)} className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong">
+          <button onClick={() => setDetail(null)} className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong">
             ←
           </button>
           <span className="font-medium text-strong">#{run.run_number}</span>
@@ -262,7 +262,7 @@ export function GithubPanel() {
     return (
       <div className="flex h-full min-w-0 flex-col bg-surface text-sm">
         <div className="flex min-w-0 flex-wrap items-center gap-2 border-b border-edge p-2">
-          <button onClick={() => setDetail(null)} className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong">
+          <button onClick={() => setDetail(null)} className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong">
             ←
           </button>
           <span className="font-medium text-strong">#{item.number}</span>
@@ -345,7 +345,7 @@ export function GithubPanel() {
             <select
               value={state}
               onChange={(e) => setState(e.target.value as IssueState)}
-              className="rounded border border-edge bg-surface px-1 py-0.5 text-xs text-muted"
+              className="rounded border border-edge bg-surface px-1 py-1 text-xs text-muted"
             >
               <option value="open">{t("github.state.open", "Open")}</option>
               <option value="closed">{t("github.state.closed", "Closed")}</option>
@@ -355,7 +355,7 @@ export function GithubPanel() {
           {tab === "issues" && (
             <button
               onClick={() => setCreating((v) => !v)}
-              className="flex items-center gap-1 rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong"
+              className="flex items-center gap-1 rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             >
               <Plus size={12} />
               {t("github.newIssue", "New issue")}
@@ -364,7 +364,7 @@ export function GithubPanel() {
           {tab === "pulls" && (
             <button
               onClick={() => void openPrForm()}
-              className="flex items-center gap-1 rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong"
+              className="flex items-center gap-1 rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong"
             >
               <Plus size={12} />
               {t("github.newPr", "New PR")}
@@ -414,7 +414,7 @@ export function GithubPanel() {
             <button
               onClick={() => void createPull()}
               disabled={prBusy || !prTitle.trim() || !prHead.trim() || !prBase.trim()}
-              className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong disabled:opacity-40"
+              className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong disabled:opacity-40"
             >
               {prBusy ? t("common.loading", "Loading…") : t("common.create", "Create")}
             </button>
@@ -444,7 +444,7 @@ export function GithubPanel() {
             <button
               onClick={() => void createIssue()}
               disabled={!newTitle.trim()}
-              className="rounded border border-edge px-2 py-0.5 text-xs text-muted hover:text-strong disabled:opacity-40"
+              className="rounded border border-edge px-2 py-1 text-xs text-muted hover:text-strong disabled:opacity-40"
             >
               {t("common.create", "Create")}
             </button>

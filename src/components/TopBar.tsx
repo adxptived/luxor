@@ -908,8 +908,8 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
       } ${activeId === p.id ? "bg-surface text-strong" : "text-muted hover:text-strong"} ${
         dragOverId === p.id && dragId && dragId !== p.id
           ? vertical
-            ? "shadow-[inset_0_2px_0_0_var(--lx-muted)]"
-            : "shadow-[inset_2px_0_0_0_var(--lx-muted)]"
+            ? "shadow-[inset_0_2px_0_0_var(--lx-accent)]"
+            : "shadow-[inset_2px_0_0_0_var(--lx-accent)]"
           : ""
       }`}
     >
@@ -1383,8 +1383,8 @@ function NavBtn(props: {
       } ${
         props.dropTarget
           ? props.vertical
-            ? "shadow-[inset_0_2px_0_0_var(--lx-muted)]"
-            : "shadow-[inset_2px_0_0_0_var(--lx-muted)]"
+            ? "shadow-[inset_0_2px_0_0_var(--lx-accent)]"
+            : "shadow-[inset_2px_0_0_0_var(--lx-accent)]"
           : ""
       }`}
     >

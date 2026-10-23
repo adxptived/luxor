@@ -138,7 +138,7 @@ export function AnalyticsPanel() {
           </div>
           <button
             onClick={() => void refresh()}
-            className="flex items-center gap-1.5 rounded-md border border-edge px-2.5 py-1.5 text-xs text-strong transition hover:bg-raised"
+            className="flex items-center gap-1.5 rounded-md border border-edge px-2.5 py-1 text-xs text-strong transition hover:bg-raised"
           >
             <RefreshCw size={13} /> {t("Refresh")}
           </button>

@@ -1,5 +1,6 @@
 /** Personal library: code snippets, per-project scratch notes and bookmarks. */
 
+import { EmptyState } from "@/components/EmptyState";
 import { t } from "@/lib/i18n";
 import { reportError } from "@/lib/reportError";
 import { Bookmark as BookmarkIcon, Copy, NotebookPen, Plus, Scissors, Search, Trash2 } from "lucide-react";
@@ -118,7 +119,7 @@ function SnippetsTab() {
           className="min-h-0 flex-1 resize-none rounded-lg border border-edge bg-raised p-3 font-mono text-xs text-strong outline-none focus:border-accent"
         />
         <div className="flex flex-wrap justify-end gap-2">
-          <button onClick={() => setEditing(null)} className="rounded-lg border border-edge px-3 py-1.5 text-xs text-muted hover:bg-raised hover:text-strong">
+          <button onClick={() => setEditing(null)} className="rounded-lg border border-edge px-3 py-1 text-xs text-muted hover:bg-raised hover:text-strong">
             {tr("common.cancel", "Cancel")}
           </button>
           <button onClick={() => void save()} disabled={!editing.title.trim()} className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-on-accent disabled:opacity-40">
@@ -144,7 +145,7 @@ function SnippetsTab() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={tr("Search snippets…")}
-            className="w-full rounded-lg border border-edge bg-raised py-1.5 pl-7 pr-2 text-xs text-strong outline-none focus:border-accent"
+            className="w-full rounded-lg border border-edge bg-raised py-1 pl-7 pr-2 text-xs text-strong outline-none focus:border-accent"
           />
         </span>
         <span className="rounded-full border border-edge px-2 py-1 text-3xs text-muted">{filtered.length}/{snippets.length}</span>
@@ -286,11 +287,5 @@ function BookmarksTab() {
 }
 
 function EmptyHint({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
-  return (
-    <div className="rounded-lg border border-dashed border-edge bg-bar/30 px-5 py-10 text-center text-muted">
-      <div className="lx-empty-icon mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-lg border border-edge bg-raised text-accent">{icon}</div>
-      <div className="font-medium text-strong">{title}</div>
-      <div className="mx-auto mt-1 max-w-xs text-xs leading-5">{text}</div>
-    </div>
-  );
+  return <EmptyState icon={icon} title={title} text={text} />;
 }

@@ -61,7 +61,7 @@ export function NoFolderCta({ hint }: { hint: string }) {
 
         <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
           <button
-            className="flex items-center gap-1.5 rounded-lg border border-accent bg-accent/10 px-3 py-1.5 text-xs font-medium text-accent hover:bg-accent/20"
+            className="flex items-center gap-1.5 rounded-lg border border-accent bg-accent/10 px-3 py-1 text-xs font-medium text-accent hover:bg-accent/20"
             onClick={() => void browse()}
           >
             <FolderOpen size={13} /> {t("Choose folder…")}
@@ -73,7 +73,7 @@ export function NoFolderCta({ hint }: { hint: string }) {
 
         <div className="mx-auto mt-4 flex w-full max-w-md items-center gap-1.5 rounded-lg border border-edge bg-surface p-1 focus-within:border-transparent">
           <input
-            className="min-w-0 flex-1 bg-transparent px-2 py-1.5 text-xs text-strong outline-none"
+            className="min-w-0 flex-1 bg-transparent px-2 py-1 text-xs text-strong outline-none"
             placeholder={t("…or paste a path and press Enter")}
             value={path}
             onChange={(e) => setPath(e.target.value)}
