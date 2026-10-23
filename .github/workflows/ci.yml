@@ -33,6 +33,11 @@ jobs:
         run: cargo fmt --all --check
       - name: Check workspace
         run: cargo check --workspace
+      - name: Clippy (annotated probe)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          cargo clippy --workspace --all-targets --message-format=short -- -D warnings 2>&1 | grep -E "(error|warning)" | grep -v "^\s*Compiling" | head -40 | sed 's/^/::warning::/' || true
       - name: Clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
       - name: Tests
