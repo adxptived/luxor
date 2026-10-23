@@ -243,6 +243,13 @@ mod tests {
             .spawn()
             .expect("spawn sleep");
         let pid = child.id();
+        // Reap concurrently, as a real parent shell would: this process is the
+        // child's parent, and on macOS an unreaped killed child lingers in the
+        // process table in a state sysinfo does not report as a zombie, which
+        // made the "is it gone?" verification fail.
+        let reaper = std::thread::spawn(move || {
+            let _ = child.wait();
+        });
 
         let killed = kill_process(pid, true).expect("kill should succeed");
         assert!(killed >= 1, "expected at least one process terminated");
@@ -251,8 +258,6 @@ mod tests {
         let mut sys = System::new();
         sys.refresh_processes(ProcessesToUpdate::All, true);
         assert!(!process_alive(&sys, pid), "child must be dead after kill");
-
-        // Reap so we don't leak a zombie from the test itself.
-        let _ = child.wait();
+        let _ = reaper.join();
     }
 }

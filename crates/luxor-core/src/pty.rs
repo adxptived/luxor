@@ -294,6 +294,16 @@ impl PtyManager {
         // shell is gone, while the PTY reader reliably sees EOF — and vice
         // versa on others.
         let exit_sent = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        // The tail of the output must reach the UI before `Exited`: the wait
+        // thread used to report the exit the moment the shell died, while the
+        // last chunk was still in the reader/flusher pipeline, so the UI
+        // printed "[process exited]" above the command's final line (and on
+        // macOS a fast `sh -c echo` could lose its output entirely).
+        // `drained` is set by the flusher once it has emitted everything up to
+        // EOF; `wait_code` carries the real exit code to whichever side ends up
+        // sending `Exited`.
+        let drained = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let wait_code: Arc<Mutex<Option<Option<u32>>>> = Arc::new(Mutex::new(None));
 
         // Output path is split across two threads so we can coalesce bytes
         // without ever holding up the blocking `read()`:
@@ -332,6 +342,8 @@ impl PtyManager {
         let sink = Arc::clone(&self.sink);
         let flush_session = session_id.clone();
         let flush_exit_sent = Arc::clone(&exit_sent);
+        let flush_drained = Arc::clone(&drained);
+        let flush_code = Arc::clone(&wait_code);
         std::thread::Builder::new()
             .name(format!("pty-flush-{}", &session_id[..8]))
             .spawn(move || {
@@ -373,14 +385,26 @@ impl PtyManager {
                         }
                     }
                 }
-                // EOF: give the wait thread a moment to report the real exit
-                // code, then emit a fallback Exited so the UI never shows a
-                // zombie terminal.
-                std::thread::sleep(Duration::from_millis(200));
+                // EOF: all output has been emitted. Give the wait thread a
+                // moment to learn the real exit code, then emit Exited (with
+                // that code when known) so the UI never shows a zombie terminal.
+                flush_drained.store(true, std::sync::atomic::Ordering::SeqCst);
+                let until = Instant::now() + Duration::from_millis(200);
+                let mut code = None;
+                while Instant::now() < until {
+                    if let Some(c) = *flush_code
+                        .lock()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    {
+                        code = c;
+                        break;
+                    }
+                    std::thread::sleep(Duration::from_millis(10));
+                }
                 if !flush_exit_sent.swap(true, std::sync::atomic::Ordering::SeqCst) {
                     sink(PtyEvent::Exited {
                         session_id: flush_session,
-                        exit_code: None,
+                        exit_code: code,
                     });
                 }
             })
@@ -390,10 +414,24 @@ impl PtyManager {
         let sink = Arc::clone(&self.sink);
         let wait_session = session_id.clone();
         let wait_exit_sent = Arc::clone(&exit_sent);
+        let wait_drained = Arc::clone(&drained);
+        let wait_slot = Arc::clone(&wait_code);
         std::thread::Builder::new()
             .name(format!("pty-wait-{}", &session_id[..8]))
             .spawn(move || {
                 let exit_code = child.wait().ok().map(|status| status.exit_code());
+                *wait_slot
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(exit_code);
+                // Let the reader/flusher deliver the tail of the output first.
+                // Bounded: a background process that keeps the PTY open must
+                // not hold the exit notice back forever.
+                let until = Instant::now() + Duration::from_millis(1500);
+                while !wait_drained.load(std::sync::atomic::Ordering::SeqCst)
+                    && Instant::now() < until
+                {
+                    std::thread::sleep(Duration::from_millis(15));
+                }
                 if !wait_exit_sent.swap(true, std::sync::atomic::Ordering::SeqCst) {
                     sink(PtyEvent::Exited {
                         session_id: wait_session,
