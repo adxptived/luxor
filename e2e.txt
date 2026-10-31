@@ -1,0 +1,1787 @@
+
+Running 91 tests using 2 workers
+
+[1A[2K[1/91] [chromium] › e2e/app.spec.ts:6:3 › app shell › loads the welcome screen with discoverability tips
+[1A[2K[2/91] [chromium] › e2e/app.spec.ts:14:3 › app shell › status bar shows default segments
+[1A[2K[3/91] [chromium] › e2e/app.spec.ts:21:3 › app shell › no unexpected console errors on load
+[1A[2K[4/91] [chromium] › e2e/blank-workspace.spec.ts:6:3 › blank workspace folder CTA › panels without a folder offer to attach one
+[1A[2K[5/91] [chromium] › e2e/chrome-layout.spec.ts:19:3 › top bar layout › nav buttons never squeeze the project tabs below one tab wide
+[1A[2K[6/91] (retries) [chromium] › e2e/blank-workspace.spec.ts:6:3 › blank workspace folder CTA › panels without a folder offer to attach one (retry #1)
+[1A[2K[7/91] (retries) [chromium] › e2e/chrome-layout.spec.ts:19:3 › top bar layout › nav buttons never squeeze the project tabs below one tab wide (retry #1)
+[1A[2K  1) [chromium] › e2e/blank-workspace.spec.ts:6:3 › blank workspace folder CTA › panels without a folder offer to attach one 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('no-folder-cta').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('no-folder-cta').first()[22m
+
+
+      13 |     await clickNav(page, "files");
+      14 |     const cta = page.getByTestId("no-folder-cta").first();
+    > 15 |     await expect(cta).toBeVisible();
+         |                       ^
+      16 |     await expect(cta.getByText("This workspace has no folder")).toBeVisible();
+      17 |     await expect(cta.getByRole("button", { name: /Choose folder/ })).toBeVisible();
+      18 |
+        at /home/runner/work/luxor/luxor/e2e/blank-workspace.spec.ts:15:23
+
+    Error Context: test-results/blank-workspace-blank-work-a820b--folder-offer-to-attach-one-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/blank-workspace-blank-work-a820b--folder-offer-to-attach-one-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/blank-workspace-blank-work-a820b--folder-offer-to-attach-one-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('no-folder-cta').first()
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('no-folder-cta').first()[22m
+
+
+      13 |     await clickNav(page, "files");
+      14 |     const cta = page.getByTestId("no-folder-cta").first();
+    > 15 |     await expect(cta).toBeVisible();
+         |                       ^
+      16 |     await expect(cta.getByText("This workspace has no folder")).toBeVisible();
+      17 |     await expect(cta.getByRole("button", { name: /Choose folder/ })).toBeVisible();
+      18 |
+        at /home/runner/work/luxor/luxor/e2e/blank-workspace.spec.ts:15:23
+
+    Error Context: test-results/blank-workspace-blank-work-a820b--folder-offer-to-attach-one-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/blank-workspace-blank-work-a820b--folder-offer-to-attach-one-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/blank-workspace-blank-work-a820b--folder-offer-to-attach-one-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[8/91] [chromium] › e2e/chrome-layout.spec.ts:50:3 › top bar layout › the all-tabs button stays reachable while the tabs overflow
+[1A[2K  2) [chromium] › e2e/chrome-layout.spec.ts:19:3 › top bar layout › nav buttons never squeeze the project tabs below one tab wide 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: >= [32m240[39m
+    Received:    [31m128[39m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      27 |       await expect
+      28 |         .poll(async () => Math.round((await strip.boundingBox())!.width), { timeout: 5000 })
+    > 29 |         .toBeGreaterThanOrEqual(240);
+         |          ^
+      30 |
+      31 |       // One whole project tab always fits inside the visible strip.
+      32 |       const stripBox = (await strip.boundingBox())!;
+        at /home/runner/work/luxor/luxor/e2e/chrome-layout.spec.ts:29:10
+
+    Error Context: test-results/chrome-layout-top-bar-layo-3db3a-ect-tabs-below-one-tab-wide-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chrome-layout-top-bar-layo-3db3a-ect-tabs-below-one-tab-wide-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chrome-layout-top-bar-layo-3db3a-ect-tabs-below-one-tab-wide-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThanOrEqual[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: >= [32m240[39m
+    Received:    [31m158[39m
+
+    Call Log:
+    - Timeout 5000ms exceeded while waiting on the predicate
+
+      27 |       await expect
+      28 |         .poll(async () => Math.round((await strip.boundingBox())!.width), { timeout: 5000 })
+    > 29 |         .toBeGreaterThanOrEqual(240);
+         |          ^
+      30 |
+      31 |       // One whole project tab always fits inside the visible strip.
+      32 |       const stripBox = (await strip.boundingBox())!;
+        at /home/runner/work/luxor/luxor/e2e/chrome-layout.spec.ts:29:10
+
+    Error Context: test-results/chrome-layout-top-bar-layo-3db3a-ect-tabs-below-one-tab-wide-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chrome-layout-top-bar-layo-3db3a-ect-tabs-below-one-tab-wide-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chrome-layout-top-bar-layo-3db3a-ect-tabs-below-one-tab-wide-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[9/91] [chromium] › e2e/chrome-layout.spec.ts:73:3 › status bar › no segment is hidden behind the version cluster
+[1A[2K[10/91] [chromium] › e2e/chrome-layout.spec.ts:95:3 › status bar › centre alignment stays centred
+[1A[2K[11/91] [chromium] › e2e/chrome-layout.spec.ts:119:5 › overlays on short windows › the command palette fits a 480px-tall window
+[1A[2K[12/91] [chromium] › e2e/chrome-layout.spec.ts:119:5 › overlays on short windows › the command palette fits a 380px-tall window
+[1A[2K[13/91] [chromium] › e2e/chrome-layout.spec.ts:142:3 › overlays on short windows › every settings section is reachable on a short window
+[1A[2K[14/91] [chromium] › e2e/chrome-layout.spec.ts:166:3 › side panels on small windows › the right-panel toggle works on a narrow window
+[1A[2K[15/91] [chromium] › e2e/features.spec.ts:6:3 › splitting & layout discoverability › group header split buttons create new terminals
+[1A[2K[16/91] [chromium] › e2e/features.spec.ts:17:3 › splitting & layout discoverability › tab-strip plus adds a terminal; right-click lists all panels
+[1A[2K[17/91] (retries) [chromium] › e2e/features.spec.ts:17:3 › splitting & layout discoverability › tab-strip plus adds a terminal; right-click lists all panels (retry #1)
+[1A[2K[18/91] (retries) [chromium] › e2e/chrome-layout.spec.ts:50:3 › top bar layout › the all-tabs button stays reachable while the tabs overflow (retry #1)
+[1A[2K  3) [chromium] › e2e/features.spec.ts:17:3 › splitting & layout discoverability › tab-strip plus adds a terminal; right-click lists all panels 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.dv-tab').filter({ hasText: 'Terminal' })
+    Expected: [32m2[39m
+    Received: [31m0[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('.dv-tab').filter({ hasText: 'Terminal' })[22m
+    [2m    14 × locator resolved to 0 elements[22m
+    [2m       - unexpected value "0"[22m
+
+
+      24 |     await add.click();
+      25 |     await page.getByTestId("context-menu").getByText("New terminal").click();
+    > 26 |     await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+         |                                                                    ^
+      27 |     await add.click({ button: "right" });
+      28 |     const menu = page.getByTestId("context-menu");
+      29 |     await expect(menu.getByText("New terminal")).toBeVisible();
+        at /home/runner/work/luxor/luxor/e2e/features.spec.ts:26:68
+
+    Error Context: test-results/features-splitting-layout--b4e5c-ight-click-lists-all-panels-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/features-splitting-layout--b4e5c-ight-click-lists-all-panels-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/features-splitting-layout--b4e5c-ight-click-lists-all-panels-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.dv-tab').filter({ hasText: 'Terminal' })
+    Expected: [32m2[39m
+    Received: [31m1[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('.dv-tab').filter({ hasText: 'Terminal' })[22m
+    [2m    11 × locator resolved to 0 elements[22m
+    [2m       - unexpected value "0"[22m
+    [2m    2 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+
+
+      24 |     await add.click();
+      25 |     await page.getByTestId("context-menu").getByText("New terminal").click();
+    > 26 |     await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+         |                                                                    ^
+      27 |     await add.click({ button: "right" });
+      28 |     const menu = page.getByTestId("context-menu");
+      29 |     await expect(menu.getByText("New terminal")).toBeVisible();
+        at /home/runner/work/luxor/luxor/e2e/features.spec.ts:26:68
+
+    Error Context: test-results/features-splitting-layout--b4e5c-ight-click-lists-all-panels-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/features-splitting-layout--b4e5c-ight-click-lists-all-panels-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/features-splitting-layout--b4e5c-ight-click-lists-all-panels-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[19/91] [chromium] › e2e/features.spec.ts:34:3 › splitting & layout discoverability › palette split commands work
+[1A[2K[20/91] [chromium] › e2e/features.spec.ts:44:3 › splitting & layout discoverability › tab context menu offers split actions
+[1A[2K[21/91] [chromium] › e2e/features.spec.ts:57:3 › status bar customization › segments can be toggled from the right-click menu
+[1A[2K[22/91] [chromium] › e2e/features.spec.ts:70:3 › app zoom › Ctrl +/- zooms the app and Ctrl+0 resets
+[1A[2K[23/91] [chromium] › e2e/features.spec.ts:85:3 › IDE launch group › chevron sits right of the IDE launch icon
+[1A[2K  4) [chromium] › e2e/chrome-layout.spec.ts:50:3 › top bar layout › the all-tabs button stays reachable while the tabs overflow 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('tab-add-menu').getByText('Blank workspace', { exact: true })[22m
+    [2m    - locator resolved to <span class="min-w-0 flex-1 truncate">Blank workspace</span>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       7 |   for (let i = 0; i < n; i++) {
+       8 |     await page.getByTestId("tab-add").click();
+    >  9 |     await page.getByTestId("tab-add-menu").getByText("Blank workspace", { exact: true }).click();
+         |                                                                                          ^
+      10 |   }
+      11 | }
+      12 |
+        at addBlankTabs (/home/runner/work/luxor/luxor/e2e/chrome-layout.spec.ts:9:90)
+        at /home/runner/work/luxor/luxor/e2e/chrome-layout.spec.ts:53:5
+
+    Error Context: test-results/chrome-layout-top-bar-layo-a6795-ble-while-the-tabs-overflow-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chrome-layout-top-bar-layo-a6795-ble-while-the-tabs-overflow-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chrome-layout-top-bar-layo-a6795-ble-while-the-tabs-overflow-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('tab-add-menu').getByText('Blank workspace', { exact: true })[22m
+    [2m    - locator resolved to <span class="min-w-0 flex-1 truncate">Blank workspace</span>[22m
+    [2m  - attempting click action[22m
+    [2m    2 × waiting for element to be visible, enabled and stable[22m
+    [2m      - element is not stable[22m
+    [2m    - retrying click action[22m
+    [2m    - waiting 20ms[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m    - element is not stable[22m
+    [2m  - retrying click action[22m
+    [2m    - waiting 100ms[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       7 |   for (let i = 0; i < n; i++) {
+       8 |     await page.getByTestId("tab-add").click();
+    >  9 |     await page.getByTestId("tab-add-menu").getByText("Blank workspace", { exact: true }).click();
+         |                                                                                          ^
+      10 |   }
+      11 | }
+      12 |
+        at addBlankTabs (/home/runner/work/luxor/luxor/e2e/chrome-layout.spec.ts:9:90)
+        at /home/runner/work/luxor/luxor/e2e/chrome-layout.spec.ts:53:5
+
+    Error Context: test-results/chrome-layout-top-bar-layo-a6795-ble-while-the-tabs-overflow-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/chrome-layout-top-bar-layo-a6795-ble-while-the-tabs-overflow-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/chrome-layout-top-bar-layo-a6795-ble-while-the-tabs-overflow-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[24/91] [chromium] › e2e/features.spec.ts:118:3 › markdown preview › opening a .md file shows rendered preview with raw/preview toggle
+[1A[2K[25/91] [chromium] › e2e/language-switch.spec.ts:17:3 › UI language switch › does not remount the tree or destroy running terminals
+[1A[2K[26/91] (retries) [chromium] › e2e/language-switch.spec.ts:17:3 › UI language switch › does not remount the tree or destroy running terminals (retry #1)
+[1A[2K[27/91] (retries) [chromium] › e2e/features.spec.ts:85:3 › IDE launch group › chevron sits right of the IDE launch icon (retry #1)
+[1A[2K  5) [chromium] › e2e/language-switch.spec.ts:17:3 › UI language switch › does not remount the tree or destroy running terminals 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.dv-tab').filter({ hasText: 'Terminal' })
+    Expected: [32m2[39m
+    Received: [31m0[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('.dv-tab').filter({ hasText: 'Terminal' })[22m
+    [2m    - locator resolved to 1 element[22m
+    [2m    - unexpected value "1"[22m
+    [2m    13 × locator resolved to 0 elements[22m
+    [2m       - unexpected value "0"[22m
+
+
+      23 |     const actions = page.getByTestId("group-actions").first();
+      24 |     await actions.getByTitle("Split right with a new terminal").click();
+    > 25 |     await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+         |                                                                    ^
+      26 |
+      27 |     const xterms = page.locator(".xterm");
+      28 |     await expect(xterms.first()).toBeVisible();
+        at /home/runner/work/luxor/luxor/e2e/language-switch.spec.ts:25:68
+
+    Error Context: test-results/language-switch-UI-languag-7eb27-r-destroy-running-terminals-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/language-switch-UI-languag-7eb27-r-destroy-running-terminals-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/language-switch-UI-languag-7eb27-r-destroy-running-terminals-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoHaveCount[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator:  locator('.dv-tab').filter({ hasText: 'Terminal' })
+    Expected: [32m2[39m
+    Received: [31m0[39m
+    Timeout:  5000ms
+
+    Call log:
+    [2m  - Expect "toHaveCount" with timeout 5000ms[22m
+    [2m  - waiting for locator('.dv-tab').filter({ hasText: 'Terminal' })[22m
+    [2m    2 × locator resolved to 1 element[22m
+    [2m      - unexpected value "1"[22m
+    [2m    - locator resolved to 0 elements[22m
+    [2m    - unexpected value "0"[22m
+    [2m    - waiting for" http://localhost:4173/" navigation to finish...[22m
+    [2m    - navigated to "http://localhost:4173/"[22m
+    [2m    10 × locator resolved to 0 elements[22m
+    [2m       - unexpected value "0"[22m
+
+
+      23 |     const actions = page.getByTestId("group-actions").first();
+      24 |     await actions.getByTitle("Split right with a new terminal").click();
+    > 25 |     await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+         |                                                                    ^
+      26 |
+      27 |     const xterms = page.locator(".xterm");
+      28 |     await expect(xterms.first()).toBeVisible();
+        at /home/runner/work/luxor/luxor/e2e/language-switch.spec.ts:25:68
+
+    Error Context: test-results/language-switch-UI-languag-7eb27-r-destroy-running-terminals-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/language-switch-UI-languag-7eb27-r-destroy-running-terminals-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/language-switch-UI-languag-7eb27-r-destroy-running-terminals-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[28/91] [chromium] › e2e/language-switch.spec.ts:59:3 › UI language switch › retranslates memoized shell components
+[1A[2K  6) [chromium] › e2e/features.spec.ts:85:3 › IDE launch group › chevron sits right of the IDE launch icon 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="settings" title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/features.spec.ts:92:11
+
+    Error Context: test-results/features-IDE-launch-group--17f64-ight-of-the-IDE-launch-icon-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/features-IDE-launch-group--17f64-ight-of-the-IDE-launch-icon-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/features-IDE-launch-group--17f64-ight-of-the-IDE-launch-icon-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/features.spec.ts:92:11
+
+    Error Context: test-results/features-IDE-launch-group--17f64-ight-of-the-IDE-launch-icon-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/features-IDE-launch-group--17f64-ight-of-the-IDE-launch-icon-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/features-IDE-launch-group--17f64-ight-of-the-IDE-launch-icon-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[29/91] [chromium] › e2e/palette.spec.ts:11:3 › command palette fuzzy search › subsequence query finds and ranks the intuitive command first
+[1A[2K[30/91] [chromium] › e2e/palette.spec.ts:21:3 › command palette fuzzy search › multi-word query matches words in any order
+[1A[2K[31/91] [chromium] › e2e/palette.spec.ts:29:3 › command palette fuzzy search › non-matching query shows the empty state
+[1A[2K[32/91] [chromium] › e2e/palette.spec.ts:38:3 › command palette recents › a run command floats to the top on next open
+[1A[2K[33/91] (retries) [chromium] › e2e/language-switch.spec.ts:59:3 › UI language switch › retranslates memoized shell components (retry #1)
+[1A[2K[34/91] [chromium] › e2e/palette.spec.ts:57:3 › command palette recents › recents survive a reload (persisted)
+[1A[2K[35/91] [chromium] › e2e/palette.spec.ts:75:3 › command palette recents › typing a query hides the recents grouping
+[1A[2K[36/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › terminal panel opens and renders without crashing
+[1A[2K[37/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › git panel opens and renders without crashing
+[1A[2K[38/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › files panel opens and renders without crashing
+[1A[2K[39/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › launcher panel opens and renders without crashing
+[1A[2K[40/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › tasks panel opens and renders without crashing
+[1A[2K[41/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › skills panel opens and renders without crashing
+[1A[2K[42/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › agents panel opens and renders without crashing
+[1A[2K[43/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › activity panel opens and renders without crashing
+[1A[2K[44/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › analytics panel opens and renders without crashing
+[1A[2K[45/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › search panel opens and renders without crashing
+[1A[2K[46/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › snippets panel opens and renders without crashing
+[1A[2K[47/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › http panel opens and renders without crashing
+[1A[2K[48/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › docker panel opens and renders without crashing
+[1A[2K[49/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › devtools panel opens and renders without crashing
+[1A[2K  7) [chromium] › e2e/language-switch.spec.ts:59:3 › UI language switch › retranslates memoized shell components 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/language-switch.spec.ts:70:11
+
+    Error Context: test-results/language-switch-UI-languag-3b25c-s-memoized-shell-components-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/language-switch-UI-languag-3b25c-s-memoized-shell-components-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/language-switch-UI-languag-3b25c-s-memoized-shell-components-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="settings" title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/language-switch.spec.ts:70:11
+
+    Error Context: test-results/language-switch-UI-languag-3b25c-s-memoized-shell-components-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/language-switch-UI-languag-3b25c-s-memoized-shell-components-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/language-switch-UI-languag-3b25c-s-memoized-shell-components-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[50/91] [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › github panel opens and renders without crashing
+[1A[2K[51/91] (retries) [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › devtools panel opens and renders without crashing (retry #1)
+[1A[2K[52/91] (retries) [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › github panel opens and renders without crashing (retry #1)
+[1A[2K  8) [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › devtools panel opens and renders without crashing 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="devtools"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="devtools" title="Env, logs, disk, deps, processes, crashes" aria-label="Env, logs, disk, deps, processes, crashes" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/panels-smoke.spec.ts:38:13
+
+    Error Context: test-results/panels-smoke-panel-smoke-t-b5f0e-nd-renders-without-crashing-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/panels-smoke-panel-smoke-t-b5f0e-nd-renders-without-crashing-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/panels-smoke-panel-smoke-t-b5f0e-nd-renders-without-crashing-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="devtools"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/panels-smoke.spec.ts:38:13
+
+    Error Context: test-results/panels-smoke-panel-smoke-t-b5f0e-nd-renders-without-crashing-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/panels-smoke-panel-smoke-t-b5f0e-nd-renders-without-crashing-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/panels-smoke-panel-smoke-t-b5f0e-nd-renders-without-crashing-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[53/91] [chromium] › e2e/panels-smoke.spec.ts:45:3 › panel smoke tests › opening every panel in sequence keeps the app alive
+[1A[2K  9) [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › github panel opens and renders without crashing 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="github"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="github" title="GitHub issues, pull requests & CI" aria-label="GitHub issues, pull requests & CI" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/panels-smoke.spec.ts:38:13
+
+    Error Context: test-results/panels-smoke-panel-smoke-t-33bc0-nd-renders-without-crashing-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/panels-smoke-panel-smoke-t-33bc0-nd-renders-without-crashing-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/panels-smoke-panel-smoke-t-33bc0-nd-renders-without-crashing-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="github"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/panels-smoke.spec.ts:38:13
+
+    Error Context: test-results/panels-smoke-panel-smoke-t-33bc0-nd-renders-without-crashing-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/panels-smoke-panel-smoke-t-33bc0-nd-renders-without-crashing-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/panels-smoke-panel-smoke-t-33bc0-nd-renders-without-crashing-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[54/91] [chromium] › e2e/panels.spec.ts:6:3 › kanban task board › opens from the sidebar and shows the seeded board
+[1A[2K[55/91] [chromium] › e2e/panels.spec.ts:17:3 › kanban task board › adds a task via the inline composer
+[1A[2K[56/91] [chromium] › e2e/panels.spec.ts:27:3 › kanban task board › moves a task to another column via the context menu
+[1A[2K[57/91] [chromium] › e2e/panels.spec.ts:38:3 › kanban task board › opens from the command palette
+[1A[2K[58/91] [chromium] › e2e/panels.spec.ts:46:3 › kanban task board › filter narrows cards across columns and clears via Esc
+[1A[2K[59/91] [chromium] › e2e/panels.spec.ts:70:3 › skills panel › opens from the sidebar with project and global tabs
+[1A[2K[60/91] [chromium] › e2e/perf.spec.ts:12:1 › cold start: app is interactive within budget
+[1A[2K[61/91] [chromium] › e2e/perf.spec.ts:22:1 › entry HTML does not preload monaco or language workers
+[1A[2K[62/91] [chromium] › e2e/perf.spec.ts:39:1 › first terminal panel becomes visible quickly
+[1A[2K[63/91] [chromium] › e2e/popups.spec.ts:6:3 › popup dismissal (Esc + outside click) › settings closes on Esc and on outside click
+[1A[2K[64/91] (retries) [chromium] › e2e/panels-smoke.spec.ts:45:3 › panel smoke tests › opening every panel in sequence keeps the app alive (retry #1)
+[1A[2K[65/91] (retries) [chromium] › e2e/popups.spec.ts:6:3 › popup dismissal (Esc + outside click) › settings closes on Esc and on outside click (retry #1)
+[1A[2K  10) [chromium] › e2e/panels-smoke.spec.ts:45:3 › panel smoke tests › opening every panel in sequence keeps the app alive 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="devtools"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/panels-smoke.spec.ts:48:13
+
+    Error Context: test-results/panels-smoke-panel-smoke-t-5bc60-equence-keeps-the-app-alive-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/panels-smoke-panel-smoke-t-5bc60-equence-keeps-the-app-alive-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/panels-smoke-panel-smoke-t-5bc60-equence-keeps-the-app-alive-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="devtools"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="devtools" title="Env, logs, disk, deps, processes, crashes" aria-label="Env, logs, disk, deps, processes, crashes" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/panels-smoke.spec.ts:48:13
+
+    Error Context: test-results/panels-smoke-panel-smoke-t-5bc60-equence-keeps-the-app-alive-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/panels-smoke-panel-smoke-t-5bc60-equence-keeps-the-app-alive-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/panels-smoke-panel-smoke-t-5bc60-equence-keeps-the-app-alive-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[66/91] [chromium] › e2e/popups.spec.ts:23:3 › popup dismissal (Esc + outside click) › command palette opens with Ctrl+Shift+P, runs commands, closes on Esc
+[1A[2K[67/91] [chromium] › e2e/popups.spec.ts:39:3 › popup dismissal (Esc + outside click) › context menu closes on Esc and on outside click
+[1A[2K[68/91] [chromium] › e2e/popups.spec.ts:52:3 › popup dismissal (Esc + outside click) › prompt dialog closes on Esc
+[1A[2K[69/91] [chromium] › e2e/project-shortcuts.spec.ts:6:3 › browser-style project tab shortcuts › Ctrl+Tab and Ctrl+Shift+Tab switch project tabs forward and backward
+[1A[2K[70/91] [chromium] › e2e/project-shortcuts.spec.ts:29:3 › browser-style project tab shortcuts › Ctrl+Shift+T reopens the most recently closed project tab
+[1A[2K[71/91] [chromium] › e2e/settings-search.spec.ts:6:3 › settings content search › finds individual settings, not just section names
+[1A[2K  11) [chromium] › e2e/popups.spec.ts:6:3 › popup dismissal (Esc + outside click) › settings closes on Esc and on outside click 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/popups.spec.ts:8:11
+
+    Error Context: test-results/popups-popup-dismissal-Esc-379ef-on-Esc-and-on-outside-click-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/popups-popup-dismissal-Esc-379ef-on-Esc-and-on-outside-click-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/popups-popup-dismissal-Esc-379ef-on-Esc-and-on-outside-click-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/popups.spec.ts:8:11
+
+    Error Context: test-results/popups-popup-dismissal-Esc-379ef-on-Esc-and-on-outside-click-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/popups-popup-dismissal-Esc-379ef-on-Esc-and-on-outside-click-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/popups-popup-dismissal-Esc-379ef-on-Esc-and-on-outside-click-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[72/91] [chromium] › e2e/settings-search.spec.ts:24:3 › settings content search › export/import buttons live in Appearance
+[1A[2K[73/91] (retries) [chromium] › e2e/settings-search.spec.ts:6:3 › settings content search › finds individual settings, not just section names (retry #1)
+[1A[2K[74/91] (retries) [chromium] › e2e/settings-search.spec.ts:24:3 › settings content search › export/import buttons live in Appearance (retry #1)
+[1A[2K  12) [chromium] › e2e/settings-search.spec.ts:6:3 › settings content search › finds individual settings, not just section names 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/settings-search.spec.ts:8:11
+
+    Error Context: test-results/settings-search-settings-c-19c5a-ings-not-just-section-names-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/settings-search-settings-c-19c5a-ings-not-just-section-names-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/settings-search-settings-c-19c5a-ings-not-just-section-names-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/settings-search.spec.ts:8:11
+
+    Error Context: test-results/settings-search-settings-c-19c5a-ings-not-just-section-names-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/settings-search-settings-c-19c5a-ings-not-just-section-names-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/settings-search-settings-c-19c5a-ings-not-just-section-names-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[75/91] [chromium] › e2e/sidebar.spec.ts:6:3 › nav buttons › every visible nav button registers a single click
+[1A[2K  13) [chromium] › e2e/settings-search.spec.ts:24:3 › settings content search › export/import buttons live in Appearance 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/settings-search.spec.ts:26:11
+
+    Error Context: test-results/settings-search-settings-c-c7930--buttons-live-in-Appearance-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/settings-search-settings-c-c7930--buttons-live-in-Appearance-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/settings-search-settings-c-c7930--buttons-live-in-Appearance-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="settings" title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/settings-search.spec.ts:26:11
+
+    Error Context: test-results/settings-search-settings-c-c7930--buttons-live-in-Appearance-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/settings-search-settings-c-c7930--buttons-live-in-Appearance-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/settings-search-settings-c-c7930--buttons-live-in-Appearance-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[76/91] [chromium] › e2e/sidebar.spec.ts:18:3 › nav buttons › clicks register immediately after an open dropdown (no swallowed first click)
+[1A[2K[77/91] [chromium] › e2e/sidebar.spec.ts:33:3 › nav buttons › rapid sequential clicks all register
+[1A[2K[78/91] [chromium] › e2e/sidebar.spec.ts:43:3 › nav buttons › right-click menu hides a button and reset restores it
+[1A[2K[79/91] [chromium] › e2e/sidebar.spec.ts:62:3 › nav buttons › a full nav stack cannot squeeze the project tabs out of the sidebar
+[1A[2K[80/91] (retries) [chromium] › e2e/sidebar.spec.ts:6:3 › nav buttons › every visible nav button registers a single click (retry #1)
+[1A[2K[81/91] (retries) [chromium] › e2e/sidebar.spec.ts:62:3 › nav buttons › a full nav stack cannot squeeze the project tabs out of the sidebar (retry #1)
+[1A[2K  14) [chromium] › e2e/sidebar.spec.ts:6:3 › nav buttons › every visible nav button registers a single click 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    3 × locator resolved to <button draggable="true" data-nav-id="settings" title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m    - attempting click action[22m
+    [2m      - waiting for element to be visible, enabled and stable[22m
+    [2m    - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:14:11
+
+    Error Context: test-results/sidebar-nav-buttons-every--51aa5-on-registers-a-single-click-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-every--51aa5-on-registers-a-single-click-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-every--51aa5-on-registers-a-single-click-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:14:11
+
+    Error Context: test-results/sidebar-nav-buttons-every--51aa5-on-registers-a-single-click-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-every--51aa5-on-registers-a-single-click-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-every--51aa5-on-registers-a-single-click-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[82/91] [chromium] › e2e/sidebar.spec.ts:112:3 › nav buttons › every nav button fits in the sidebar without scrolling
+[1A[2K  15) [chromium] › e2e/sidebar.spec.ts:62:3 › nav buttons › a full nav stack cannot squeeze the project tabs out of the sidebar 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:73:11
+
+    Error Context: test-results/sidebar-nav-buttons-a-full-ce225-ect-tabs-out-of-the-sidebar-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-a-full-ce225-ect-tabs-out-of-the-sidebar-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-a-full-ce225-ect-tabs-out-of-the-sidebar-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="settings" title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:73:11
+
+    Error Context: test-results/sidebar-nav-buttons-a-full-ce225-ect-tabs-out-of-the-sidebar-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-a-full-ce225-ect-tabs-out-of-the-sidebar-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-a-full-ce225-ect-tabs-out-of-the-sidebar-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[83/91] [chromium] › e2e/sidebar.spec.ts:146:3 › nav buttons › icon rail moves the icons that do not fit into a ⋯ menu
+[1A[2K[84/91] (retries) [chromium] › e2e/sidebar.spec.ts:112:3 › nav buttons › every nav button fits in the sidebar without scrolling (retry #1)
+[1A[2K[85/91] (retries) [chromium] › e2e/sidebar.spec.ts:146:3 › nav buttons › icon rail moves the icons that do not fit into a ⋯ menu (retry #1)
+[1A[2K  16) [chromium] › e2e/sidebar.spec.ts:112:3 › nav buttons › every nav button fits in the sidebar without scrolling 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="settings" title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:116:11
+
+    Error Context: test-results/sidebar-nav-buttons-every--49145-e-sidebar-without-scrolling-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-every--49145-e-sidebar-without-scrolling-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-every--49145-e-sidebar-without-scrolling-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:116:11
+
+    Error Context: test-results/sidebar-nav-buttons-every--49145-e-sidebar-without-scrolling-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-every--49145-e-sidebar-without-scrolling-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-every--49145-e-sidebar-without-scrolling-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[86/91] [chromium] › e2e/sidebar.spec.ts:179:3 › nav buttons › nav buttons can be reordered from Settings
+[1A[2K  17) [chromium] › e2e/sidebar.spec.ts:146:3 › nav buttons › icon rail moves the icons that do not fit into a ⋯ menu 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:151:11
+
+    Error Context: test-results/sidebar-nav-buttons-icon-r-1b208-at-do-not-fit-into-a-⋯-menu-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-icon-r-1b208-at-do-not-fit-into-a-⋯-menu-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-icon-r-1b208-at-do-not-fit-into-a-⋯-menu-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:151:11
+
+    Error Context: test-results/sidebar-nav-buttons-icon-r-1b208-at-do-not-fit-into-a-⋯-menu-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-icon-r-1b208-at-do-not-fit-into-a-⋯-menu-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-icon-r-1b208-at-do-not-fit-into-a-⋯-menu-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[87/91] [chromium] › e2e/splash.spec.ts:13:3 › splash teardown › splash overlay is removed so the UI is reachable
+[1A[2K[88/91] [chromium] › e2e/splash.spec.ts:22:3 › splash teardown › editor opened from the palette is visible and interactive
+[1A[2K[89/91] [chromium] › e2e/splash.spec.ts:41:3 › splash teardown › markdown preview→source renders the text layer (not just the gutter)
+[1A[2K[90/91] [chromium] › e2e/tabs.spec.ts:9:3 › project tab switching › inactive dock cannot intercept input after switching
+[1A[2K[91/91] [chromium] › e2e/terminal-restore.spec.ts:17:3 › terminal restore › the unsent input line is saved, and removed when the terminal is closed
+[1A[2K[92/91] (retries) [chromium] › e2e/sidebar.spec.ts:179:3 › nav buttons › nav buttons can be reordered from Settings (retry #1)
+[1A[2K[93/91] (retries) [chromium] › e2e/terminal-restore.spec.ts:17:3 › terminal restore › the unsent input line is saved, and removed when the terminal is closed (retry #1)
+[1A[2K  18) [chromium] › e2e/terminal-restore.spec.ts:17:3 › terminal restore › the unsent input line is saved, and removed when the terminal is closed 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 1[39m
+
+    [2m  Array [[22m
+    [32m-   "git sta",[39m
+    [31m+   "",[39m
+    [2m  ][22m
+
+    Call Log:
+    - Timeout 8000ms exceeded while waiting on the predicate
+
+      24 |
+      25 |     // Saved on a short throttle, without needing an Enter or a reload.
+    > 26 |     await expect.poll(async () => Object.values(await snapshots(page)).map((s) => s.draft), { timeout: 8000 }).toEqual(["git sta"]);
+         |                                                                                                                ^
+      27 |
+      28 |     await dockTab(page, "Terminal").getByRole("button").first().click();
+      29 |     await expect.poll(async () => Object.keys(await snapshots(page)), { timeout: 5000 }).toEqual([]);
+        at /home/runner/work/luxor/luxor/e2e/terminal-restore.spec.ts:26:112
+
+    Error Context: test-results/terminal-restore-terminal--b0e08-when-the-terminal-is-closed-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-restore-terminal--b0e08-when-the-terminal-is-closed-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-restore-terminal--b0e08-when-the-terminal-is-closed-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoEqual[2m([22m[32mexpected[39m[2m) // deep equality[22m
+
+    [32m- Expected  - 1[39m
+    [31m+ Received  + 1[39m
+
+    [2m  Array [[22m
+    [32m-   "git sta",[39m
+    [31m+   "",[39m
+    [2m  ][22m
+
+    Call Log:
+    - Timeout 8000ms exceeded while waiting on the predicate
+
+      24 |
+      25 |     // Saved on a short throttle, without needing an Enter or a reload.
+    > 26 |     await expect.poll(async () => Object.values(await snapshots(page)).map((s) => s.draft), { timeout: 8000 }).toEqual(["git sta"]);
+         |                                                                                                                ^
+      27 |
+      28 |     await dockTab(page, "Terminal").getByRole("button").first().click();
+      29 |     await expect.poll(async () => Object.keys(await snapshots(page)), { timeout: 5000 }).toEqual([]);
+        at /home/runner/work/luxor/luxor/e2e/terminal-restore.spec.ts:26:112
+
+    Error Context: test-results/terminal-restore-terminal--b0e08-when-the-terminal-is-closed-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/terminal-restore-terminal--b0e08-when-the-terminal-is-closed-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/terminal-restore-terminal--b0e08-when-the-terminal-is-closed-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[94/91] [chromium] › e2e/terminal-restore.spec.ts:32:3 › terminal restore › turning the Settings toggle off deletes what was saved
+[1A[2K[95/91] [chromium] › e2e/v046.spec.ts:6:3 › activity log › opens from the sidebar and records toasts
+[1A[2K[96/91] [chromium] › e2e/v046.spec.ts:20:3 › activity log › filter and clear work
+[1A[2K[97/91] [chromium] › e2e/v046.spec.ts:37:3 › activity log › opens from the command palette
+[1A[2K  19) [chromium] › e2e/sidebar.spec.ts:179:3 › nav buttons › nav buttons can be reordered from Settings 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    - waiting for" http://localhost:4173/" navigation to finish...[22m
+    [2m    - navigated to "http://localhost:4173/"[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:181:11
+
+    Error Context: test-results/sidebar-nav-buttons-nav-bu-248db--be-reordered-from-Settings-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-nav-bu-248db--be-reordered-from-Settings-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-nav-bu-248db--be-reordered-from-Settings-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/sidebar.spec.ts:181:11
+
+    Error Context: test-results/sidebar-nav-buttons-nav-bu-248db--be-reordered-from-Settings-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/sidebar-nav-buttons-nav-bu-248db--be-reordered-from-Settings-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/sidebar-nav-buttons-nav-bu-248db--be-reordered-from-Settings-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[98/91] [chromium] › e2e/v046.spec.ts:58:3 › git blame tab › blames a file with mock data
+[1A[2K[99/91] [chromium] › e2e/v046.spec.ts:48:3 › status bar AI agents segment › shows the mock agents with usage totals
+[1A[2K[100/91] [chromium] › e2e/v046.spec.ts:80:3 › terminal CPU/RAM badge › shows mock process-tree stats on a terminal
+[1A[2K[101/91] [chromium] › e2e/v046.spec.ts:91:3 › settings additions › search finds the new toggles
+[1A[2K[102/91] (retries) [chromium] › e2e/v046.spec.ts:48:3 › status bar AI agents segment › shows the mock agents with usage totals (retry #1)
+[1A[2K  20) [chromium] › e2e/v046.spec.ts:48:3 › status bar AI agents segment › shows the mock agents with usage totals 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: getByTestId('status-agents')
+    Expected: visible
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('status-agents')[22m
+
+
+      49 |     await openApp(page);
+      50 |     const seg = page.getByTestId("status-agents");
+    > 51 |     await expect(seg).toBeVisible();
+         |                       ^
+      52 |     await expect(seg).toContainText("3 agents"); // 2× Claude Code + 1× Codex CLI
+      53 |     await expect(seg).toContainText("%");
+      54 |   });
+        at /home/runner/work/luxor/luxor/e2e/v046.spec.ts:51:23
+
+    Error Context: test-results/v046-status-bar-AI-agents--4c268-ck-agents-with-usage-totals-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/v046-status-bar-AI-agents--4c268-ck-agents-with-usage-totals-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/v046-status-bar-AI-agents--4c268-ck-agents-with-usage-totals-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[103/91] [chromium] › e2e/workbench.spec.ts:21:3 › workbench: explorer side bar › a project opens with its file tree beside an empty editor area
+[1A[2K[104/91] [chromium] › e2e/workbench.spec.ts:33:3 › workbench: explorer side bar › single click previews a file; double click keeps the tab
+[1A[2K[105/91] [chromium] › e2e/workbench.spec.ts:53:3 › workbench: explorer side bar › Ctrl+B hides and shows the side bar
+[1A[2K[106/91] [chromium] › e2e/workbench.spec.ts:63:3 › workbench: explorer side bar › a new file is named inline and opens in the editor
+[1A[2K[107/91] [chromium] › e2e/workbench.spec.ts:75:3 › workbench: explorer side bar › F2 renames inline
+[1A[2K[108/91] [chromium] › e2e/workbench.spec.ts:88:3 › workbench: explorer side bar › the search view finds text across the project
+[1A[2K[109/91] (retries) [chromium] › e2e/v046.spec.ts:91:3 › settings additions › search finds the new toggles (retry #1)
+[1A[2K[110/91] (retries) [chromium] › e2e/workbench.spec.ts:88:3 › workbench: explorer side bar › the search view finds text across the project (retry #1)
+[1A[2K  21) [chromium] › e2e/v046.spec.ts:91:3 › settings additions › search finds the new toggles ───────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+    [2m    - locator resolved to <button draggable="true" data-nav-id="settings" title="Settings (Ctrl+,)" aria-label="Settings (Ctrl+,)" class="lx-square-btn lx-toolbar-item flex items-center text-muted hover:text-strong h-7 w-7 justify-center ">…</button>[22m
+    [2m  - attempting click action[22m
+    [2m    - waiting for element to be visible, enabled and stable[22m
+    [2m  - element was detached from the DOM, retrying[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/v046.spec.ts:93:11
+
+    Error Context: test-results/v046-settings-additions-search-finds-the-new-toggles-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/v046-settings-additions-search-finds-the-new-toggles-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/v046-settings-additions-search-finds-the-new-toggles-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.click: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for locator('[data-nav-id="settings"]')[22m
+
+
+       at helpers.ts:35
+
+      33 | /** Click a sidebar/topbar nav button by its id (terminal, git, files, …). */
+      34 | export async function clickNav(page: Page, id: string): Promise<void> {
+    > 35 |   await page.locator(`[data-nav-id="${id}"]`).click();
+         |                                               ^
+      36 | }
+      37 |
+      38 | /** Locator for a dockview panel tab with the given title. */
+        at clickNav (/home/runner/work/luxor/luxor/e2e/helpers.ts:35:47)
+        at /home/runner/work/luxor/luxor/e2e/v046.spec.ts:93:11
+
+    Error Context: test-results/v046-settings-additions-search-finds-the-new-toggles-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/v046-settings-additions-search-finds-the-new-toggles-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/v046-settings-additions-search-finds-the-new-toggles-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[111/91] [chromium] › e2e/workbench.spec.ts:100:3 › workbench: terminal panel › Ctrl+` opens a terminal below the editor and toggles it
+[1A[2K[112/91] (retries) [chromium] › e2e/workbench.spec.ts:100:3 › workbench: terminal panel › Ctrl+` opens a terminal below the editor and toggles it (retry #1)
+[1A[2K  22) [chromium] › e2e/workbench.spec.ts:88:3 › workbench: explorer side bar › the search view finds text across the project 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workbench-sidebar').getByRole('textbox').first()[22m
+
+
+      91 |     await page.getByTestId("sidebar-tab-search").click();
+      92 |     const box = page.getByTestId("workbench-sidebar").getByRole("textbox").first();
+    > 93 |     await box.fill("formatPrice");
+         |               ^
+      94 |     await box.press("Enter");
+      95 |     await expect(page.getByTestId("workbench-sidebar").getByText("Cart.tsx").first()).toBeVisible();
+      96 |   });
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:93:15
+
+    Error Context: test-results/workbench-workbench-explor-de27b-nds-text-across-the-project-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-explor-de27b-nds-text-across-the-project-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-explor-de27b-nds-text-across-the-project-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: locator.fill: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - waiting for getByTestId('workbench-sidebar').getByRole('textbox').first()[22m
+
+
+      91 |     await page.getByTestId("sidebar-tab-search").click();
+      92 |     const box = page.getByTestId("workbench-sidebar").getByRole("textbox").first();
+    > 93 |     await box.fill("formatPrice");
+         |               ^
+      94 |     await box.press("Enter");
+      95 |     await expect(page.getByTestId("workbench-sidebar").getByText("Cart.tsx").first()).toBeVisible();
+      96 |   });
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:93:15
+
+    Error Context: test-results/workbench-workbench-explor-de27b-nds-text-across-the-project-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-explor-de27b-nds-text-across-the-project-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-explor-de27b-nds-text-across-the-project-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[113/91] [chromium] › e2e/workbench.spec.ts:126:3 › workbench: terminal panel › the simulated shell answers commands and the tab is named after its folder
+[1A[2K  23) [chromium] › e2e/workbench.spec.ts:100:3 › workbench: terminal panel › Ctrl+` opens a terminal below the editor and toggles it 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.xterm-rows').first()
+    Expected substring: [32m"dev@luxor"[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 10000ms[22m
+    [2m  - waiting for locator('.xterm-rows').first()[22m
+
+
+      108 |     await expect(xterm).toBeVisible();
+      109 |     // The browser mock runs a tiny simulated shell.
+    > 110 |     await expect(page.locator(".xterm-rows").first()).toContainText("dev@luxor", { timeout: 10_000 });
+          |                                                       ^
+      111 |     const panel = page.getByTestId("statusbar-toggle-panel");
+      112 |     await expect(panel).toHaveAttribute("aria-pressed", "true");
+      113 |
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:110:55
+
+    Error Context: test-results/workbench-workbench-termin-9f113-w-the-editor-and-toggles-it-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-termin-9f113-w-the-editor-and-toggles-it-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-termin-9f113-w-the-editor-and-toggles-it-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.xterm-rows').first()
+    Expected substring: [32m"dev@luxor"[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 10000ms[22m
+    [2m  - waiting for locator('.xterm-rows').first()[22m
+
+
+      108 |     await expect(xterm).toBeVisible();
+      109 |     // The browser mock runs a tiny simulated shell.
+    > 110 |     await expect(page.locator(".xterm-rows").first()).toContainText("dev@luxor", { timeout: 10_000 });
+          |                                                       ^
+      111 |     const panel = page.getByTestId("statusbar-toggle-panel");
+      112 |     await expect(panel).toHaveAttribute("aria-pressed", "true");
+      113 |
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:110:55
+
+    Error Context: test-results/workbench-workbench-termin-9f113-w-the-editor-and-toggles-it-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-termin-9f113-w-the-editor-and-toggles-it-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-termin-9f113-w-the-editor-and-toggles-it-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[114/91] [chromium] › e2e/workbench.spec.ts:140:3 › workbench: go to file › Ctrl+P opens the palette on files and opens the pick
+[1A[2K[115/91] (retries) [chromium] › e2e/workbench.spec.ts:126:3 › workbench: terminal panel › the simulated shell answers commands and the tab is named after its folder (retry #1)
+[1A[2K[116/91] (retries) [chromium] › e2e/workbench.spec.ts:140:3 › workbench: go to file › Ctrl+P opens the palette on files and opens the pick (retry #1)
+[1A[2K  24) [chromium] › e2e/workbench.spec.ts:126:3 › workbench: terminal panel › the simulated shell answers commands and the tab is named after its folder 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.xterm-rows').first()
+    Expected substring: [32m"dev@luxor"[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 10000ms[22m
+    [2m  - waiting for locator('.xterm-rows').first()[22m
+    [2m    - locator resolved to <div aria-hidden="true" class="xterm-rows xterm-focus">…</div>[22m
+    [2m    - unexpected value " "[22m
+
+
+      128 |     await openDemoProject(page);
+      129 |     await page.keyboard.press("Control+Backquote");
+    > 130 |     await expect(page.locator(".xterm-rows").first()).toContainText("dev@luxor", { timeout: 10_000 });
+          |                                                       ^
+      131 |     await page.locator(".xterm-helper-textarea").first().focus();
+      132 |     await page.keyboard.type("ls");
+      133 |     await page.keyboard.press("Enter");
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:130:55
+
+    Error Context: test-results/workbench-workbench-termin-ccb8b-b-is-named-after-its-folder-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-termin-ccb8b-b-is-named-after-its-folder-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-termin-ccb8b-b-is-named-after-its-folder-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: locator('.xterm-rows').first()
+    Expected substring: [32m"dev@luxor"[39m
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 10000ms[22m
+    [2m  - waiting for locator('.xterm-rows').first()[22m
+
+
+      128 |     await openDemoProject(page);
+      129 |     await page.keyboard.press("Control+Backquote");
+    > 130 |     await expect(page.locator(".xterm-rows").first()).toContainText("dev@luxor", { timeout: 10_000 });
+          |                                                       ^
+      131 |     await page.locator(".xterm-helper-textarea").first().focus();
+      132 |     await page.keyboard.type("ls");
+      133 |     await page.keyboard.press("Enter");
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:130:55
+
+    Error Context: test-results/workbench-workbench-termin-ccb8b-b-is-named-after-its-folder-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-termin-ccb8b-b-is-named-after-its-folder-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-termin-ccb8b-b-is-named-after-its-folder-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  25) [chromium] › e2e/workbench.spec.ts:140:3 › workbench: go to file › Ctrl+P opens the palette on files and opens the pick 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('command-palette').getByRole('option').first()
+    Expected substring: [32m"Cart.tsx"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('command-palette').getByRole('option').first()[22m
+
+
+      146 |     await expect(palette).toBeVisible();
+      147 |     await page.getByTestId("palette-input").fill("Cart.tsx");
+    > 148 |     await expect(palette.getByRole("option").first()).toContainText("Cart.tsx");
+          |                                                       ^
+      149 |     await page.keyboard.press("Enter");
+      150 |     await expect(tab(page, "Cart.tsx")).toBeVisible();
+      151 |   });
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:148:55
+
+    Error Context: test-results/workbench-workbench-go-to--00416-on-files-and-opens-the-pick-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-go-to--00416-on-files-and-opens-the-pick-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-go-to--00416-on-files-and-opens-the-pick-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoContainText[2m([22m[32mexpected[39m[2m)[22m failed
+
+    Locator: getByTestId('command-palette').getByRole('option').first()
+    Expected substring: [32m"Cart.tsx"[39m
+    Timeout: 5000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toContainText" with timeout 5000ms[22m
+    [2m  - waiting for getByTestId('command-palette').getByRole('option').first()[22m
+
+
+      146 |     await expect(palette).toBeVisible();
+      147 |     await page.getByTestId("palette-input").fill("Cart.tsx");
+    > 148 |     await expect(palette.getByRole("option").first()).toContainText("Cart.tsx");
+          |                                                       ^
+      149 |     await page.keyboard.press("Enter");
+      150 |     await expect(tab(page, "Cart.tsx")).toBeVisible();
+      151 |   });
+        at /home/runner/work/luxor/luxor/e2e/workbench.spec.ts:148:55
+
+    Error Context: test-results/workbench-workbench-go-to--00416-on-files-and-opens-the-pick-chromium-retry1/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results/workbench-workbench-go-to--00416-on-files-and-opens-the-pick-chromium-retry1/trace.zip
+    Usage:
+
+        npx playwright show-trace test-results/workbench-workbench-go-to--00416-on-files-and-opens-the-pick-chromium-retry1/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K  24 failed
+    [chromium] › e2e/blank-workspace.spec.ts:6:3 › blank workspace folder CTA › panels without a folder offer to attach one 
+    [chromium] › e2e/chrome-layout.spec.ts:19:3 › top bar layout › nav buttons never squeeze the project tabs below one tab wide 
+    [chromium] › e2e/chrome-layout.spec.ts:50:3 › top bar layout › the all-tabs button stays reachable while the tabs overflow 
+    [chromium] › e2e/features.spec.ts:17:3 › splitting & layout discoverability › tab-strip plus adds a terminal; right-click lists all panels 
+    [chromium] › e2e/features.spec.ts:85:3 › IDE launch group › chevron sits right of the IDE launch icon 
+    [chromium] › e2e/language-switch.spec.ts:17:3 › UI language switch › does not remount the tree or destroy running terminals 
+    [chromium] › e2e/language-switch.spec.ts:59:3 › UI language switch › retranslates memoized shell components 
+    [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › devtools panel opens and renders without crashing 
+    [chromium] › e2e/panels-smoke.spec.ts:36:5 › panel smoke tests › github panel opens and renders without crashing 
+    [chromium] › e2e/panels-smoke.spec.ts:45:3 › panel smoke tests › opening every panel in sequence keeps the app alive 
+    [chromium] › e2e/popups.spec.ts:6:3 › popup dismissal (Esc + outside click) › settings closes on Esc and on outside click 
+    [chromium] › e2e/settings-search.spec.ts:6:3 › settings content search › finds individual settings, not just section names 
+    [chromium] › e2e/settings-search.spec.ts:24:3 › settings content search › export/import buttons live in Appearance 
+    [chromium] › e2e/sidebar.spec.ts:6:3 › nav buttons › every visible nav button registers a single click 
+    [chromium] › e2e/sidebar.spec.ts:62:3 › nav buttons › a full nav stack cannot squeeze the project tabs out of the sidebar 
+    [chromium] › e2e/sidebar.spec.ts:112:3 › nav buttons › every nav button fits in the sidebar without scrolling 
+    [chromium] › e2e/sidebar.spec.ts:146:3 › nav buttons › icon rail moves the icons that do not fit into a ⋯ menu 
+    [chromium] › e2e/sidebar.spec.ts:179:3 › nav buttons › nav buttons can be reordered from Settings 
+    [chromium] › e2e/terminal-restore.spec.ts:17:3 › terminal restore › the unsent input line is saved, and removed when the terminal is closed 
+    [chromium] › e2e/v046.spec.ts:91:3 › settings additions › search finds the new toggles ─────────
+    [chromium] › e2e/workbench.spec.ts:88:3 › workbench: explorer side bar › the search view finds text across the project 
+    [chromium] › e2e/workbench.spec.ts:100:3 › workbench: terminal panel › Ctrl+` opens a terminal below the editor and toggles it 
+    [chromium] › e2e/workbench.spec.ts:126:3 › workbench: terminal panel › the simulated shell answers commands and the tab is named after its folder 
+    [chromium] › e2e/workbench.spec.ts:140:3 › workbench: go to file › Ctrl+P opens the palette on files and opens the pick 
+  1 flaky
+    [chromium] › e2e/v046.spec.ts:48:3 › status bar AI agents segment › shows the mock agents with usage totals 
+  66 passed (11.3m)
+exit=1

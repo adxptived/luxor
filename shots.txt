@@ -1,0 +1,30 @@
+shot probe-out/shots/01-welcome.png
+FAIL open project locator.click: Timeout 30000ms exceeded.
+shot probe-out/shots/02-project-default.png
+FAIL preview App.tsx locator.click: Timeout 30000ms exceeded.
+shot probe-out/shots/03-preview-tab.png
+FAIL pin Cart.tsx locator.click: Timeout 30000ms exceeded.
+FAIL terminal panel locator.focus: Timeout 30000ms exceeded.
+shot probe-out/shots/04-workbench.png
+ok   second terminal + split
+shot probe-out/shots/05-two-terminals.png
+FAIL go to file locator.click: Timeout 30000ms exceeded.
+shot probe-out/shots/06-go-to-file.png
+ok   close palette
+FAIL search view locator.click: Timeout 30000ms exceeded.
+shot probe-out/shots/07-sidebar-search.png
+FAIL back to explorer + context menu locator.click: Timeout 30000ms exceeded.
+shot probe-out/shots/08-context-menu.png
+FAIL inline rename locator.click: Timeout 30000ms exceeded.
+shot probe-out/shots/09-inline-rename.png
+ok   cancel rename
+FAIL maximize terminal group locator.focus: Timeout 30000ms exceeded.
+shot probe-out/shots/10-maximized-terminal.png
+ok   restore + hide terminal panel
+shot probe-out/shots/11-terminal-hidden.png
+ok   light theme
+shot probe-out/shots/12-light.png
+FAIL narrow page.evaluate: Execution context was destroyed, most likely because of a navigation
+shot probe-out/shots/13-narrow.png
+console errors: []
+exit=0
