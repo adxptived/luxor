@@ -1,5 +1,6 @@
 /**
- * Built-in layouts: "Everything", "Code" and "Terminals".
+ * Built-in layouts: "Everything", "Code" and "Terminals" (of the editor area —
+ * the file tree is the Explorer side bar).
  *
  * A layout is a list of steps (which panel, split from which earlier step, in
  * which direction, taking what share of the window). It is pure data so the
@@ -29,11 +30,13 @@ export interface BuiltinLayoutInfo {
   description: string;
 }
 
-/** Labels are literals so the Russian dictionary coverage test can see them. */
+/** Labels are literals so the Russian dictionary coverage test can see them.
+ *  The project's file tree is the Explorer side bar, so layouts arrange the
+ *  editor area and the terminals only. */
 export const BUILTIN_LAYOUTS: BuiltinLayoutInfo[] = [
-  { id: "all", label: "Everything", description: "Files, editor and terminals side by side" },
-  { id: "code", label: "Code", description: "Files and editor, one small terminal" },
-  { id: "terminals", label: "Terminals", description: "Terminals first, files on the side" },
+  { id: "all", label: "Everything", description: "Editor on top, two terminals below" },
+  { id: "code", label: "Code", description: "Editor with one terminal underneath" },
+  { id: "terminals", label: "Terminals", description: "Three terminals, editor on the side" },
 ];
 
 export interface BuildOptions {
@@ -50,40 +53,28 @@ export function buildLayout(id: BuiltinLayoutId, { cwd, file }: BuildOptions): L
     params: { cwd },
     ...extra,
   });
-  const editor: LayoutStep | null = file
-    ? { key: "editor", component: "editor", ref: "files", direction: "right", size: 0.78, params: { path: file } }
-    : null;
+  const editor: LayoutStep | null = file ? { key: "editor", component: "editor", params: { path: file } } : null;
 
   switch (id) {
     case "all": {
-      const steps: LayoutStep[] = [{ key: "files", component: "files" }];
-      if (editor) {
-        steps.push(editor);
-        steps.push(term("t1", { ref: "editor", direction: "below", size: 0.36 }));
-      } else {
-        steps.push(term("t1", { ref: "files", direction: "right", size: 0.78 }));
-      }
-      steps.push(term("t2", { ref: "t1", direction: "right", size: 0.5 }));
-      return steps;
+      if (!editor) return [term("t1"), term("t2", { ref: "t1", direction: "right", size: 0.5 })];
+      return [
+        editor,
+        term("t1", { ref: "editor", direction: "below", size: 0.36 }),
+        term("t2", { ref: "t1", direction: "right", size: 0.5 }),
+      ];
     }
     case "code": {
-      const steps: LayoutStep[] = [{ key: "files", component: "files" }];
-      if (editor) {
-        steps.push(editor);
-        steps.push(term("t1", { ref: "editor", direction: "below", size: 0.22 }));
-      } else {
-        steps.push(term("t1", { ref: "files", direction: "right", size: 0.78 }));
-      }
-      return steps;
+      if (!editor) return [term("t1")];
+      return [editor, term("t1", { ref: "editor", direction: "below", size: 0.28 })];
     }
     case "terminals": {
       const steps: LayoutStep[] = [
         term("t1"),
         term("t2", { ref: "t1", direction: "below", size: 0.34 }),
         term("t3", { ref: "t2", direction: "right", size: 0.5 }),
-        { key: "files", component: "files", ref: "t1", direction: "left", size: 0.2 },
       ];
-      if (file) steps.push({ key: "editor", component: "editor", ref: "t1", direction: "right", size: 0.4, params: { path: file } });
+      if (file) steps.push({ key: "editor", component: "editor", ref: "t1", direction: "right", size: 0.45, params: { path: file } });
       return steps;
     }
   }

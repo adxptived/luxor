@@ -18,7 +18,9 @@ import { useAppStore } from "@/state/appStore";
 import { useActiveProject } from "@/state/projectsStore";
 import { confirmDestructive } from "@/state/uiStore";
 
-export function SearchPanel() {
+/** `compact` — the narrow variant shown in the workbench side bar (no title
+ *  block, tighter padding). */
+export function SearchPanel({ compact = false }: { compact?: boolean } = {}) {
   const project = useActiveProject();
   const toast = useAppStore((s) => s.toast);
   const openFile = useDockStore((s) => s.openFile);
@@ -151,9 +153,9 @@ export function SearchPanel() {
 
   return (
     <div className="flex h-full flex-col bg-surface text-sm lx-fade-in">
-      <div className="border-b border-edge bg-bar/55 p-3">
-        <div className="mb-3 flex flex-wrap items-center gap-2">
-          <div className="flex min-w-0 flex-1 items-center gap-2">
+      <div className={`border-b border-edge ${compact ? "px-2 pb-2" : "bg-bar/55 p-3"}`}>
+        <div className={`flex flex-wrap items-center gap-2 ${compact ? (report ? "mb-1.5" : "hidden") : "mb-3"}`}>
+          <div className={`min-w-0 flex-1 items-center gap-2 ${compact ? "hidden" : "flex"}`}>
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-edge bg-raised text-accent">
               <FolderSearch size={18} />
             </span>

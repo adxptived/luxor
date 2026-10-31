@@ -22,13 +22,17 @@ import * as codeMirrorView from "@codemirror/view";
 import {
   EditorView,
   keymap,
+  crosshairCursor,
   drawSelection,
+  dropCursor,
   highlightActiveLine,
   lineNumbers,
   highlightActiveLineGutter,
   highlightSpecialChars,
   highlightWhitespace,
   highlightTrailingWhitespace,
+  rectangularSelection,
+  scrollPastEnd,
 } from "@codemirror/view";
 import { defaultKeymap, history, historyKeymap, indentWithTab, toggleComment } from "@codemirror/commands";
 import { searchKeymap, highlightSelectionMatches } from "@codemirror/search";
@@ -71,6 +75,42 @@ export function getCodeMirror(): Promise<CmModule> {
  */
 export function languageExtensionForId(id: string): Promise<Extension> {
   return resolveLanguageExtension(id);
+}
+
+/**
+ * The indentation a document already uses: a tab when tab-indented lines
+ * dominate, else the most common step between space-indented lines (2, 4 or
+ * 8), falling back to two spaces. Keeps Tab / auto-indent consistent with the
+ * file instead of forcing two spaces into a four-space Python file.
+ */
+export function detectIndentUnit(doc: string): string {
+  let tabs = 0;
+  let spaced = 0;
+  const steps = new Map<number, number>();
+  let prev = 0;
+  const lines = doc.split("\n", 2000);
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    if (line.startsWith("\t")) {
+      tabs += 1;
+      continue;
+    }
+    const width = line.length - line.trimStart().length;
+    if (width > 0) spaced += 1;
+    const step = Math.abs(width - prev);
+    if (step === 2 || step === 4 || step === 8) steps.set(step, (steps.get(step) ?? 0) + 1);
+    prev = width;
+  }
+  if (tabs > spaced && tabs > 0) return "\t";
+  let best = 2;
+  let bestCount = 0;
+  for (const [step, count] of steps) {
+    if (count > bestCount || (count === bestCount && step < best)) {
+      best = step;
+      bestCount = count;
+    }
+  }
+  return " ".repeat(best);
 }
 
 export interface EditorOptions {
@@ -168,6 +208,14 @@ export async function mountEditor(
         highlightSpecialChars(),
         highlightSelectionMatches(),
         drawSelection(),
+        dropCursor(),
+        // Multiple cursors: Ctrl+D adds the next occurrence, Ctrl+Shift+L all
+        // of them (search keymap), Alt+drag a rectangular selection, Ctrl+click
+        // (Cmd on macOS) another cursor.
+        EditorState.allowMultipleSelections.of(true),
+        rectangularSelection(),
+        crosshairCursor(),
+        scrollPastEnd(),
         history(),
         // IDE-grade editing: auto-reindent on input, match/close brackets,
         // fold code blocks, and offer completions from the open document and
@@ -175,7 +223,7 @@ export async function mountEditor(
         // grammar in `langCompartment`, so they light up the moment a language
         // pack resolves.
         indentOnInput(),
-        indentUnit.of("  "),
+        indentUnit.of(detectIndentUnit(opts.doc)),
         bracketMatching(),
         closeBrackets(),
         codeFolding(),

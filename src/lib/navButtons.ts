@@ -40,11 +40,11 @@ export interface NavButtonDef {
 
 /** Default button order. Unknown ids in a saved config are ignored. */
 export const NAV_BUTTONS: NavButtonDef[] = [
-  { id: "terminal", label: "Terminal", title: "New terminal (Ctrl+`)", icon: TerminalSquare },
+  { id: "terminal", label: "Terminal", title: "New terminal", icon: TerminalSquare },
   { id: "ide", label: "Open in IDE", title: "Open project in your IDE", icon: Code2 },
   { id: "filemanager", label: "File manager", title: "Open project in the OS file manager", icon: HardDrive },
-  { id: "git", label: "Git", title: "Git explorer (Ctrl+Shift+G)", icon: FolderGit2 },
-  { id: "files", label: "Files", title: "File explorer (Ctrl+Shift+E)", icon: FolderOpen },
+  { id: "git", label: "Git", title: "Git explorer", icon: FolderGit2 },
+  { id: "files", label: "Files", title: "Explorer side bar (double-click: as a tab)", icon: FolderOpen },
   { id: "launcher", label: "Launcher", title: "Project launcher panel", icon: Rocket },
   { id: "tasks", label: "Tasks", title: "Kanban task board", icon: SquareKanban },
   { id: "skills", label: "Skills", title: "Agent skills manager", icon: GraduationCap },
@@ -52,7 +52,7 @@ export const NAV_BUTTONS: NavButtonDef[] = [
   { id: "agents", label: "Agents", title: "Running AI agents (Claude Code, Codex, …)", icon: Bot },
   { id: "activity", label: "Activity", title: "Activity log: what happened this session", icon: ScrollText },
   { id: "analytics", label: "Analytics", title: "Activity analytics & dashboards", icon: BarChart3 },
-  { id: "search", label: "Search", title: "Search in project (Ctrl+Shift+F)", icon: SearchIcon },
+  { id: "search", label: "Search", title: "Search in project (double-click: as a tab)", icon: SearchIcon },
   { id: "snippets", label: "Snippets", title: "Snippets, notes & bookmarks", icon: Scissors },
   { id: "http", label: "HTTP", title: "REST client scratch pad", icon: Globe },
   { id: "docker", label: "Docker", title: "Docker containers & images", icon: Container },
@@ -60,8 +60,8 @@ export const NAV_BUTTONS: NavButtonDef[] = [
   { id: "github", label: "GitHub", title: "GitHub issues, pull requests & CI", icon: FolderGit2 },
   // Only shown when `ui.browser_enabled` is on (Settings → Interface).
   { id: "web", label: "Browser", title: "Built-in web browser", icon: Compass },
-  { id: "palette", label: "Palette", title: "Command palette (Ctrl+Shift+P)", icon: Command },
-  { id: "settings", label: "Settings", title: "Settings (Ctrl+,)", icon: Settings },
+  { id: "palette", label: "Palette", title: "Command palette", icon: Command },
+  { id: "settings", label: "Settings", title: "Settings", icon: Settings },
 ];
 
 export const NAV_IDS: string[] = NAV_BUTTONS.map((b) => b.id);

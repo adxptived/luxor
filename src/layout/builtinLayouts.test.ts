@@ -31,29 +31,35 @@ describe("buildLayout", () => {
     }
   });
 
-  it("'all' shows files, editor and two terminals when there is a file to open", () => {
-    expect(components(buildLayout("all", OPTS))).toEqual(["files", "editor", "terminal", "terminal"]);
+  it("'all' shows the editor and two terminals when there is a file to open", () => {
+    expect(components(buildLayout("all", OPTS))).toEqual(["editor", "terminal", "terminal"]);
   });
 
   it("'all' and 'code' leave the editor out when there is nothing to open", () => {
-    expect(components(buildLayout("all", { cwd: "/p", file: null }))).toEqual(["files", "terminal", "terminal"]);
-    expect(components(buildLayout("code", { cwd: "/p", file: null }))).toEqual(["files", "terminal"]);
+    expect(components(buildLayout("all", { cwd: "/p", file: null }))).toEqual(["terminal", "terminal"]);
+    expect(components(buildLayout("code", { cwd: "/p", file: null }))).toEqual(["terminal"]);
   });
 
   it("'code' has a single, small terminal under the editor", () => {
     const steps = buildLayout("code", OPTS);
-    expect(components(steps)).toEqual(["files", "editor", "terminal"]);
-    const t = steps[2];
+    expect(components(steps)).toEqual(["editor", "terminal"]);
+    const t = steps[1];
     expect(t.direction).toBe("below");
     expect(t.size).toBeLessThan(0.3);
   });
 
-  it("'terminals' starts from a terminal and puts files on the left", () => {
-    const steps = buildLayout("terminals", { cwd: "/p", file: null });
+  it("no layout adds a Files tab: the tree is the Explorer side bar", () => {
+    for (const { id } of BUILTIN_LAYOUTS) {
+      expect(components(buildLayout(id, OPTS))).not.toContain("files");
+    }
+  });
+
+  it("'terminals' starts from a terminal and puts the editor beside it", () => {
+    const steps = buildLayout("terminals", OPTS);
     expect(steps[0].component).toBe("terminal");
     expect(components(steps).filter((c) => c === "terminal")).toHaveLength(3);
-    const files = steps.find((s) => s.component === "files")!;
-    expect(files.direction).toBe("left");
+    const editor = steps.find((s) => s.component === "editor")!;
+    expect(editor.direction).toBe("right");
   });
 
   it("passes the project folder to every terminal and the file to the editor", () => {

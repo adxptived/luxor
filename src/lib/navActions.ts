@@ -1,6 +1,29 @@
 import { useDockStore, type PanelKind } from "@/layout/dockStore";
 import { useAppStore } from "@/state/appStore";
+import { useProjectsStore } from "@/state/projectsStore";
+import { useWorkbenchStore, type SidebarView } from "@/state/workbenchStore";
 import { launcherOpenIde, openPath } from "./ipc";
+
+/** The side bar exists for project tabs only (not the Welcome screen). */
+export function sidebarAvailable(): boolean {
+  const { projects, activeId } = useProjectsStore.getState();
+  return projects.some((p) => p.id === activeId);
+}
+
+/**
+ * Explorer / Search: toggle the matching side-bar view (activity-bar style);
+ * on the Welcome screen, where there is no side bar, open the dock panel.
+ */
+export function toggleSidebarView(view: SidebarView): void {
+  if (sidebarAvailable()) useWorkbenchStore.getState().toggleSidebar(view);
+  else useDockStore.getState().openPanel(view === "explorer" ? "files" : "search");
+}
+
+/** Show a side-bar view and focus it (Ctrl+Shift+E / Ctrl+Shift+F). */
+export function showSidebarView(view: SidebarView): void {
+  if (sidebarAvailable()) useWorkbenchStore.getState().showSidebar(view);
+  else useDockStore.getState().openPanel(view === "explorer" ? "files" : "search");
+}
 
 export function getNavAction(id: string): () => void {
   const { addTerminal, openPanel } = useDockStore.getState();
@@ -12,7 +35,7 @@ export function getNavAction(id: string): () => void {
     ide: () => launcherOpenIde("."),
     filemanager: () => openPath("."),
     git: () => openPanel("git"),
-    files: () => openPanel("files"),
+    files: () => toggleSidebarView("explorer"),
     launcher: () => openPanel("launcher"),
     tasks: () => openPanel("tasks"),
     skills: () => openPanel("skills"),
@@ -20,7 +43,7 @@ export function getNavAction(id: string): () => void {
     agents: () => openPanel("agents"),
     activity: () => openPanel("activity"),
     analytics: () => openPanel("analytics"),
-    search: () => openPanel("search"),
+    search: () => toggleSidebarView("search"),
     snippets: () => openPanel("snippets"),
     http: () => openPanel("http"),
     docker: () => openPanel("docker"),

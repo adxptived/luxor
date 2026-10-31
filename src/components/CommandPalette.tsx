@@ -13,7 +13,16 @@ import { applyRecents, loadRecents, recordRecent } from "@/lib/paletteRecents";
 import { THEMES } from "@/lib/themes";
 import { ZOOM_STEP } from "@/lib/zoom";
 import { useFocusTrap } from "@/lib/useFocusTrap";
-import { focusNeighbourGroup, moveTabToNeighbourGroup, useDockStore } from "@/layout/dockStore";
+import {
+  focusNeighbourGroup,
+  moveTabToNeighbourGroup,
+  splitActivePanel,
+  toggleMaximizeGroup,
+  toggleTerminalPanel,
+  useDockStore,
+} from "@/layout/dockStore";
+import { showSidebarView } from "@/lib/navActions";
+import { useWorkbenchStore } from "@/state/workbenchStore";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
@@ -61,7 +70,8 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(0);
   const [recents, setRecents] = useState<string[]>([]);
-  const [mode, setMode] = useState<PaletteMode>("commands");
+  // Go to file (Ctrl+P) opens straight into file mode.
+  const [mode, setMode] = useState<PaletteMode>(() => useAppStore.getState().paletteMode);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -122,12 +132,38 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       fn();
     };
     const cmds: Command[] = [
-      { id: "terminal.new", label: t("cmd.terminal.new", "Terminal: New terminal"), hint: "Ctrl+`", run: close(() => dock.addTerminal()) },
+      { id: "terminal.new", label: t("cmd.terminal.new", "Terminal: New terminal"), hint: "Ctrl+Shift+`", run: close(() => dock.addTerminal()) },
+      { id: "terminal.toggle", label: t("View: Show / hide terminal panel"), hint: "Ctrl+`", run: close(() => toggleTerminalPanel()) },
+      { id: "panel.toggle", label: t("View: Toggle terminal panel visibility"), hint: "Ctrl+J", run: close(() => toggleTerminalPanel("visibility")) },
+      { id: "sidebar.toggle", label: t("View: Toggle side bar"), hint: "Ctrl+B", run: close(() => useWorkbenchStore.getState().toggleSidebar()) },
+      { id: "group.maximize", label: t("View: Maximize / restore group"), hint: "Ctrl+Shift+M", run: close(() => toggleMaximizeGroup()) },
+      { id: "editor.split", label: t("View: Move tab to a new group on the right"), hint: "Ctrl+\\", run: close(() => splitActivePanel("right")) },
+      {
+        id: "file.quickOpen",
+        label: t("Go to file…"),
+        hint: "Ctrl+P",
+        // Reopen the palette in file mode (the close() wrapper would shut it).
+        run: () => {
+          setMode("files");
+          setQuery("");
+        },
+      },
+      {
+        id: "explorer.reveal",
+        label: t("Explorer: Reveal active file"),
+        run: close(() => {
+          const path = useWorkbenchStore.getState().activeFileByDock[dock.activeKey];
+          if (path) useWorkbenchStore.getState().revealInExplorer(path);
+          else appStore.toast(t("No file is open"), "info");
+        }),
+      },
       { id: "git.open", label: t("cmd.git.open", "Git: Open explorer"), hint: "Ctrl+Shift+G", run: close(() => dock.openPanel("git")) },
-      { id: "files.open", label: t("cmd.files.open", "Files: Open file explorer"), hint: "Ctrl+Shift+E", run: close(() => dock.openPanel("files")) },
+      { id: "files.open", label: t("cmd.files.open", "Files: Open file explorer"), hint: "Ctrl+Shift+E", run: close(() => showSidebarView("explorer")) },
+      { id: "files.openTab", label: t("Files: Open the explorer as a tab"), run: close(() => dock.openPanel("files")) },
+      { id: "search.openTab", label: t("Search: Open search as a tab"), run: close(() => dock.openPanel("search")) },
       { id: "project.add", label: t("Project: Add project folder…"), run: close(() => void projectsStore.addProject()) },
       { id: "project.addBlank", label: t("Project: New blank workspace"), run: close(() => void projectsStore.addBlank()) },
-      { id: "project.switcher", label: t("Project: Quick switcher…"), hint: "Ctrl+P", run: close(() => appStore.setSwitcherOpen(true)) },
+      { id: "project.switcher", label: t("Project: Quick switcher…"), hint: "Ctrl+R", run: close(() => appStore.setSwitcherOpen(true)) },
       { id: "settings.open", label: t("cmd.settings.open", "Settings: Open settings"), hint: "Ctrl+,", run: close(() => appStore.setSettingsOpen(true)) },
       {
         id: "appearance.toggleTheme",
@@ -203,7 +239,7 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
       { id: "tasks.open", label: t("cmd.tasks.open", "Tasks: Open kanban board"), run: close(() => dock.openPanel("tasks")) },
       { id: "skills.open", label: t("cmd.skills.open", "Skills: Open manager"), run: close(() => dock.openPanel("skills")) },
       { id: "activity.open", label: t("cmd.activity.open", "Activity: Open activity log"), run: close(() => dock.openPanel("activity")) },
-      { id: "search.open", label: t("cmd.search.open", "Search: Find in project…"), hint: "Ctrl+Shift+F", run: close(() => dock.openPanel("search")) },
+      { id: "search.open", label: t("cmd.search.open", "Search: Find in project…"), hint: "Ctrl+Shift+F", run: close(() => showSidebarView("search")) },
       {
         id: "file.saveAll",
         label: t("cmd.file.saveAll", "File: Save all files"),
@@ -359,6 +395,12 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
     // fallback for commands with no corresponding remappable action.
     const cmdToAction: Record<string, string> = {
       "terminal.new": "terminal.new",
+      "terminal.toggle": "terminal.toggle",
+      "panel.toggle": "panel.toggle",
+      "sidebar.toggle": "sidebar.toggle",
+      "group.maximize": "group.maximize",
+      "editor.split": "editor.split",
+      "file.quickOpen": "file.quickOpen",
       "git.open": "git.open",
       "files.open": "files.open",
       "project.switcher": "projects.switch",

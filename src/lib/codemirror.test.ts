@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  detectIndentUnit,
   getCodeMirror,
   languageExtensionForId,
 } from "./codemirror";
@@ -53,5 +54,18 @@ describe("getCodeMirror", () => {
     const a = await getCodeMirror();
     const b = await getCodeMirror();
     expect(a).toBe(b);
+  });
+});
+
+describe("detectIndentUnit", () => {
+  test("follows the file's own indentation", () => {
+    expect(detectIndentUnit("def f():\n    if x:\n        return 1\n    return 2\n")).toBe("    ");
+    expect(detectIndentUnit("{\n  \"a\": {\n    \"b\": 1\n  }\n}\n")).toBe("  ");
+    expect(detectIndentUnit("fn main() {\n\tlet x = 1;\n\tif x {\n\t\tx;\n\t}\n}\n")).toBe("\t");
+  });
+
+  test("defaults to two spaces when there is nothing to learn from", () => {
+    expect(detectIndentUnit("")).toBe("  ");
+    expect(detectIndentUnit("a\nb\nc")).toBe("  ");
   });
 });

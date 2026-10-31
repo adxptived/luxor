@@ -10,8 +10,20 @@ import { pushClosedTab, type ReopenInfo } from "@/lib/closedTabs";
 import { revealInEditor } from "@/lib/editorBus";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
-import { neighbourGroup, pickGroup, rememberedGroup, type PlacementKind } from "./placement";
+import { isPanelDirty } from "@/lib/dirtyGuard";
+import { useWorkbenchStore } from "@/state/workbenchStore";
+import { neighbourGroup, rememberedGroup } from "./placement";
 import { buildLayout, pickStartFile, type BuiltinLayoutId } from "./builtinLayouts";
+import {
+  decideTerminalToggle,
+  filePlacement,
+  groupRole,
+  previewToReplace,
+  terminalPlacement,
+  type GroupSnapshot,
+  type Placement,
+  type TerminalToggleMode,
+} from "./workbenchLogic";
 
 export type PanelKind =
   | "terminal"
@@ -79,7 +91,12 @@ interface DockStore {
     opts?: { forceNew?: boolean },
   ) => void;
   openDiff: (params: { repoPath: string; filePath: string; target: string; commitId?: string }) => void;
-  openFile: (path: string, opts?: { line?: number }) => void;
+  /**
+   * Open a file in the right viewer. `preview: true` (single click in the
+   * explorer) opens a preview tab that the next preview replaces — VS Code
+   * style — until it is edited, double-clicked or opened again normally.
+   */
+  openFile: (path: string, opts?: { line?: number; preview?: boolean }) => void;
 
   serialize: () => SerializedDockview | null;
   resetLayout: (cwd?: string | null) => void;
@@ -193,7 +210,12 @@ export const useDockStore = create<DockStore>((set, get) => ({
   addTerminal: (params = {}) => {
     const api = activeApi();
     if (!api) return;
-    addTerminalPanel(api, params, targetPosition(api, get().activeKey, "terminal"));
+    const placement = terminalPlacement(
+      groupSnapshots(api),
+      api.activeGroup?.id ?? null,
+      rememberedGroup(get().activeKey, "terminal"),
+    );
+    addTerminalPanel(api, params, ...placementOptions(api, placement, "terminal"));
   },
 
   splitWithTerminal: (direction, referencePanel) => {
@@ -260,21 +282,44 @@ export const useDockStore = create<DockStore>((set, get) => ({
     const existing = api.panels.find((p) => p.id === id);
     if (existing) {
       existing.api.setActive();
+      // Opening a previewed file "for real" keeps its tab.
+      if (!opts.preview && isPreviewPanel(existing)) existing.api.updateParameters({ preview: false });
       // Already open: jump to the requested line (e.g. a search hit).
       if (kind === "editor" && opts.line) revealInEditor(id, opts.line);
       return;
     }
-    const position = kind === "editor" || kind === "image" || kind === "db" || kind === "pdf" || kind === "html"
-      ? targetPosition(api, get().activeKey, "file")
-      : undefined;
+    const placement = filePlacement(
+      groupSnapshots(api),
+      api.activeGroup?.id ?? null,
+      rememberedGroup(get().activeKey, "file"),
+    );
+    let [position, initialHeight] = placementOptions(api, placement, "file");
+    // A preview replaces the clean preview tab of the target group, in place.
+    let replace: string | null = null;
+    if (opts.preview && placement.kind === "within") {
+      const group = api.groups.find((g) => g.id === placement.groupId);
+      const panels = group?.panels ?? [];
+      replace = previewToReplace(
+        panels.map((p) => ({ id: p.id, preview: isPreviewPanel(p), dirty: isPanelDirty(p.id) })),
+      );
+      if (replace && group) {
+        position = { referenceGroup: group.id, direction: "within", index: panels.findIndex((p) => p.id === replace) };
+        initialHeight = undefined;
+      }
+    }
+    const params: Record<string, unknown> = { path };
+    if (opts.line) params.gotoLine = opts.line;
+    if (opts.preview) params.preview = true;
     try {
       api.addPanel({
         id,
         component: kind,
         title: fileName(path),
-        params: opts.line ? { path, gotoLine: opts.line } : { path },
+        params,
         ...(position ? { position } : {}),
+        ...(initialHeight ? { initialHeight } : {}),
       });
+      if (replace) api.getPanel(replace)?.api.close();
     } catch (e) {
       // Dockview can throw while restoring/adding custom preview panels in some
       // stale layouts. Never make opening a file fatal: fall back to the editor.
@@ -413,6 +458,8 @@ export const useDockStore = create<DockStore>((set, get) => ({
       console.warn("builtin layout failed", e);
       useAppStore.getState().toast(t("layout.builtin.failed", "Could not build the layout"), "error");
     }
+    // The layouts arrange the editor area; the file tree is the side bar.
+    if (cwd) useWorkbenchStore.getState().setSidebarOpen(true);
   },
 
   deletePreset: async (id) => {
@@ -562,22 +609,198 @@ function activeApi(): DockviewApi | null {
   return apis[activeKey] ?? null;
 }
 
-/**
- * Where a new file / terminal should open: the group that already holds that
- * kind of panel (see `placement.ts`), or undefined to keep dockview's default
- * of "the active group".
- */
-function targetPosition(
-  api: DockviewApi,
-  dockKey: string,
-  wanted: PlacementKind,
-): AddPanelPositionOptions | undefined {
+/** The dockview of the active project (or the Welcome dock). */
+export function activeDockApi(): DockviewApi | null {
+  return activeApi();
+}
+
+/** Plain snapshot of the dock's groups for the pure workbench rules. */
+export function groupSnapshots(api: DockviewApi): GroupSnapshot[] {
   try {
-    const groups = api.groups.map((g) => ({ id: g.id, components: g.panels.map((p) => panelComponent(p)) }));
-    const id = pickGroup(groups, api.activeGroup?.id ?? null, wanted, rememberedGroup(dockKey, wanted));
-    return id ? { referenceGroup: id, direction: "within" } : undefined;
+    return api.groups.map((g) => ({
+      id: g.id,
+      components: g.panels.map((p) => panelComponent(p)),
+      visible: g.api.isVisible,
+      grid: g.api.location.type === "grid",
+    }));
   } catch {
-    return undefined;
+    return [];
+  }
+}
+
+/** True for a tab opened as a (replaceable) preview. */
+export function isPreviewPanel(panel: { params?: Record<string, unknown> } | undefined): boolean {
+  return Boolean(panel?.params && (panel.params as { preview?: unknown }).preview === true);
+}
+
+/**
+ * Translate a workbench placement into dockview add-panel options. A hidden
+ * target group (terminal panel toggled off) is shown first, and a maximized
+ * group is restored so the new tab is actually visible.
+ */
+function placementOptions(
+  api: DockviewApi,
+  placement: Placement,
+  wanted: "file" | "terminal",
+): [AddPanelPositionOptions | undefined, number | undefined] {
+  try {
+    if (placement.kind === "within") {
+      const group = api.groups.find((g) => g.id === placement.groupId);
+      if (!group) return [undefined, undefined];
+      if (placement.reveal || !group.api.isVisible) revealGroups(api, [group.id]);
+      return [{ referenceGroup: group.id, direction: "within" }, undefined];
+    }
+    if (api.hasMaximizedGroup()) api.exitMaximizedGroup();
+    if (placement.kind === "edge") {
+      // Bottom terminal panel: about a third of the dock, never a sliver.
+      const height = Math.max(160, Math.round(api.height * 0.32));
+      return [{ direction: placement.direction }, wanted === "terminal" ? height : undefined];
+    }
+    if (placement.kind === "split") {
+      const group = api.groups.find((g) => g.id === placement.groupId);
+      if (!group) return [undefined, undefined];
+      return [
+        { referenceGroup: group.id, direction: placement.direction },
+        Math.max(160, Math.round(group.api.height * 0.62)),
+      ];
+    }
+  } catch {
+    /* fall back to dockview's default placement */
+  }
+  return [undefined, undefined];
+}
+
+function revealGroups(api: DockviewApi, ids: string[]): void {
+  try {
+    if (api.hasMaximizedGroup()) api.exitMaximizedGroup();
+  } catch {
+    /* not maximized */
+  }
+  for (const id of ids) {
+    const group = api.groups.find((g) => g.id === id);
+    if (group && !group.api.isVisible) group.api.setVisible(true);
+  }
+}
+
+function focusGroup(api: DockviewApi, id: string): void {
+  const group = api.groups.find((g) => g.id === id);
+  if (!group) return;
+  try {
+    group.api.setActive();
+    (group.activePanel ?? group.panels[0])?.focus();
+  } catch {
+    /* group mid-teardown */
+  }
+}
+
+/**
+ * Ctrl+` — show, focus or hide the terminal panel (the groups that hold only
+ * terminals), creating a terminal at the bottom when there is none. `show`
+ * never hides (used by "focus terminal").
+ */
+export function toggleTerminalPanel(mode: TerminalToggleMode = "toggle"): void {
+  const api = activeApi();
+  if (!api) return;
+  const dockKey = useDockStore.getState().activeKey;
+  const groups = groupSnapshots(api);
+  const action = decideTerminalToggle(
+    groups,
+    api.activeGroup?.id ?? null,
+    rememberedGroup(dockKey, "terminal"),
+    rememberedGroup(dockKey, "file"),
+    mode,
+  );
+  try {
+    switch (action.kind) {
+      case "create":
+        useDockStore.getState().addTerminal();
+        return;
+      case "show":
+        revealGroups(api, action.groupIds);
+        focusGroup(api, action.focus);
+        return;
+      case "focus": {
+        const group = api.groups.find((g) => g.id === action.groupId);
+        // A maximized editor group hides the terminals without them being
+        // "hidden" — restore the grid so the focused terminal is on screen.
+        if (api.hasMaximizedGroup() && !group?.api.isMaximized()) api.exitMaximizedGroup();
+        focusGroup(api, action.groupId);
+        return;
+      }
+      case "hide":
+        if (api.hasMaximizedGroup()) api.exitMaximizedGroup();
+        for (const id of action.groupIds) api.groups.find((g) => g.id === id)?.api.setVisible(false);
+        focusGroup(api, action.focus);
+        return;
+    }
+  } catch (err) {
+    console.warn("toggle terminal panel failed", err);
+  }
+}
+
+/** Is the terminal panel of the active dock currently on screen? */
+export function terminalPanelState(api: DockviewApi | null): "none" | "hidden" | "visible" {
+  if (!api) return "none";
+  const terminals = groupSnapshots(api).filter((g) => g.grid && groupRole(g.components) === "terminal");
+  if (terminals.length === 0) return "none";
+  return terminals.some((g) => g.visible) ? "visible" : "hidden";
+}
+
+/** Maximize the active group, or restore the grid when one is maximized. */
+export function toggleMaximizeGroup(groupId?: string): void {
+  const api = activeApi();
+  if (!api) return;
+  try {
+    if (api.hasMaximizedGroup()) {
+      api.exitMaximizedGroup();
+      return;
+    }
+    const group = groupId ? api.groups.find((g) => g.id === groupId) : api.activeGroup;
+    const visibleGrid = api.groups.filter((g) => g.api.location.type === "grid" && g.api.isVisible);
+    if (!group || group.api.location.type !== "grid" || visibleGrid.length < 2) return;
+    group.api.maximize();
+  } catch (err) {
+    console.warn("maximize group failed", err);
+  }
+}
+
+/**
+ * Move the active tab into a new group beside its current one (Ctrl+\).
+ * Files can only be open once per dock, so splitting moves the tab; the group
+ * it leaves keeps its other tabs.
+ */
+export function splitActivePanel(direction: "right" | "below" = "right"): void {
+  const api = activeApi();
+  const panel = api?.activePanel;
+  if (!api || !panel) return;
+  try {
+    if (panel.group.panels.length < 2) {
+      // Nothing would be left behind: open a terminal next to it instead of
+      // moving the lone tab around.
+      addTerminalPanel(api, {}, { referencePanel: panel.id, direction });
+      return;
+    }
+    const group = api.addGroup({ referencePanel: panel, direction });
+    panel.api.moveTo({ group });
+    panel.api.setActive();
+  } catch (err) {
+    console.warn("split panel failed", err);
+  }
+}
+
+/**
+ * Never leave a dock showing nothing: when every remaining group is hidden
+ * (the user closed the editors while the terminal panel was toggled off),
+ * bring the hidden ones back.
+ */
+export function ensureVisibleContent(api: DockviewApi): void {
+  try {
+    const grid = api.groups.filter((g) => g.api.location.type === "grid");
+    if (grid.length > 0 && grid.every((g) => !g.api.isVisible)) {
+      for (const g of grid) g.api.setVisible(true);
+    }
+  } catch {
+    /* dock mid-teardown */
   }
 }
 
@@ -586,6 +809,7 @@ export function addTerminalPanel(
   api: DockviewApi,
   params: TerminalPanelParams = {},
   position?: AddPanelPositionOptions,
+  initialHeight?: number,
 ) {
   try {
     const id = nextId("terminal");
@@ -600,6 +824,7 @@ export function addTerminalPanel(
       title: t("panel.terminal", PANEL_TITLES.terminal),
       params,
       ...(position ? { position } : {}),
+      ...(initialHeight ? { initialHeight } : {}),
     });
   } catch (e) {
     console.warn("addTerminalPanel failed", e);
@@ -640,10 +865,23 @@ export function restoreDockLayout(
   cwd?: string | null,
   isBlank = false,
 ) {
+  void cwd;
   const raw = localStorage.getItem(layoutKey(dockKey));
   if (raw) {
     try {
       api.fromJSON(JSON.parse(raw) as SerializedDockview);
+      // The project's file tree now lives in the Explorer side bar. A layout
+      // still holding nothing but the old default "Files" tab (the only thing
+      // a fresh project used to get) would show the same tree twice — drop
+      // that tab once per project; one the user reopens later stays.
+      if (
+        api.panels.length === 1 &&
+        api.panels[0].id === "panel-files" &&
+        markWorkbenchMigrated(dockKey)
+      ) {
+        api.clear();
+        return;
+      }
       // A stored layout that parses but contains no panels would leave the
       // window looking empty/broken — fall through to the default instead.
       if (api.panels.length > 0) return;
@@ -653,6 +891,7 @@ export function restoreDockLayout(
     }
   }
   api.clear();
+  markWorkbenchMigrated(dockKey);
   if (dockKey === WELCOME_KEY || isBlank) {
     api.addPanel({
       id: "panel-welcome",
@@ -660,16 +899,26 @@ export function restoreDockLayout(
       title: isBlank && dockKey !== WELCOME_KEY ? "Blank workspace" : "Welcome",
       params: { blank: isBlank && dockKey !== WELCOME_KEY },
     });
-  } else {
-    // Keep the default workspace light. Opening a terminal pulls in the xterm
-    // runtime and spawns a shell; doing that during startup delays first usable
-    // paint even when the user only wants to browse files. The terminal remains
-    // one click away via the tab-strip + button, nav rail and hotkeys.
-    api.addPanel({
-      id: "panel-files",
-      component: "files",
-      title: t("panel.files", PANEL_TITLES.files),
-      params: { cwd: cwd ?? null },
-    });
+  }
+  // A project with a folder starts with an empty editor area: the Explorer
+  // side bar shows its files and the dock's empty state lists the shortcuts
+  // (Ctrl+P, Ctrl+`, …). No terminal is spawned at startup — that pulls in the
+  // xterm runtime and a shell before the user asked for one.
+}
+
+const WORKBENCH_MIGRATED_KEY = "luxor.workbench.migrated";
+
+/** Record that `dockKey` got the side-bar migration; true the first time only. */
+function markWorkbenchMigrated(dockKey: string): boolean {
+  try {
+    const raw = localStorage.getItem(WORKBENCH_MIGRATED_KEY);
+    const done = new Set<string>(raw ? (JSON.parse(raw) as string[]) : []);
+    if (done.has(dockKey)) return false;
+    done.add(dockKey);
+    // Bounded: keys of long-deleted projects are not worth keeping forever.
+    localStorage.setItem(WORKBENCH_MIGRATED_KEY, JSON.stringify([...done].slice(-500)));
+    return true;
+  } catch {
+    return false;
   }
 }

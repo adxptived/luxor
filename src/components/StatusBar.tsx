@@ -9,6 +9,8 @@ import {
   Cpu,
   GitBranch,
   MemoryStick,
+  PanelBottom,
+  PanelLeft,
   PanelRight,
   RotateCcw,
   SlidersHorizontal,
@@ -38,7 +40,10 @@ import {
 } from "@/lib/statusBarPrefs";
 import type { AgentInfo, RepoStatus, StatusBarConfig, SystemStats, Task } from "@/lib/types";
 import { errorMessage } from "@/lib/types";
-import { useDockStore } from "@/layout/dockStore";
+import { toggleTerminalPanel, useDockStore } from "@/layout/dockStore";
+import { useTerminalPanelState } from "@/layout/useTerminalPanelState";
+import { hintFor } from "@/lib/hotkeys";
+import { useWorkbenchStore } from "@/state/workbenchStore";
 import { useAppStore } from "@/state/appStore";
 import { fmtClock, useFocusRemaining, useFocusTimer } from "@/state/focusTimerStore";
 import { openContextMenu } from "@/state/uiStore";
@@ -67,6 +72,8 @@ function StatusBarImpl() {
   const project = useActiveProject();
   const config = useAppStore((s) => s.config);
   const saveConfig = useAppStore((s) => s.saveConfig);
+  const sidebarOpen = useWorkbenchStore((s) => s.sidebarOpen);
+  const terminalPanel = useTerminalPanelState();
   const sb = config?.status_bar;
   const openPanel = useDockStore((s) => s.openPanel);
   const [git, setGit] = useState<RepoStatus | null>(null);
@@ -552,6 +559,30 @@ Click: Git explorer · right-click: fetch / pull / push`}
         >
           v{APP_VERSION}
         </button>
+        {project && (
+          <>
+            <button
+              className={`shrink-0 rounded p-0.5 hover:bg-raised hover:text-strong ${sidebarOpen ? "text-strong" : "text-muted"}`}
+              title={`${t("Toggle side bar")} (${hintFor("sidebar.toggle", config)})`}
+              aria-label={t("Toggle side bar")}
+              aria-pressed={sidebarOpen}
+              data-testid="statusbar-toggle-sidebar"
+              onClick={() => useWorkbenchStore.getState().toggleSidebar()}
+            >
+              <PanelLeft size={13} />
+            </button>
+            <button
+              className={`shrink-0 rounded p-0.5 hover:bg-raised hover:text-strong ${terminalPanel === "visible" ? "text-strong" : "text-muted"}`}
+              title={`${t("Toggle terminal panel")} (${hintFor("panel.toggle", config)})`}
+              aria-label={t("Toggle terminal panel")}
+              aria-pressed={terminalPanel === "visible"}
+              data-testid="statusbar-toggle-panel"
+              onClick={() => toggleTerminalPanel("visibility")}
+            >
+              <PanelBottom size={13} />
+            </button>
+          </>
+        )}
         <button
           className={`shrink-0 rounded p-0.5 hover:bg-raised hover:text-strong ${
             config?.ui.right_panel_enabled ? "text-strong" : "text-muted"

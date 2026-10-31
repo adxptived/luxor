@@ -2745,7 +2745,7 @@ input, textarea, select {
 
 /* Chrome zones: darker base; anything "raised" inside them (active project
  * tab, hovered buttons, right-panel widgets) lifts toward the work colour. */
-:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"], .lx-workbench-sidebar) {
   --lx-bar: var(--lx-chrome);
   --color-bar: var(--lx-chrome);
   --lx-glass-bg: var(--lx-chrome);
@@ -2758,8 +2758,15 @@ input, textarea, select {
   background-color: var(--lx-chrome);
 }
 /* Zone boundaries are drawn by the brightness step, not by lines. */
-:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+:root:not([data-surfaces="flat"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"], .lx-workbench-sidebar) {
   border-color: transparent;
+}
+/* The Explorer side bar is chrome all the way down: its tree sits on the
+ * chrome tone (like an IDE side bar), so the editor area stays the one
+ * lighter "sheet". */
+:root:not([data-surfaces="flat"]) .lx-workbench-sidebar {
+  --lx-surface: var(--lx-chrome);
+  --color-surface: var(--lx-chrome);
 }
 :root:not([data-surfaces="flat"]) body,
 :root:not([data-surfaces="flat"]) #root > div {
@@ -2804,7 +2811,7 @@ input, textarea, select {
 :root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) {
   --lx-hairline: color-mix(in srgb, var(--lx-edge) 75%, transparent);
 }
-:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"]) {
+:root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) :is(.lx-titlebar, [data-testid="topbar"], .lx-nav-rail, [data-testid="statusbar"], [data-testid="side-panel"], [data-testid="right-panel"], .lx-workbench-sidebar) {
   border-color: var(--lx-hairline);
 }
 :root:not([data-surfaces="flat"]):is([data-theme="light"], [data-theme="catppuccin_latte"], [data-theme="solarized_light"], [data-theme="github_light"]) :is(.dockview-theme-dark, .dockview-theme-light) {
@@ -2886,4 +2893,43 @@ input, textarea, select {
   width: 2px;
   border-radius: 0 2px 2px 0;
   background: var(--lx-accent);
+}
+
+
+/* ── Workbench (Explorer side bar, tree, resize) ─────────────────────────── */
+
+/* Indent guides in the file tree: hairlines aligned with the folder chevrons,
+ * a little stronger while the pointer is over the tree. */
+.lx-tree-guide {
+  background: color-mix(in srgb, var(--lx-edge) 55%, transparent);
+  transition: background-color var(--lx-dur-fast) ease;
+}
+[role="tree"]:hover .lx-tree-guide {
+  background: color-mix(in srgb, var(--lx-muted) 32%, transparent);
+}
+
+/* Side-bar resize handle: invisible until hovered/dragged, then an accent
+ * hairline on the boundary. */
+.lx-sidebar-resize::after {
+  content: "";
+  position: absolute;
+  inset: 0 2px;
+  border-radius: 1px;
+  background: transparent;
+  transition: background-color var(--lx-dur-fast) ease;
+}
+.lx-sidebar-resize:hover::after,
+body.lx-col-resizing .lx-sidebar-resize::after {
+  background: color-mix(in srgb, var(--lx-accent) 70%, transparent);
+}
+/* While dragging: one cursor everywhere, and iframes / terminals must not
+ * swallow the pointer (the drag would stall over them). */
+body.lx-col-resizing,
+body.lx-col-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+body.lx-col-resizing iframe,
+body.lx-col-resizing .xterm {
+  pointer-events: none;
 }

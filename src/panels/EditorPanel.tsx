@@ -19,6 +19,10 @@ import { errorMessage } from "@/lib/types";
 import { cursorLabel, langLabel, selectionLabel } from "@/lib/editorStatus";
 import { EDITOR_LANGUAGE_OPTIONS, detectLanguage, languageForPath, languageLabel } from "@/lib/editorLanguage";
 import { fileName, useDockStore } from "@/layout/dockStore";
+import { useDockKey } from "@/layout/DockKeyContext";
+import { useProjectsStore } from "@/state/projectsStore";
+import { useWorkbenchStore } from "@/state/workbenchStore";
+import { breadcrumbs } from "@/lib/breadcrumbs";
 import { CODEMIRROR_THEMES } from "@/lib/codemirrorThemeMeta";
 import type { MountedEditor } from "@/lib/codemirror";
 import { isLightTheme } from "@/lib/themes";
@@ -103,9 +107,11 @@ type FileEditorSurfaceProps = {
   embedded?: boolean;
   setPanelTitle?: (title: string) => void;
   onDirtyChange?: (dirty: boolean) => void;
+  /** Called on the first edit: a preview tab becomes a normal one. */
+  onFirstEdit?: () => void;
 };
 
-export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, setPanelTitle, onDirtyChange }: FileEditorSurfaceProps) {
+export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, setPanelTitle, onDirtyChange, onFirstEdit }: FileEditorSurfaceProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<MountedEditor | null>(null);
   const visibilityObsRef = useRef<IntersectionObserver | null>(null);
@@ -128,6 +134,12 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
   const [editorLoading, setEditorLoading] = useState(true);
   const contentRef = useRef("");
   const manualSaveRef = useRef<() => Promise<void>>(async () => {});
+  // Latest callbacks for the long-lived CodeMirror listeners (mounted once per path).
+  const firstEditRef = useRef(onFirstEdit);
+  firstEditRef.current = onFirstEdit;
+  const dockKey = useDockKey();
+  const project = useProjectsStore((s) => s.projects.find((p) => p.id === (dockKey || s.activeId)) ?? null);
+  const crumbs = breadcrumbs(path, project?.path || null, project?.name ?? null);
   const [cursor, setCursor] = useState({ line: 1, col: 1 });
   const [sel, setSel] = useState({ chars: 0, ranges: 0 });
   const [lang, setLang] = useState(() => languageForPath(path));
@@ -309,17 +321,23 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
     setDirtyState(dirty);
     setPanelTitle?.(dirty ? `● ${fileName(path)}` : fileName(path));
     onDirtyChange?.(dirty);
-    // Trigger autosave when the file becomes dirty (debounced 2s).
-    if (dirty) {
+    if (dirty) firstEditRef.current?.();
+    // Autosave (Settings → Editor → "Editor autosave"): about a second after
+    // the edit. Read the setting at edit time so toggling it applies to open
+    // editors immediately. It used to run unconditionally, ignoring the switch.
+    if (dirty && useAppStore.getState().config?.ui.editor_autosave) {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
       autosaveTimerRef.current = setTimeout(() => {
+        autosaveTimerRef.current = null;
+        if (!dirtyRef.current || !useAppStore.getState().config?.ui.editor_autosave) return;
+        setAutosaveStatus("saving");
         void saveRef.current().then(() => {
           setAutosaveStatus("saved");
           setLastSaved(Date.now());
           setTimeout(() => setAutosaveStatus("idle"), 2000);
         });
-      }, 2000);
-    } else {
+      }, 1000);
+    } else if (!dirty) {
       if (autosaveTimerRef.current) {
         clearTimeout(autosaveTimerRef.current);
         autosaveTimerRef.current = null;
@@ -779,31 +797,25 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         </div>
       )}
       <div className="lx-editor-toolbar flex items-center gap-1 border-b border-edge/50 bg-surface px-2.5 py-1.5 text-xs text-muted">
-        {/* Breadcrumbs */}
-        <div className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden">
-          {path.split("/").filter(Boolean).map((seg, i, arr) => (
-            <span key={i} className="flex min-w-0 items-center gap-0.5">
-              {i > 0 && <ChevronRight size={10} className="shrink-0 text-muted/50" />}
-              <span
-                className={`truncate ${i === arr.length - 1 ? "font-medium text-strong" : "text-muted hover:text-strong cursor-pointer"}`}
-                title={seg}
-                onClick={() => {
-                  // Navigate to parent directory segments (best-effort)
-                  if (i < arr.length - 1) {
-                    const dirPath = arr.slice(0, i + 1).join("/");
-                    void import("@/lib/ipc").then(({ isTauri }) => {
-                      if (isTauri) {
-                        void import("@tauri-apps/plugin-opener").then(({ openPath }) => openPath(dirPath));
-                      }
-                    });
-                  }
-                }}
-              >
-                {seg}
+        {/* Breadcrumbs: project-relative; a click reveals the folder/file in the Explorer. */}
+        <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden" aria-label={t("Breadcrumbs")} data-testid="editor-breadcrumbs">
+          {crumbs.map((crumb, i) => {
+            const last = i === crumbs.length - 1;
+            return (
+              <span key={crumb.path} className={`flex items-center gap-0.5 ${last ? "min-w-0" : "min-w-0 shrink"}`}>
+                {i > 0 && <ChevronRight size={10} className="shrink-0 text-muted/50" />}
+                <button
+                  type="button"
+                  className={`truncate rounded px-0.5 ${last ? "font-medium text-strong" : "text-muted hover:text-strong"} hover:bg-raised/70`}
+                  title={`${crumb.path}\n${t("Reveal in Explorer")}`}
+                  onClick={() => useWorkbenchStore.getState().revealInExplorer(crumb.path)}
+                >
+                  {crumb.label}
+                </button>
               </span>
-            </span>
-          ))}
-        </div>
+            );
+          })}
+        </nav>
         {/* Autosave indicator */}
         {!preview && !truncated && autosaveStatus !== "idle" && (
           <span className="shrink-0 text-3xs text-muted/70" data-testid="autosave-indicator">
@@ -1006,13 +1018,18 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
 }
 
 export function EditorPanel(props: IDockviewPanelProps) {
-  const params = props.params as { path: string; gotoLine?: number };
+  const params = props.params as { path: string; gotoLine?: number; preview?: boolean };
   return (
     <FileEditorSurface
       path={params.path}
       gotoLine={params.gotoLine}
       panelId={props.api.id}
       setPanelTitle={(title) => props.api.setTitle(title)}
+      // Editing a preview tab keeps it (it is no longer replaced by the next
+      // file opened with a single click).
+      onFirstEdit={() => {
+        if ((props.params as { preview?: boolean } | undefined)?.preview) props.api.updateParameters({ preview: false });
+      }}
     />
   );
 }

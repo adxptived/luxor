@@ -11,6 +11,7 @@ import { pruneTerminalStates } from "@/lib/terminalState";
 import { Overlays } from "@/components/Overlays";
 import { RightPanel } from "@/components/RightPanel";
 import { SidePanel } from "@/components/SidePanel";
+import { ExplorerSidebar } from "@/components/ExplorerSidebar";
 
 // Heavy, on-demand overlays (Settings is ~80 KB of source on its own). They
 // render nothing until opened, so keeping them out of the entry chunk shrinks
@@ -30,7 +31,17 @@ import { TopBar } from "@/components/TopBar";
 import { WindowChrome } from "@/components/WindowChrome";
 import { QuickActions } from "@/components/QuickActions";
 import { DockLayout } from "@/layout/DockLayout";
-import { cycleTab, focusNeighbourGroup, moveTabToNeighbourGroup, useDockStore } from "@/layout/dockStore";
+import {
+  cycleTab,
+  focusNeighbourGroup,
+  moveTabToNeighbourGroup,
+  splitActivePanel,
+  toggleMaximizeGroup,
+  toggleTerminalPanel,
+  useDockStore,
+} from "@/layout/dockStore";
+import { showSidebarView } from "@/lib/navActions";
+import { useWorkbenchStore } from "@/state/workbenchStore";
 import * as ipc from "@/lib/ipc";
 import { frontendLog } from "@/lib/ipc";
 import { schedulePoll } from "@/lib/poll";
@@ -468,12 +479,17 @@ export default function App() {
         e.preventDefault();
         fn();
       };
+      // One chord derivation + one map lookup, instead of ~15 sequential
+      // `matchChord` calls per keystroke (this handler sees every key pressed
+      // anywhere in the app, including typing in the editor and terminal).
+      const action = actionForEvent(e, useAppStore.getState().config);
       // Swallow the webview's full-page reload shortcuts (F5 / Ctrl+R /
       // Ctrl+Shift+R): in a desktop app a hard reload throws away terminals,
-      // layout and unsaved state. Nothing should reload the window.
+      // layout and unsaved state. Nothing should reload the window — a chord
+      // bound to an app action (Ctrl+R = switch project) still runs below.
       if (
-        e.code === "F5" ||
-        ((e.ctrlKey || e.metaKey) && (e.code === "KeyR" || e.code === "F5"))
+        !action &&
+        (e.code === "F5" || ((e.ctrlKey || e.metaKey) && (e.code === "KeyR" || e.code === "F5")))
       ) {
         e.preventDefault();
         return;
@@ -496,16 +512,17 @@ export default function App() {
         if (!e.repeat) useProjectsStore.getState().cycleActive(e.shiftKey ? -1 : 1);
         return;
       }
-      // One chord derivation + one map lookup, instead of ~15 sequential
-      // `matchChord` calls per keystroke (this handler sees every key pressed
-      // anywhere in the app, including typing in the editor and terminal).
-      const action = actionForEvent(e, useAppStore.getState().config);
-
       // Actions that must not auto-repeat while the key is held: each of these
       // toggles or spawns something, so a held key would fire it dozens of times.
       const NO_REPEAT = new Set([
         "projects.switch",
         "terminal.new",
+        "terminal.toggle",
+        "panel.toggle",
+        "sidebar.toggle",
+        "file.quickOpen",
+        "editor.split",
+        "group.maximize",
         "project.open",
         "file.saveAll",
         "tab.reopen",
@@ -520,18 +537,30 @@ export default function App() {
           return fire(() => app.setPaletteOpen(!app.paletteOpen));
         case "projects.switch":
           return fire(() => app.setSwitcherOpen(!app.switcherOpen));
+        case "file.quickOpen":
+          return fire(() => (app.paletteOpen ? app.setPaletteOpen(false) : app.openPalette("files")));
         case "terminal.new":
           return fire(() => dock.addTerminal());
+        case "terminal.toggle":
+          return fire(() => toggleTerminalPanel());
+        case "panel.toggle":
+          return fire(() => toggleTerminalPanel("visibility"));
+        case "sidebar.toggle":
+          return fire(() => useWorkbenchStore.getState().toggleSidebar());
+        case "editor.split":
+          return fire(() => splitActivePanel("right"));
+        case "group.maximize":
+          return fire(() => toggleMaximizeGroup());
         case "project.open":
           return fire(() => void useProjectsStore.getState().addProject());
         case "git.open":
           return fire(() => dock.openPanel("git"));
         case "files.open":
-          return fire(() => dock.openPanel("files"));
+          return fire(() => showSidebarView("explorer"));
         case "settings.open":
           return fire(() => app.setSettingsOpen(true));
         case "search.open":
-          return fire(() => dock.openPanel("search"));
+          return fire(() => showSidebarView("search"));
         case "file.saveAll":
           return fire(() =>
             void saveAllEditors().then((n) =>
@@ -658,7 +687,9 @@ export default function App() {
         { label: t("Split right (new terminal)"), onClick: () => dock.splitWithTerminal("right") },
         { label: t("Split down (new terminal)"), onClick: () => dock.splitWithTerminal("below") },
         { separator: true },
-        { label: t("File explorer panel"), hint: hintFor("files.open", cfg), onClick: () => dock.openPanel("files") },
+        { label: t("Explorer side bar"), hint: hintFor("sidebar.toggle", cfg), onClick: () => useWorkbenchStore.getState().toggleSidebar("explorer") },
+        { label: t("Show / hide terminal panel"), hint: hintFor("terminal.toggle", cfg), onClick: () => toggleTerminalPanel() },
+        { label: t("Go to file…"), hint: hintFor("file.quickOpen", cfg), onClick: () => app.openPalette("files") },
         {
           label: t("Open file / database…"),
           onClick: () => void ipc.pickFile().then((path) => path && dock.openFile(path)),
@@ -699,6 +730,7 @@ export default function App() {
             </div>
           )}
           {!sideTabs && <NavRail />}
+          {!zenMode && <ExplorerSidebar />}
           {/* In side-tab mode the vertical TopBar already *is* the left sidebar,
               so the optional widget side panel would be a confusing second left
               panel — show it only in top-tab mode.

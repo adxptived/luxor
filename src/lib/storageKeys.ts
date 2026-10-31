@@ -61,6 +61,8 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.browserMode", version: 1, description: "Browser panel mode preference" },
   { key: "luxor.browserSession", version: 1, description: "Browser panel last URL and history (survives panel re-mounts)" },
   { key: "luxor.statusBarAlign", version: 1, description: "Status bar alignment preference" },
+  { key: "luxor.workbench.v1", version: 1, description: "Workbench side bar: open, active view (explorer/search) and width" },
+  { key: "luxor.workbench.migrated", version: 1, description: "Dock keys whose old default 'Files' tab was dropped for the Explorer side bar (JSON array)" },
 
   // Analytics / telemetry
   { key: "luxor.discord.settings", version: 1, description: "LEGACY (read once to migrate mask_projects into luxor.telemetry.prefs)" },

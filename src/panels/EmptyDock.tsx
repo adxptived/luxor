@@ -1,7 +1,8 @@
-import { FolderGit2, FolderPlus, FolderTree, LayoutGrid, Plus, SquareTerminal } from "lucide-react";
+import { FileSearch, FolderGit2, FolderPlus, FolderTree, LayoutGrid, Plus, SquareTerminal } from "lucide-react";
 
 import { t } from "@/lib/i18n";
-import { hintFor } from "@/lib/hotkeys";
+import { formatChord, hintFor } from "@/lib/hotkeys";
+import { showSidebarView } from "@/lib/navActions";
 import { PLUS_MENU_PANELS } from "@/lib/plusMenu";
 import { BUILTIN_LAYOUTS } from "@/layout/builtinLayouts";
 import { useDockStore } from "@/layout/dockStore";
@@ -46,6 +47,24 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
     openContextMenu(e, items);
   };
 
+  const config = useAppStore.getState().config;
+  const projectName = useProjectsStore((s) => s.projects.find((x) => x.id === dockKey)?.name ?? null);
+  // The editor area's "watermark": what you can do from here, with the live
+  // (possibly remapped) chords — the way IDEs teach their shortcuts.
+  const shortcuts: Array<{ label: string; action: string }> = hasFolder
+    ? [
+        { label: t("Go to file"), action: "file.quickOpen" },
+        { label: t("Show / hide terminal panel"), action: "terminal.toggle" },
+        { label: t("Toggle side bar"), action: "sidebar.toggle" },
+        { label: t("Search in project"), action: "search.open" },
+        { label: t("Command palette"), action: "palette" },
+      ]
+    : [
+        { label: t("New terminal"), action: "terminal.new" },
+        { label: t("Command palette"), action: "palette" },
+        { label: t("Switch project"), action: "projects.switch" },
+      ];
+
   return (
     <div
       className="flex h-full w-full items-center justify-center overflow-auto bg-surface px-4 py-8"
@@ -56,15 +75,43 @@ export function EmptyDock({ dockKey }: { dockKey: string }) {
           <div className="lx-empty-icon flex h-11 w-11 items-center justify-center rounded-lg bg-accent/10 text-accent" aria-hidden>
             <LayoutGrid size={20} />
           </div>
-          <div className="mt-3 text-sm font-medium text-strong">{t("Nothing open")}</div>
+          <div className="mt-3 text-sm font-medium text-strong">
+            {hasFolder && projectName ? projectName : t("Nothing open")}
+          </div>
           <p className="mt-1 max-w-sm text-xs leading-5 text-muted text-pretty">
-            {t("Every tab in this workspace is closed. Reopen the essentials or choose any panel from the menu.")}
+            {hasFolder
+              ? t("Open a file from the Explorer, jump to one with Go to file, or start a terminal.")
+              : t("Every tab in this workspace is closed. Reopen the essentials or choose any panel from the menu.")}
           </p>
         </div>
 
+        <dl className="mx-auto mt-5 grid max-w-sm grid-cols-[1fr_auto] gap-x-6 gap-y-1.5 text-xs" data-testid="empty-dock-shortcuts">
+          {shortcuts.map((s) => {
+            const chord = hintFor(s.action, config);
+            if (!chord) return null;
+            return (
+              <div key={s.action} className="contents">
+                <dt className="text-muted">{s.label}</dt>
+                <dd className="text-right">
+                  <kbd className="rounded-sm border border-edge bg-raised px-1.5 py-0.5 font-mono text-3xs text-strong">{chord}</kbd>
+                </dd>
+              </div>
+            );
+          })}
+        </dl>
+
         <div className="mt-6 grid grid-cols-1 gap-1.5 sm:grid-cols-3">
-          <EmptyAction icon={SquareTerminal} label={t("New terminal")} hint={hintFor("terminal.new", useAppStore.getState().config) || "Ctrl+`"} primary onClick={() => addTerminal()} />
-          <EmptyAction icon={FolderTree} label={t("Files")} hint={t("Browse project")} onClick={() => openPanel("files")} />
+          <EmptyAction icon={SquareTerminal} label={t("New terminal")} hint={hintFor("terminal.new", config) || formatChord("Ctrl+Shift+`")} primary onClick={() => addTerminal()} />
+          {hasFolder ? (
+            <EmptyAction
+              icon={FileSearch}
+              label={t("Go to file")}
+              hint={hintFor("file.quickOpen", config) || t("Find a file by name")}
+              onClick={() => useAppStore.getState().openPalette("files")}
+            />
+          ) : (
+            <EmptyAction icon={FolderTree} label={t("Files")} hint={t("Browse project")} onClick={() => showSidebarView("explorer")} />
+          )}
           {hasFolder ? (
             <EmptyAction icon={FolderGit2} label={t("Git")} hint={t("Changes & history")} onClick={() => openPanel("git")} />
           ) : (

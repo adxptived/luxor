@@ -10,13 +10,21 @@ export interface HotkeyAction {
 
 export const HOTKEY_ACTIONS: HotkeyAction[] = [
   { id: "palette", label: "Command palette", default: "Ctrl+Shift+P" },
-  { id: "projects.switch", label: "Switch project", default: "Ctrl+P" },
+  // VS Code muscle memory: Ctrl+P finds a file, Ctrl+R switches the
+  // "recent workspace" (here: project tab).
+  { id: "file.quickOpen", label: "Go to file", default: "Ctrl+P" },
+  { id: "projects.switch", label: "Switch project", default: "Ctrl+R" },
   { id: "project.open", label: "Open project folder", default: "Ctrl+O" },
-  { id: "terminal.new", label: "New terminal", default: "Ctrl+`" },
+  { id: "terminal.toggle", label: "Show / hide terminal panel", default: "Ctrl+`" },
+  { id: "terminal.new", label: "New terminal", default: "Ctrl+Shift+`" },
+  { id: "panel.toggle", label: "Toggle terminal panel visibility", default: "Ctrl+J" },
+  { id: "sidebar.toggle", label: "Toggle side bar", default: "Ctrl+B" },
   { id: "git.open", label: "Git explorer", default: "Ctrl+Shift+G" },
   { id: "files.open", label: "File explorer", default: "Ctrl+Shift+E" },
   { id: "settings.open", label: "Settings", default: "Ctrl+," },
   { id: "search.open", label: "Search in project", default: "Ctrl+Shift+F" },
+  { id: "editor.split", label: "Split: move tab to a new group on the right", default: "Ctrl+\\" },
+  { id: "group.maximize", label: "Maximize / restore group", default: "Ctrl+Shift+M" },
   { id: "zen.toggle", label: "Toggle zen mode", default: "Ctrl+Shift+Z" },
   { id: "tab.next", label: "Next tab", default: "Ctrl+PageDown" },
   { id: "tab.prev", label: "Previous tab", default: "Ctrl+PageUp" },
@@ -202,6 +210,26 @@ export function formatChord(chord: string, isMac: boolean = IS_MAC): string {
     return [...mods.map((m) => MAC_SYMBOLS[m] ?? m), prettyKey].join("");
   }
   return [...mods, prettyKey].join("+");
+}
+
+/**
+ * Should a key event pressed inside a terminal go to the app instead of the
+ * shell? App chords with Shift/Alt (Ctrl+Shift+P, Ctrl+Alt+PageDown, …),
+ * Ctrl+` and the tab/group chords are taken by the app (VS Code's
+ * "commands to skip shell"); a plain Ctrl+letter chord (Ctrl+P, Ctrl+B,
+ * Ctrl+W, Ctrl+R, Ctrl+J, …) stays with the shell, where readline, tmux and
+ * TUIs use it. Pure for unit tests.
+ */
+export function chordSkipsShell(chord: string | null, action: string | undefined): boolean {
+  if (!chord || !action) return false;
+  if (action === "tab.close") return false;
+  const parts = normalizeChord(chord).split("+");
+  const key = parts[parts.length - 1];
+  const mods = new Set(parts.slice(0, -1));
+  if (mods.has("Shift") || mods.has("Alt")) return true;
+  // Plain Ctrl + letter/digit belongs to the shell.
+  if (/^[A-Z0-9]$/.test(key)) return false;
+  return true;
 }
 
 /** Display hint for a remappable action id, reading current overrides from

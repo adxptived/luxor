@@ -54,6 +54,8 @@ interface AppStore {
   zenMode: boolean;
   toggleZen: () => void;
   paletteOpen: boolean;
+  /** Mode the palette opens in next time ("files" = Go to file, Ctrl+P). */
+  paletteMode: "commands" | "files";
   settingsOpen: boolean;
   /** Section the settings modal should open at (deep link). */
   settingsSection: string | null;
@@ -68,6 +70,8 @@ interface AppStore {
   /** Re-arm auto-dismiss timers after the pointer leaves the stack. */
   resumeToasts: () => void;
   setPaletteOpen: (open: boolean) => void;
+  /** Open the palette in a given mode (Go to file opens it on "files"). */
+  openPalette: (mode: "commands" | "files") => void;
   setSettingsOpen: (open: boolean, section?: string) => void;
   setSwitcherOpen: (open: boolean) => void;
   /** Apply + persist (debounced) a new zoom factor. */
@@ -99,6 +103,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
   paletteOpen: false,
+  paletteMode: "commands",
   settingsOpen: false,
   settingsSection: null,
   switcherOpen: false,
@@ -223,7 +228,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+  setPaletteOpen: (paletteOpen) => set(paletteOpen ? { paletteOpen } : { paletteOpen, paletteMode: "commands" }),
+  openPalette: (mode) => set({ paletteOpen: true, paletteMode: mode }),
   setSettingsOpen: (settingsOpen, section) =>
     set({ settingsOpen, settingsSection: settingsOpen ? (section ?? null) : null }),
   setSwitcherOpen: (switcherOpen) => set({ switcherOpen }),

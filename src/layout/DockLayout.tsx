@@ -9,9 +9,14 @@ import {
 } from "dockview";
 import {
   BarChart3,
+  ChevronDown,
   Copy,
   ExternalLink,
+  LocateFixed,
+  Maximize2,
+  Minimize2,
   Pencil,
+  Pin,
   Plus,
   SquareSplitHorizontal,
   SquareSplitVertical,
@@ -70,9 +75,22 @@ const TAB_ICONS: Record<string, LucideIcon> = {
 function tabIcon(component: string | undefined): LucideIcon {
   return (component && TAB_ICONS[component]) || FileText;
 }
+
+const FILE_TAB_COMPONENTS = new Set(["editor", "image", "pdf", "db", "html"]);
+
+/** File path shown by a document tab, or null for terminals / tool panels. */
+function filePathOf(panel: { params?: Record<string, unknown>; view?: unknown } | null | undefined): string | null {
+  if (!panel) return null;
+  const component = panelComponent(panel);
+  const path = (panel.params as { path?: unknown } | undefined)?.path;
+  return component && FILE_TAB_COMPONENTS.has(component) && typeof path === "string" ? path : null;
+}
 import React, { useEffect, useRef, useState } from "react";
 
 import { isLightTheme } from "@/lib/themes";
+import { hintFor } from "@/lib/hotkeys";
+import * as ipc from "@/lib/ipc";
+import type { DetectedProgram } from "@/lib/types";
 import { useAppStore } from "@/state/appStore";
 import { openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
@@ -212,11 +230,17 @@ import {
   closePanelGuarded,
   closePanelsGuarded,
   dropDockLayout,
+  ensureVisibleContent,
+  isPreviewPanel,
   panelComponent,
   restoreDockLayout,
   saveDockLayout,
+  toggleMaximizeGroup,
+  toggleTerminalPanel,
   useDockStore,
 } from "./dockStore";
+import { groupRole } from "./workbenchLogic";
+import { useWorkbenchStore } from "@/state/workbenchStore";
 import { deleteTerminalState, terminalStateId } from "@/lib/terminalState";
 import { DockKeyContext } from "./DockKeyContext";
 import { forgetDock, rememberGroup } from "./placement";
@@ -275,6 +299,10 @@ function DockTab(props: IDockviewPanelHeaderProps) {
 
   const filePath = (props.params as { path?: unknown } | undefined)?.path;
   const tabFile = typeof filePath === "string" && /^(editor|image|pdf|db|html)$/.test(props.api.component) ? filePath : null;
+  // A preview tab (single click in the explorer) is replaced by the next
+  // preview; editing, double-clicking the tab or "Keep open" pins it.
+  const preview = isPreviewPanel({ params: props.params as Record<string, unknown> | undefined });
+  const pin = () => props.api.updateParameters({ preview: false });
 
   const moveToSplit = (direction: "right" | "below") => {
     try {
@@ -303,8 +331,14 @@ function DockTab(props: IDockviewPanelHeaderProps) {
       },
       { label: t("Move panel to split right"), icon: SquareSplitHorizontal, onClick: () => moveToSplit("right") },
       { label: t("Move panel to split down"), icon: SquareSplitVertical, onClick: () => moveToSplit("below") },
+      ...(preview ? [{ label: t("Keep open"), icon: Pin, hint: t("double-click"), onClick: pin }] : []),
       ...(tabFile
         ? [
+            {
+              label: t("Reveal in Explorer"),
+              icon: LocateFixed,
+              onClick: () => useWorkbenchStore.getState().revealInExplorer(tabFile),
+            },
             {
               label: t("Copy path"),
               icon: Copy,
@@ -344,7 +378,11 @@ function DockTab(props: IDockviewPanelHeaderProps) {
             .getState()
             .prompt({ title: t("Tab title"), initial: props.api.title ?? "" })
             .then((name) => {
-              if (name?.trim()) props.api.setTitle(name.trim());
+              if (!name?.trim()) return;
+              props.api.setTitle(name.trim());
+              // Terminals retitle themselves from the shell; a name the user
+              // chose wins over that.
+              props.api.updateParameters({ customTitle: true });
             });
         },
       },
@@ -402,11 +440,15 @@ function DockTab(props: IDockviewPanelHeaderProps) {
   return (
     <div
       className="flex h-full w-full items-center gap-2 px-2.5 text-xs"
+      data-preview={preview || undefined}
       onMouseDown={(e) => {
         if (e.button === 1) {
           e.preventDefault();
           close();
         }
+      }}
+      onDoubleClick={() => {
+        if (preview) pin();
       }}
       onContextMenu={onContextMenu}
     >
@@ -415,7 +457,12 @@ function DockTab(props: IDockviewPanelHeaderProps) {
       ) : (
         <Icon size={13} className="shrink-0 opacity-60 transition-opacity [.dv-active-tab_&]:opacity-95" />
       )}
-      <span className="min-w-0 flex-1 truncate [.dv-active-tab_&]:font-medium">{title}</span>
+      <span
+        className={`min-w-0 flex-1 truncate [.dv-active-tab_&]:font-medium ${preview ? "italic" : ""}`}
+        title={preview ? t("Preview — opening another file replaces this tab. Double-click to keep it open.") : undefined}
+      >
+        {title}
+      </span>
       {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot.cls}`} title={dot.label} aria-label={dot.label} />}
       <button
         className="shrink-0 rounded-full p-1 opacity-55 transition-[opacity,background-color] hover:bg-edge hover:opacity-100 [.dv-active-tab_&]:opacity-75 [.dv-active-tab_&]:hover:opacity-100"
@@ -433,6 +480,23 @@ function DockTab(props: IDockviewPanelHeaderProps) {
   );
 }
 
+/** Shells found on this machine (first entry = the system default). Fetched
+ *  once, in the background, the first time a dock mounts. */
+let detectedShells: DetectedProgram[] = [];
+let shellsRequested = false;
+function prefetchShells(): void {
+  if (shellsRequested) return;
+  shellsRequested = true;
+  void ipc.ptyDetectShells().then(
+    (list) => {
+      detectedShells = list;
+    },
+    () => {
+      detectedShells = [];
+    },
+  );
+}
+
 /** Menu listing every panel kind — used by the tab-strip "+" button (RMB)
  *  and by right-clicking the empty area of a tab strip. */
 function panelsMenuItems(
@@ -441,17 +505,21 @@ function panelsMenuItems(
 ): MenuItem[] {
   const ui = useAppStore.getState().config?.ui;
   const hidden = new Set(ui?.plus_menu_hidden ?? []);
+  const where = groupId ? { referenceGroup: groupId, direction: "within" as const } : undefined;
   const items: MenuItem[] = [
     {
       label: t("cmd.terminal.short", "New terminal"),
       icon: TerminalSquare,
-      onClick: () =>
-        addTerminalPanel(
-          containerApi,
-          {},
-          groupId ? { referenceGroup: groupId, direction: "within" } : undefined,
-        ),
+      hint: hintFor("terminal.new", useAppStore.getState().config),
+      onClick: () => addTerminalPanel(containerApi, {}, where),
     },
+    // Other shells installed here (PowerShell 7, Git Bash, WSL, zsh, …).
+    ...detectedShells.slice(1).map((sh) => ({
+      label: sh.label,
+      hint: t("shell"),
+      icon: TerminalSquare,
+      onClick: () => addTerminalPanel(containerApi, { shell: sh.command }, where),
+    })),
     { separator: true },
   ];
   for (const def of PLUS_MENU_PANELS) {
@@ -504,10 +572,38 @@ function LeftGroupActions(props: IDockviewHeaderActionsProps) {
   );
 }
 
-/** Per-group header buttons: explicit split actions. */
+/** Re-render when this dock's maximized group changes. */
+function useMaximizedGroup(containerApi: IDockviewHeaderActionsProps["containerApi"]): boolean {
+  const [maximized, setMaximized] = useState(() => containerApi.hasMaximizedGroup());
+  useEffect(() => {
+    const sub = containerApi.onDidMaximizedGroupChange(() => setMaximized(containerApi.hasMaximizedGroup()));
+    return () => sub.dispose();
+  }, [containerApi]);
+  return maximized;
+}
+
+/** Per-group header buttons: split with a terminal, maximize, and — on the
+ *  terminal panel — hide it (Ctrl+` brings it back). */
 function GroupActions(props: IDockviewHeaderActionsProps) {
   const btn =
     "flex h-full items-center rounded px-1 text-[--lx-muted] opacity-70 hover:bg-raised hover:opacity-100";
+  const maximized = useMaximizedGroup(props.containerApi);
+  const isTerminalGroup = groupRole(props.panels.map((p) => panelComponent(p))) === "terminal";
+  const grid = (() => {
+    try {
+      return props.group.api.location.type === "grid";
+    } catch {
+      return false;
+    }
+  })();
+  const thisMaximized = maximized && (() => {
+    try {
+      return props.group.api.isMaximized();
+    } catch {
+      return false;
+    }
+  })();
+  const canMaximize = grid && (thisMaximized || props.containerApi.groups.length > 1);
   return (
     <div className="flex h-full shrink-0 items-center gap-0.5 px-1 text-muted" data-testid="group-actions">
       <button
@@ -528,6 +624,36 @@ function GroupActions(props: IDockviewHeaderActionsProps) {
       >
         <SquareSplitVertical size={14} />
       </button>
+      {canMaximize && (
+        <button
+          className={btn}
+          data-testid="group-maximize"
+          title={thisMaximized ? t("Restore group size") : t("Maximize group (double-click the tab bar)")}
+          aria-label={thisMaximized ? t("Restore group size") : t("Maximize group (double-click the tab bar)")}
+          aria-pressed={thisMaximized}
+          onClick={() => {
+            props.group.api.setActive();
+            toggleMaximizeGroup(props.group.id);
+          }}
+        >
+          {thisMaximized ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+        </button>
+      )}
+      {isTerminalGroup && grid && (
+        <button
+          className={btn}
+          data-testid="terminal-panel-hide"
+          title={t("Hide terminal panel (Ctrl+`)")}
+          aria-label={t("Hide terminal panel (Ctrl+`)")}
+          onClick={() => {
+            // Toggle from a focused terminal group = hide.
+            props.group.api.setActive();
+            toggleTerminalPanel();
+          }}
+        >
+          <ChevronDown size={14} />
+        </button>
+      )}
     </div>
   );
 }
@@ -567,12 +693,14 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
     // recreated and its onReady fires *before* this component's effect re-runs,
     // so a disposedRef guard here would leave the dock permanently empty.
     disposedRef.current = false;
+    prefetchShells();
     registerApi(dockKey, event.api);
     restoreDockLayout(dockKey, event.api, cwdRef.current, isBlankRef.current);
     setEmpty(event.api.panels.length === 0);
     let timer: ReturnType<typeof setTimeout> | null = null;
     const disposable = event.api.onDidLayoutChange(() => {
       setEmpty(event.api.panels.length === 0);
+      ensureVisibleContent(event.api);
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         if (!disposedRef.current) saveDockLayout(dockKey, event.api);
@@ -582,12 +710,23 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
     // not fire this; project/dock teardown is handled by the startup prune.)
     const removeSub = event.api.onDidRemovePanel((panel) => {
       deleteTerminalState(terminalStateId(dockKey, panel.id));
+      // The explorer highlights the active editor's file; forget a closed one.
+      const wb = useWorkbenchStore.getState();
+      const removedPath = (panel.params as { path?: unknown } | undefined)?.path;
+      if (removedPath && wb.activeFileByDock[dockKey] === removedPath) {
+        wb.setActiveFile(dockKey, filePathOf(event.api.activePanel));
+      }
     });
     // Remember which group last held a file / terminal so the next "open file"
     // or "new terminal" lands there instead of in whichever group is active.
     const activeSub = event.api.onDidActivePanelChange((panel) => {
       if (panel) rememberGroup(dockKey, panelComponent(panel), panel.group.id);
+      // Focusing a terminal keeps the last file highlighted (like an IDE);
+      // only another document changes it.
+      const path = filePathOf(panel);
+      if (path) useWorkbenchStore.getState().setActiveFile(dockKey, path);
     });
+    useWorkbenchStore.getState().setActiveFile(dockKey, filePathOf(event.api.activePanel));
     cleanupRef.current = () => {
       if (timer) clearTimeout(timer);
       disposable.dispose();
@@ -639,6 +778,18 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
         if (!target.closest(".dv-void-container")) return;
         const api = useDockStore.getState().apis[dockKey];
         if (api) openContextMenu(e, panelsMenuItems(api));
+      }}
+      onDoubleClick={(e) => {
+        // Double-click the empty part of a tab strip → maximize / restore that
+        // group (the common IDE gesture).
+        const target = e.target as HTMLElement;
+        if (!target.closest(".dv-void-container")) return;
+        const api = useDockStore.getState().apis[dockKey];
+        const group = api?.groups.find((g) => g.element.contains(target));
+        if (group) {
+          group.api.setActive();
+          toggleMaximizeGroup(group.id);
+        }
       }}
     >
       <DockKeyContext.Provider value={dockKey}>

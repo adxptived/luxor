@@ -1,9 +1,10 @@
-/** Ctrl+P quick project switcher (browser-tab-style fuzzy jump). */
+/** Quick project switcher, Ctrl+R by default (browser-tab-style fuzzy jump). */
 
 import { CornerDownLeft, FolderGit2, LayoutGrid, Search, TriangleAlert } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { fuzzyFilter } from "@/lib/fuzzy";
+import { hintFor } from "@/lib/hotkeys";
 import { FuzzyText } from "@/components/CommandPalette";
 import { useAppStore } from "@/state/appStore";
 import { t } from "@/lib/i18n";
@@ -108,11 +109,11 @@ export function ProjectSwitcher() {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Escape") onEscape();
-                if (e.key === "ArrowDown" || (e.key === "p" && e.ctrlKey && !e.shiftKey)) {
+                if (e.key === "ArrowDown" || ((e.key === "p" || e.key === "r") && e.ctrlKey && !e.shiftKey)) {
                   e.preventDefault();
                   setSelected((s) => (filtered.length ? (s + 1) % filtered.length : 0));
                 }
-                if (e.key === "ArrowUp" || (e.key === "p" && e.ctrlKey && e.shiftKey)) {
+                if (e.key === "ArrowUp" || ((e.key === "P" || e.key === "R" || e.key === "p" || e.key === "r") && e.ctrlKey && e.shiftKey)) {
                   e.preventDefault();
                   setSelected((s) => (filtered.length ? (s - 1 + filtered.length) % filtered.length : 0));
                 }
@@ -174,10 +175,10 @@ export function ProjectSwitcher() {
             </div>
           )}
         </div>
-        {/* Keyboard cheat sheet: Ctrl+P cycles forward, so holding the chord
+        {/* Keyboard cheat sheet: the open chord cycles forward, so holding it
             after opening flips through projects like a browser tab switcher. */}
         <div className="flex min-h-9 items-center justify-end gap-2.5 border-t border-edge bg-surface/60 px-3 py-1.5 text-xs text-muted">
-          <span className="flex items-center gap-1"><SwitcherKbd>↑↓ / Ctrl+P</SwitcherKbd> {t("navigate")}</span>
+          <span className="flex items-center gap-1"><SwitcherKbd>↑↓ / {hintFor("projects.switch", useAppStore.getState().config) || "Ctrl+R"}</SwitcherKbd> {t("navigate")}</span>
           <span className="flex items-center gap-1"><SwitcherKbd>↵</SwitcherKbd> {t("switch")}</span>
           <span className="flex items-center gap-1"><SwitcherKbd>Esc</SwitcherKbd> {t("close")}</span>
         </div>

@@ -111,7 +111,12 @@ export function fireIpc(promise: Promise<unknown>, errorToast?: string): void {
 export type Unlisten = () => void;
 
 export async function listen<T>(event: string, handler: (payload: T) => void): Promise<Unlisten> {
-  if (!isTauri) return () => {};
+  if (!isTauri) {
+    // Browser/dev mode: the mock backend has its own tiny event bus (the
+    // simulated shell emits PTY output through it).
+    const { mockListen } = await import("./ipcMock");
+    return mockListen(event, handler as (payload: unknown) => void);
+  }
   const { listen } = await import("@tauri-apps/api/event");
   return listen<T>(event, (e) => handler(e.payload));
 }

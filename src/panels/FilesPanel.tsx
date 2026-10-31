@@ -18,6 +18,8 @@ import {
   CopyMinus,
   Eye,
   EyeOff,
+  LocateFixed,
+  MoreHorizontal,
   RefreshCw,
   Search,
   SquareTerminal,
@@ -26,7 +28,7 @@ import {
   X,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { VList } from "virtua";
+import { VList, type VListHandle } from "virtua";
 
 import * as ipc from "@/lib/ipc";
 import { t } from "@/lib/i18n";
@@ -60,8 +62,9 @@ function FileEditorSurfaceFallback({ height = 360 }: { height?: number }) {
     </div>
   );
 }
-import { confirmDestructive, openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
+import { confirmDestructive, openContextMenu, type MenuItem } from "@/state/uiStore";
 import { useActiveProject } from "@/state/projectsStore";
+import { useWorkbenchStore } from "@/state/workbenchStore";
 
 const IMAGE_EXTS = new Set(["png", "jpg", "jpeg", "gif", "webp", "svg", "bmp", "ico", "avif"]);
 const DB_EXTS = new Set(["db", "sqlite", "sqlite3", "db3"]);
@@ -114,7 +117,84 @@ function formatSize(bytes: number): string {
 const TOOLBAR_BTN =
   "flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-raised hover:text-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40";
 
-export function FilesPanel() {
+/** One row of the virtualized tree: an entry, or the inline "new" row. */
+type TreeRow =
+  | { kind: "entry"; entry: FsEntry; depth: number }
+  | { kind: "new"; dir: string; isDir: boolean; depth: number };
+
+/**
+ * Text field used for inline rename / new file (VS Code style) instead of a
+ * modal prompt. Enter or blur commits, Esc cancels; keys never reach the
+ * tree's own keyboard handler (type-ahead, Delete, arrows).
+ */
+function InlineNameInput(props: {
+  initial: string;
+  label: string;
+  placeholder?: string;
+  /** Select the name without its extension (rename of a file). */
+  selectStem?: boolean;
+  onCommit: (value: string, viaKeyboard: boolean) => void;
+  onCancel: (viaKeyboard: boolean) => void;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const done = useRef(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.focus();
+    const dot = props.selectStem ? props.initial.lastIndexOf(".") : -1;
+    el.setSelectionRange(0, dot > 0 ? dot : props.initial.length);
+    // Mount-only: re-selecting on every render would fight the user's typing.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const finish = (commit: boolean, viaKeyboard: boolean) => {
+    if (done.current) return;
+    done.current = true;
+    const value = ref.current?.value ?? "";
+    if (commit && value.trim()) props.onCommit(value, viaKeyboard);
+    else props.onCancel(viaKeyboard);
+  };
+  return (
+    <input
+      ref={ref}
+      defaultValue={props.initial}
+      placeholder={props.placeholder}
+      aria-label={props.label}
+      spellCheck={false}
+      autoComplete="off"
+      data-testid="files-inline-input"
+      className="h-[22px] min-w-0 flex-1 rounded border border-accent/70 bg-surface px-1.5 text-xs text-strong outline-none placeholder:text-muted/60"
+      onKeyDown={(e) => {
+        e.stopPropagation();
+        if (e.key === "Enter") {
+          e.preventDefault();
+          finish(true, true);
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          finish(false, true);
+        }
+      }}
+      onBlur={() => finish(true, false)}
+      onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onContextMenu={(e) => e.stopPropagation()}
+    />
+  );
+}
+
+/** Inline name editor state: renaming a row, or a new file/folder row. */
+type InlineEdit =
+  | { kind: "rename"; path: string; name: string; isDir: boolean }
+  | { kind: "new"; dir: string; isDir: boolean };
+
+/**
+ * `panel` — the explorer as a dock tab (with the embedded preview editor).
+ * `sidebar` — the compact tree in the workbench side bar: clicks open preview
+ * tabs in the editor area, the active editor's file is highlighted and
+ * revealed, and "Reveal in Explorer" requests land here.
+ */
+export function FilesPanel({ variant = "panel" }: { variant?: "panel" | "sidebar" } = {}) {
+  const sidebar = variant === "sidebar";
   const project = useActiveProject();
   const toast = useAppStore((s) => s.toast);
   const config = useAppStore((s) => s.config);
@@ -147,7 +227,16 @@ export function FilesPanel() {
   const [embeddedDirty, setEmbeddedDirty] = useState(false);
   const [detectedIdes, setDetectedIdes] = useState<DetectedIde[]>([]);
   const [searching, setSearching] = useState(false);
+  const [inlineEdit, setInlineEdit] = useState<InlineEdit | null>(null);
+  // Path to scroll into view once the rows containing it have rendered.
+  const [scrollTarget, setScrollTarget] = useState<string | null>(null);
+  const listRef = useRef<VListHandle>(null);
   const treeRef = useRef<HTMLDivElement>(null);
+  // Workbench wiring (side bar only): the active editor's file and requests.
+  const dockKey = useDockStore((s) => s.activeKey);
+  const activeFile = useWorkbenchStore((s) => (sidebar ? (s.activeFileByDock[dockKey] ?? null) : null));
+  const revealReq = useWorkbenchStore((s) => (sidebar ? s.reveal : null));
+  const focusSeq = useWorkbenchStore((s) => (sidebar ? s.focusSeq : 0));
   const loadVersionsRef = useRef(new Map<string, number>());
   const rootRef = useRef<string | null>(null);
   const root = project && project.path !== "" ? project.path : null;
@@ -248,6 +337,7 @@ export function FilesPanel() {
     setSelected(new Set());
     setEmbeddedPath(null);
     setEmbeddedDirty(false);
+    setInlineEdit(null);
     lastClickedRef.current = null;
     if (root) void load(root);
   }, [root, load]);
@@ -299,10 +389,20 @@ export function FilesPanel() {
     setEmbeddedDirty(false);
   };
 
-  const toggle = (entry: FsEntry) => {
+  /** Open a file from the tree. In the side bar a single click opens a
+   *  preview tab and `pin` (double click / Enter) keeps it. */
+  const openEntry = (entry: FsEntry, pin = false) => {
+    if (sidebar) {
+      openFile(entry.path, pin ? undefined : { preview: true });
+      return;
+    }
+    if (canUseEmbeddedEditor(entry)) void openInExplorerEditor(entry.path);
+    else openFile(entry.path);
+  };
+
+  const toggle = (entry: FsEntry, pin = false) => {
     if (!entry.is_dir) {
-      if (canUseEmbeddedEditor(entry)) void openInExplorerEditor(entry.path);
-      else openFile(entry.path);
+      openEntry(entry, pin);
       return;
     }
     const open = !expanded[entry.path];
@@ -310,19 +410,46 @@ export function FilesPanel() {
     if (open && !children[entry.path]) void load(entry.path);
   };
 
-  const newEntry = async (dir: string, isDir: boolean) => {
-    const name = await useUiStore.getState().prompt({
-      title: isDir ? t("New folder") : t("New file"),
-      placeholder: isDir ? "folder name" : "file name",
-    });
-    if (!name?.trim()) return;
-    const path = `${dir}${sep(dir)}${name.trim()}`;
+  /** Start typing the name of a new file/folder inline, inside `dir`. */
+  const newEntry = (dir: string, isDir: boolean) => {
+    if (dir !== root) {
+      setExpanded((x) => ({ ...x, [dir]: true }));
+      if (!children[dir]) void load(dir);
+    }
+    setInlineEdit({ kind: "new", dir, isDir });
+  };
+
+  /** Create what the inline row named. "a/b/c.ts" creates the folders too. */
+  const commitNew = async (dir: string, isDir: boolean, raw: string) => {
+    setInlineEdit(null);
+    const parts = raw.trim().split(/[\\/]+/).filter(Boolean);
+    if (parts.length === 0) return;
+    if (parts.some((p) => p === "." || p === "..")) {
+      toast(t("Create failed: invalid name"), "error");
+      return;
+    }
+    const s = sep(dir);
+    let parent = dir;
     try {
+      for (const folder of parts.slice(0, -1)) {
+        parent = `${parent}${s}${folder}`;
+        try {
+          await ipc.fsCreateDir(parent);
+        } catch (e) {
+          if (!String(errorMessage(e)).toLowerCase().includes("exist")) throw e;
+        }
+      }
+      const path = `${parent}${s}${parts[parts.length - 1]}`;
       if (isDir) await ipc.fsCreateDir(path);
       else await ipc.fsCreateFile(path);
+      if (parent !== dir) setExpanded((x) => ({ ...x, [parent]: true }));
       void load(dir);
+      if (parent !== dir) void load(parent);
+      setFocusedPath(path);
+      setScrollTarget(path);
       if (!isDir) {
-        if (isTextPath(path)) void openInExplorerEditor(path);
+        if (sidebar) openFile(path);
+        else if (isTextPath(path)) void openInExplorerEditor(path);
         else openFile(path);
       }
     } catch (e) {
@@ -662,10 +789,21 @@ export function FilesPanel() {
     }
   };
 
-  const renameEntry = async (entry: FsEntry) => {
-    const name = await useUiStore.getState().prompt({ title: t("Rename"), initial: entry.name });
-    if (!name?.trim() || name.trim() === entry.name) return;
-    const target = `${parentOf(entry.path)}${sep(entry.path)}${name.trim()}`;
+  /** Rename inline (F2 / context menu): the row turns into a text field. */
+  const renameEntry = (entry: FsEntry) => {
+    setFocusedPath(entry.path);
+    setInlineEdit({ kind: "rename", path: entry.path, name: entry.name, isDir: entry.is_dir });
+  };
+
+  const commitRename = async (entry: { path: string; name: string }, raw: string) => {
+    setInlineEdit(null);
+    const name = raw.trim();
+    if (!name || name === entry.name) return;
+    if (/[\\/]/.test(name)) {
+      toast(t("Rename failed: names cannot contain slashes"), "error");
+      return;
+    }
+    const target = `${parentOf(entry.path)}${sep(entry.path)}${name}`;
     try {
       if (embeddedPath === entry.path && embeddedDirty && !(await confirmEditorSwitch())) return;
       await ipc.fsRename(entry.path, target);
@@ -816,7 +954,13 @@ export function FilesPanel() {
         break;
       case "Enter":
         e.preventDefault();
-        if (entry) toggle(entry);
+        if (entry) toggle(entry, true);
+        break;
+      case "Escape":
+        if (selected.size > 0) {
+          e.preventDefault();
+          setSelected(new Set());
+        }
         break;
       case "F2":
         e.preventDefault();
@@ -869,10 +1013,12 @@ export function FilesPanel() {
       ...(entry.is_dir
         ? []
         : [
-            canUseEmbeddedEditor(entry)
-              ? { label: t("Open in Explorer editor"), icon: FilePen, onClick: () => void openInExplorerEditor(entry.path) }
-              : { label: t("Open"), icon: FilePen, onClick: () => openFile(entry.path) },
-            ...(canUseEmbeddedEditor(entry)
+            sidebar
+              ? { label: t("Open"), icon: FilePen, hint: "Enter", onClick: () => openFile(entry.path) }
+              : canUseEmbeddedEditor(entry)
+                ? { label: t("Open in Explorer editor"), icon: FilePen, onClick: () => void openInExplorerEditor(entry.path) }
+                : { label: t("Open"), icon: FilePen, onClick: () => openFile(entry.path) },
+            ...(!sidebar && canUseEmbeddedEditor(entry)
               ? [{ label: t("Open in editor tab"), icon: ExternalLink, onClick: () => openFile(entry.path) }]
               : []),
             {
@@ -978,9 +1124,175 @@ export function FilesPanel() {
     return out;
   }, [children, expanded, root, isVisible]);
 
+  /** The visible rows plus the inline "new file/folder" row, when one is open. */
+  const rows = useMemo<TreeRow[]>(() => {
+    const base: TreeRow[] = flatRows.map((r) => ({ kind: "entry", entry: r.entry, depth: r.depth }));
+    if (!inlineEdit || inlineEdit.kind !== "new") return base;
+    const { dir, isDir } = inlineEdit;
+    const at = dir === root ? -1 : base.findIndex((r) => r.kind === "entry" && r.entry.path === dir);
+    if (at < 0) return [{ kind: "new", dir, isDir, depth: 0 }, ...base];
+    const depth = base[at].depth + 1;
+    return [...base.slice(0, at + 1), { kind: "new", dir, isDir, depth }, ...base.slice(at + 1)];
+  }, [flatRows, inlineEdit, root]);
+
+  const childrenRef = useRef(children);
+  childrenRef.current = children;
+
+  /** Expand every folder between the root and `path`, loading as needed. */
+  const expandTo = useCallback(
+    async (path: string): Promise<boolean> => {
+      const r = rootRef.current;
+      if (!r || path === r || !path.startsWith(r)) return false;
+      const chain: string[] = [];
+      let dir = parentOf(path);
+      while (dir.length > r.length && dir.startsWith(r)) {
+        chain.unshift(dir);
+        const up = parentOf(dir);
+        if (up === dir) break;
+        dir = up;
+      }
+      for (const d of [r, ...chain]) {
+        if (!childrenRef.current[d]) await load(d, true);
+        if (rootRef.current !== r) return false;
+      }
+      if (chain.length > 0) {
+        setExpanded((x) => {
+          if (chain.every((d) => x[d])) return x;
+          const next = { ...x };
+          for (const d of chain) next[d] = true;
+          return next;
+        });
+      }
+      return true;
+    },
+    [load],
+  );
+
+  // Side bar: follow the active editor (VS Code's "auto reveal") — expand to
+  // its file and scroll it into view, without taking keyboard focus.
+  useEffect(() => {
+    if (!sidebar || !activeFile || !root || !activeFile.startsWith(root)) return;
+    let cancelled = false;
+    void expandTo(activeFile).then((ok) => {
+      if (ok && !cancelled) setScrollTarget(activeFile);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sidebar, activeFile, root, expandTo]);
+
+  // "Reveal in Explorer": clear filters that could hide the row, then focus it.
+  const revealSeq = revealReq?.seq ?? 0;
+  useEffect(() => {
+    if (!sidebar || !revealReq || !root) return;
+    const target = revealReq.path;
+    if (!target.startsWith(root)) {
+      toast(t("That file is outside this project's folder"), "info");
+      return;
+    }
+    setFilter("");
+    setFilterType("all");
+    void expandTo(target).then((ok) => {
+      if (!ok) return;
+      setFocusedPath(target);
+      setScrollTarget(target);
+    });
+    // Keyed on the request sequence: each request is handled exactly once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [revealSeq]);
+
+  // Ctrl+Shift+E and friends: put keyboard focus into the tree.
+  useEffect(() => {
+    if (!sidebar || focusSeq === 0) return;
+    const id = requestAnimationFrame(() => treeRef.current?.focus({ preventScroll: true }));
+    return () => cancelAnimationFrame(id);
+  }, [sidebar, focusSeq]);
+
+  // Scroll a row into view once it is part of the rendered list.
+  useEffect(() => {
+    if (!scrollTarget) return;
+    const idx = rows.findIndex((r) => r.kind === "entry" && r.entry.path === scrollTarget);
+    if (idx < 0) return;
+    const id = requestAnimationFrame(() => {
+      try {
+        listRef.current?.scrollToIndex(idx, { align: "nearest" });
+      } catch {
+        /* list not measured yet */
+      }
+    });
+    setScrollTarget(null);
+    return () => cancelAnimationFrame(id);
+  }, [scrollTarget, rows]);
+
+  const finishInline = (viaKeyboard: boolean) => {
+    if (viaKeyboard) requestAnimationFrame(() => treeRef.current?.focus({ preventScroll: true }));
+  };
+
+  /** Indent guides: one hairline per nesting level, aligned with the chevrons. */
+  const guides = (depth: number) =>
+    depth > 0 &&
+    Array.from({ length: depth }, (_, i) => (
+      <span
+        key={i}
+        aria-hidden
+        className="lx-tree-guide pointer-events-none absolute inset-y-0 w-px"
+        style={{ left: 11 + i * 14 }}
+      />
+    ));
+
+  const renderNewRow = (row: Extract<TreeRow, { kind: "new" }>): React.ReactNode => (
+    <div key="__new__" role="treeitem" aria-level={row.depth + 1} aria-selected>
+      <div className="relative flex h-7 w-full items-center gap-1.5 rounded-md bg-raised/70 pr-2" style={{ paddingLeft: 6 + row.depth * 14 }}>
+        {guides(row.depth)}
+        <span className="w-3 shrink-0" />
+        <FileIcon name={row.isDir ? "folder" : "untitled"} isDir={row.isDir} size={16} />
+        <InlineNameInput
+          initial=""
+          placeholder={row.isDir ? t("Folder name") : t("File name — use / for subfolders")}
+          label={row.isDir ? t("New folder") : t("New file")}
+          onCommit={(name, viaKeyboard) => {
+            void commitNew(row.dir, row.isDir, name);
+            finishInline(viaKeyboard);
+          }}
+          onCancel={(viaKeyboard) => {
+            setInlineEdit(null);
+            finishInline(viaKeyboard);
+          }}
+        />
+      </div>
+    </div>
+  );
+
   const renderRow = (entry: FsEntry, depth: number): React.ReactNode => {
+    if (inlineEdit?.kind === "rename" && inlineEdit.path === entry.path) {
+      const edit = inlineEdit;
+      return (
+        <div key={entry.path} role="treeitem" aria-level={depth + 1} aria-selected>
+          <div className="relative flex h-7 w-full items-center gap-1.5 rounded-md bg-raised/70 pr-2" style={{ paddingLeft: 6 + depth * 14 }}>
+            {guides(depth)}
+            <span className="w-3 shrink-0" />
+            <FileIcon name={entry.name} isDir={entry.is_dir} expanded={!!expanded[entry.path]} size={16} />
+            <InlineNameInput
+              initial={edit.name}
+              selectStem={!edit.isDir}
+              label={t("Rename")}
+              onCommit={(name, viaKeyboard) => {
+                void commitRename(entry, name);
+                finishInline(viaKeyboard);
+              }}
+              onCancel={(viaKeyboard) => {
+                setInlineEdit(null);
+                finishInline(viaKeyboard);
+              }}
+            />
+          </div>
+        </div>
+      );
+    }
     {
       const isSearchMatch = searchTerms.length > 0 && matchesSearch(entry);
+      const isActiveFile = activeFile === entry.path;
+      const mark = marks.get(entry.path);
       return (
         <div
           key={entry.path}
@@ -1015,10 +1327,12 @@ export function FilesPanel() {
               e.stopPropagation();
               void moveEntry(src, entry.path);
             }}
-            className={`group relative flex h-7 w-full items-center gap-1.5 truncate rounded-md pr-2 text-left transition-colors duration-[var(--lx-dur-fast)] hover:bg-raised/70 ${
+            className={`group relative flex w-full items-center gap-1.5 truncate rounded-md pr-2 text-left transition-colors duration-[var(--lx-dur-fast)] hover:bg-raised/70 ${sidebar ? "h-[26px]" : "h-7"} ${
               selected.has(entry.path) ? "bg-accent/10 text-strong lx-active-strip" : ""
-            } ${embeddedPath === entry.path ? "bg-accent/10 text-strong lx-active-strip" : ""} ${focusedPath === entry.path && !selected.has(entry.path) && embeddedPath !== entry.path ? "bg-raised text-strong" : ""} ${isSearchMatch ? "ring-1 ring-accent/20 bg-accent/5" : ""} ${dropTarget === entry.path ? "ring-1 ring-accent bg-accent/15" : ""}`}
+            } ${embeddedPath === entry.path || (isActiveFile && !selected.has(entry.path)) ? "bg-accent/10 text-strong lx-active-strip" : ""} ${focusedPath === entry.path && !selected.has(entry.path) && embeddedPath !== entry.path && !isActiveFile ? "bg-raised text-strong" : ""} ${isSearchMatch ? "ring-1 ring-accent/20 bg-accent/5" : ""} ${dropTarget === entry.path ? "ring-1 ring-accent bg-accent/15" : ""}`}
             style={{ paddingLeft: 6 + depth * 14 }}
+            data-path={entry.path}
+            data-active-file={isActiveFile || undefined}
             onClick={(e) => {
               setFocusedPath(entry.path);
               if (e.ctrlKey || e.metaKey || e.shiftKey) {
@@ -1026,11 +1340,18 @@ export function FilesPanel() {
                 return;
               }
               lastClickedRef.current = entry.path;
+              if (e.detail >= 2) {
+                // Second click of a double-click: keep a file open as a real
+                // tab; a folder simply stays toggled by the first click.
+                if (!entry.is_dir) openFile(entry.path);
+                return;
+              }
               toggle(entry);
             }}
             onContextMenu={(e) => openContextMenu(e, menuFor(entry))}
             title={entry.path}
           >
+            {guides(depth)}
             {entry.is_dir ? (
               expanded[entry.path] ? (
                 <ChevronDown size={12} className="shrink-0 text-muted" />
@@ -1047,20 +1368,22 @@ export function FilesPanel() {
                   ? isDimmedFolder(entry.name)
                     ? "font-medium text-muted"
                     : "font-medium text-strong"
-                  : "text-strong/90 group-hover:text-strong"
+                  : mark && mark.letter
+                    ? MARK_CLASS[mark.tone]
+                    : "text-strong/90 group-hover:text-strong"
               }`}
             >
               {entry.name}
             </span>
-            {marks.get(entry.path) && (
+            {mark && (
               <span
-                className={`shrink-0 text-3xs font-semibold ${MARK_CLASS[marks.get(entry.path)!.tone]}`}
+                className={`shrink-0 text-3xs font-semibold ${MARK_CLASS[mark.tone]}`}
                 title={t("Changed in git")}
               >
-                {marks.get(entry.path)!.letter || "●"}
+                {mark.letter || "●"}
               </span>
             )}
-            {!entry.is_dir && !embeddedPath && entry.size > 0 && (
+            {!sidebar && !entry.is_dir && !embeddedPath && entry.size > 0 && (
               <span className="shrink-0 pl-2 text-3xs tabular-nums text-transparent transition-colors group-hover:text-muted/70">
                 {formatSize(entry.size)}
               </span>
@@ -1077,8 +1400,131 @@ export function FilesPanel() {
     return <NoFolderCta hint={t("Attach a folder to browse and edit its files here.")} />;
   }
 
+  /** Folder a toolbar "new file/folder" goes into: the focused folder (or the
+   *  focused file's folder), else the project root. */
+  const targetDir = (): string => {
+    if (!focusedPath || !root) return root ?? "";
+    const entry = Object.values(children).flat().find((e) => e.path === focusedPath);
+    if (!entry) return root;
+    return entry.is_dir ? entry.path : parentOf(entry.path);
+  };
+
+  const sidebarMoreMenu = (e: React.MouseEvent) =>
+    openContextMenu(e, [
+      {
+        label: showHidden ? t("Hide dotfiles") : t("Show hidden files"),
+        icon: showHidden ? EyeOff : Eye,
+        onClick: toggleHidden,
+      },
+      { separator: true },
+      ...(["all", "code", "image", "config", "doc"] as const).map((ft) => ({
+        label:
+          ft === "all" ? t("All") : ft === "code" ? t("Code") : ft === "image" ? t("Images") : ft === "config" ? t("Config") : t("Docs"),
+        swatch: filterType === ft ? "var(--lx-accent)" : undefined,
+        onClick: () => setFilterType(ft),
+      })),
+      { separator: true },
+      ...(activeFile
+        ? [
+            {
+              label: t("Reveal active file"),
+              icon: LocateFixed,
+              onClick: () => useWorkbenchStore.getState().revealInExplorer(activeFile),
+            },
+          ]
+        : []),
+      { label: t("Open terminal here"), icon: SquareTerminal, onClick: () => addTerminal({ cwd: root }) },
+      {
+        label: `${t("Open project in")} ${defaultIdeLabel}`,
+        icon: AppWindow,
+        disabled: !defaultIde,
+        onClick: () => openInDefaultIde(root),
+      },
+      {
+        label: t("Reveal in file manager"),
+        icon: FolderOpen,
+        onClick: () => void ipc.launcherOpenFileManager(root).catch((err) => toast(errorMessage(err), "error")),
+      },
+      {
+        label: t("Open the explorer as a tab"),
+        icon: ExternalLink,
+        onClick: () => useDockStore.getState().openPanel("files"),
+      },
+    ]);
+
+  const SIDEBAR_BTN =
+    "flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted transition-colors hover:bg-raised hover:text-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40";
+
   return (
-    <div className="flex h-full flex-col bg-surface text-sm">
+    <div className={`flex h-full flex-col bg-surface text-sm ${sidebar ? "lx-files-sidebar" : ""}`} data-testid={sidebar ? "files-sidebar" : undefined}>
+      {sidebar && (
+        <div className="shrink-0 px-2 pb-1.5" data-testid="files-sidebar-header">
+          <div className="flex h-8 items-center gap-0.5">
+            <span className="flex min-w-0 flex-1 items-center gap-1.5 px-1" title={`${root}\n${t("Ctrl+click / Shift+click to select files for an AI agent")}`}>
+              <FolderOpen size={13} className="shrink-0 text-accent" />
+              <span className="truncate text-xs font-semibold text-strong">{project?.name ?? t("Project files")}</span>
+            </span>
+            <button className={SIDEBAR_BTN} title={t("New file")} aria-label={t("New file")} data-testid="files-new-file" onClick={() => newEntry(targetDir(), false)}>
+              <FilePlus size={14} />
+            </button>
+            <button className={SIDEBAR_BTN} title={t("New folder")} aria-label={t("New folder")} onClick={() => newEntry(targetDir(), true)}>
+              <FolderPlus size={14} />
+            </button>
+            <button className={SIDEBAR_BTN} title={t("Refresh")} aria-label={t("Refresh")} onClick={refresh}>
+              <RefreshCw size={13} />
+            </button>
+            <button className={SIDEBAR_BTN} title={t("Collapse all")} aria-label={t("Collapse all")} onClick={collapseAll}>
+              <CopyMinus size={14} />
+            </button>
+            <button className={SIDEBAR_BTN} title={t("More actions")} aria-label={t("More actions")} aria-haspopup="menu" onClick={sidebarMoreMenu}>
+              <MoreHorizontal size={14} />
+            </button>
+          </div>
+          <div className="lx-filter-bar flex h-7 items-center gap-1.5 rounded-md border border-edge/50 bg-raised/50 px-2 transition-colors focus-within:border-accent/40 focus-within:bg-raised hover:border-edge">
+            <Search size={12} className="shrink-0 text-muted/70" />
+            <input
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                  expandSearchMatches(true);
+                  treeRef.current?.focus();
+                }
+                if (e.key === "Escape") {
+                  e.preventDefault();
+                  setFilter("");
+                  setFocusedPath(null);
+                }
+              }}
+              placeholder={t("Filter files…")}
+              data-testid="files-filter"
+              className="min-w-0 flex-1 bg-transparent text-xs text-strong focus:outline-none placeholder:text-muted/60"
+              style={{ border: "none", boxShadow: "none", WebkitAppearance: "none" }}
+            />
+            {filter && (
+              <span className="shrink-0 text-3xs tabular-nums text-muted" title={`${loadedEntryCount} ${t("loaded entries")}`}>
+                {searching ? "…" : searchMatchCount}
+              </span>
+            )}
+            {filterType !== "all" && (
+              <button
+                className="shrink-0 rounded bg-accent/15 px-1.5 text-3xs text-accent"
+                title={t("Clear filter")}
+                onClick={() => setFilterType("all")}
+              >
+                {filterType === "code" ? t("Code") : filterType === "image" ? t("Images") : filterType === "config" ? t("Config") : t("Docs")} ×
+              </button>
+            )}
+            {filter && (
+              <button className="shrink-0 rounded p-0.5 text-muted transition-colors hover:bg-surface hover:text-strong" title={t("Clear filter")} aria-label={t("Clear filter")} onClick={() => setFilter("")}>
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+      {!sidebar && (
       <div className="border-b border-edge bg-bar/55 p-2">
         {/* Identity: folder name, path + item count, and the primary IDE action. */}
         <div className="flex items-center gap-2.5 rounded-lg border border-edge bg-surface/70 px-2.5 py-2">
@@ -1196,6 +1642,7 @@ export function FilesPanel() {
           </div>
         </div>
       </div>
+      )}
       {selected.size > 0 && (
         <div className="border-b border-edge bg-accent/5 p-2 text-xs">
           <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent/20 bg-surface/80 px-2 py-2">
@@ -1252,22 +1699,22 @@ export function FilesPanel() {
               aria-label={t("Project files")}
               aria-multiselectable="true"
               onKeyDown={onTreeKeyDown}
-              className="h-full min-h-0 overflow-hidden p-2 outline-none"
+              className={`h-full min-h-0 overflow-hidden outline-none ${sidebar ? "px-1.5 pb-2" : "p-2"}`}
               onContextMenu={(e) =>
                 openContextMenu(e, [
-                  { label: t("New file…"), icon: FilePlus, onClick: () => void newEntry(root, false) },
-                  { label: t("New folder…"), icon: FolderPlus, onClick: () => void newEntry(root, true) },
+                  { label: t("New file…"), icon: FilePlus, onClick: () => newEntry(root, false) },
+                  { label: t("New folder…"), icon: FolderPlus, onClick: () => newEntry(root, true) },
                   { label: t("Refresh"), icon: RefreshCw, onClick: refresh },
                 ])
               }
             >
-              {flatRows.length > 0 && (
+              {rows.length > 0 && (
                 // Virtualized: only visible rows hit the DOM (audit 3.1).
-                <VList style={{ height: "100%" }} className="lx-virtual-scroll">
-                  {flatRows.map(({ entry, depth }) => renderRow(entry, depth))}
+                <VList ref={listRef} style={{ height: "100%" }} className="lx-virtual-scroll">
+                  {rows.map((row) => (row.kind === "entry" ? renderRow(row.entry, row.depth) : renderNewRow(row)))}
                 </VList>
               )}
-              {children[root]?.length === 0 && (
+              {children[root]?.length === 0 && !inlineEdit && (
                 <div className="m-2 rounded-lg border border-dashed border-edge bg-bar/30 px-4 py-8 text-center text-xs text-muted">
                   <FolderOpen size={24} className="mx-auto mb-2 text-accent" />
                   <div className="font-medium text-strong">{t("Empty folder.")}</div>

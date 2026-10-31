@@ -45,8 +45,10 @@ import { useProjectsStore } from "@/state/projectsStore";
 import type { TerminalPanelParams } from "@/layout/dockStore";
 import { useDockStore } from "@/layout/dockStore";
 import { useDockKey } from "@/layout/DockKeyContext";
-import { Bot, ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, Play, RotateCcw, Search, SplitSquareHorizontal, X } from "lucide-react";
+import { Bot, ClipboardCopy, ClipboardPaste, Eraser, FileDown, History, MousePointerSquareDashed, OctagonX, Play, RotateCcw, Search, SplitSquareHorizontal, SquareSplitVertical, X } from "lucide-react";
 import { loadProfiles } from "@/lib/shellProfiles";
+import { actionForEvent, chordFromEvent, chordSkipsShell } from "@/lib/hotkeys";
+import { terminalTitle } from "@/lib/terminalTitle";
 
 /** "1h 4m" / "2m 5s" / "42s" for notification bodies. */
 function formatDuration(secs: number): string {
@@ -105,6 +107,11 @@ export function TerminalPanel(props: IDockviewPanelProps) {
   const sessionRef = useRef<string | null>(null);
   const [pid, setPid] = useState<number | null>(null);
   const [treeStats, setTreeStats] = useState<import("@/lib/types").TreeStats | null>(null);
+  // What the shell reports about itself, for the tab title (see terminalTitle).
+  const [shellTitle, setShellTitle] = useState("");
+  const [cwdNow, setCwdNow] = useState<string | null>(params.cwd ?? null);
+  const paramsRef = useRef(props.params as TerminalPanelParams | undefined);
+  paramsRef.current = props.params as TerminalPanelParams | undefined;
   // Mirror what the shell is doing onto the tab (dot next to the title).
   const panelStatusId = props.api.id;
   const activity = activityOf(exited, treeStats?.processes ?? null);
@@ -219,19 +226,48 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       });
     }
 
-    // Ctrl+F opens the in-terminal search bar; Escape is handled by the bar itself.
+    // Keys the terminal itself handles before the shell sees them. `e.code`
+    // (physical key), not `e.key`: with a Russian layout Ctrl+F reports "а".
     term.attachCustomKeyEventHandler((e) => {
-      if (e.type === "keydown" && e.ctrlKey && !e.shiftKey && e.key.toLowerCase() === "f") {
+      if (e.type !== "keydown") return true;
+      // Ctrl+F opens the in-terminal search bar; Escape is handled by the bar itself.
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && e.code === "KeyF") {
         setSearchOpen(true);
         return false;
       }
       // Ctrl+Shift+R: command history overlay (plain Ctrl+R stays with the shell).
-      if (e.type === "keydown" && e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "r") {
+      if (e.ctrlKey && e.shiftKey && !e.altKey && e.code === "KeyR") {
         openHistoryRef.current?.();
         return false;
       }
+      // Copy: Ctrl+Shift+C, or Ctrl+C while text is selected (Windows Terminal
+      // style; without a selection Ctrl+C still interrupts the program).
+      if (e.ctrlKey && !e.altKey && e.code === "KeyC" && (e.shiftKey || term.hasSelection())) {
+        const text = term.getSelection();
+        if (text) void navigator.clipboard?.writeText(text).catch(() => {});
+        if (!e.shiftKey) term.clearSelection();
+        e.preventDefault();
+        return false;
+      }
+      // Paste: Ctrl+Shift+V everywhere, plain Ctrl+V on Windows (where the
+      // shell has no other use for it). Pasted through xterm so bracketed
+      // paste mode is honoured.
+      if (e.ctrlKey && !e.altKey && e.code === "KeyV" && (e.shiftKey || isWindows)) {
+        e.preventDefault();
+        void navigator.clipboard
+          ?.readText()
+          .then((text) => {
+            if (text) term.paste(text);
+          })
+          .catch(() => {});
+        return false;
+      }
+      // App shortcuts (Ctrl+Shift+P, Ctrl+`, Ctrl+PageDown, …) go to the app;
+      // plain Ctrl+letter chords stay with the shell (see chordSkipsShell).
+      if (chordSkipsShell(chordFromEvent(e), actionForEvent(e, useAppStore.getState().config))) return false;
       return true;
     });
+    term.onTitleChange((title) => setShellTitle(title));
 
     let sessionId: string | null = null;
     let disposed = false;
@@ -405,7 +441,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       void ipc
         .ptyCwd(pidAtCall)
         .then((dir) => {
-          if (dir && !osc7Seen && shellPid === pidAtCall) liveCwd = dir;
+          if (dir && !osc7Seen && shellPid === pidAtCall) {
+            liveCwd = dir;
+            setCwdNow(dir);
+          }
         })
         .catch(() => {})
         .finally(saveNow);
@@ -431,9 +470,12 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         const profiles = loadProfiles();
         const profile = params.profileId ? profiles.find((p) => p.id === params.profileId) : undefined;
         const terminalConfig = useAppStore.getState().config?.terminal;
+        // A shell picked from the "+" menu (params.shell) runs with its own
+        // defaults: the configured shell_args belong to the configured shell.
+        const pickedShell = typeof params.shell === "string" && params.shell ? params.shell : null;
         const spawnOpts = {
-          shell: profile?.shell ?? terminalConfig?.shell ?? null,
-          args: profile?.args ?? terminalConfig?.shell_args ?? [],
+          shell: profile?.shell ?? pickedShell ?? terminalConfig?.shell ?? null,
+          args: profile?.args ?? (pickedShell ? [] : (terminalConfig?.shell_args ?? [])),
           cwd: profile?.cwd || cwd,
           cols: term.cols,
           rows: term.rows,
@@ -462,6 +504,10 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         }
         sessionId = info.session_id;
         sessionRef.current = sessionId;
+        if (info.cwd) {
+          const spawnedIn = info.cwd;
+          setCwdNow((prev) => prev ?? spawnedIn);
+        }
         setPid(info.pid ?? null);
         shellPid = info.pid ?? null;
         setExited(null);
@@ -481,7 +527,6 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               // i.e. it is sitting at its prompt.
               if (pendingDraft) {
                 if (draftTimer) clearTimeout(draftTimer);
-      if (resizeTimer) clearTimeout(resizeTimer);
                 draftTimer = setTimeout(injectDraft, 450);
               }
             },
@@ -543,6 +588,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       if (dir) {
         liveCwd = dir;
         osc7Seen = true; // the shell reports its own cwd; skip the OS fallback
+        setCwdNow(dir);
       }
       return false;
     });
@@ -710,6 +756,20 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     };
   }, [pid, showStats, notifyEnabled]);
 
+  // Tab title from the shell: folder / program / running agent — unless the
+  // user renamed the tab (DockTab sets params.customTitle).
+  const agentsKey = (treeStats?.agents ?? []).join("\u0000");
+  useEffect(() => {
+    if (paramsRef.current?.customTitle) return;
+    const next = terminalTitle({
+      shellTitle,
+      cwd: cwdNow,
+      agents: agentsKey ? agentsKey.split("\u0000") : [],
+      fallback: t("panel.terminal", "Terminal"),
+    });
+    if (props.api.title !== next) props.api.setTitle(next);
+  }, [shellTitle, cwdNow, agentsKey, props.api]);
+
   const saveOutput = () => {
     const term = termRef.current;
     if (!term) return;
@@ -786,6 +846,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       {
         label: t("Copy"),
         icon: ClipboardCopy,
+        hint: "Ctrl+Shift+C",
         disabled: !term?.hasSelection(),
         onClick: () => {
           const text = term?.getSelection();
@@ -795,6 +856,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
       {
         label: t("Paste"),
         icon: ClipboardPaste,
+        hint: isWindows ? "Ctrl+V" : "Ctrl+Shift+V",
         onClick: () => void navigator.clipboard.readText().then((t) => t && term?.paste(t)).catch(() => {}),
       },
       { label: t("Select all"), icon: MousePointerSquareDashed, onClick: () => term?.selectAll() },
@@ -825,6 +887,15 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           } catch { /* dock layout may not support split in all contexts */ }
         },
       },
+      {
+        label: t("Split terminal down"),
+        icon: SquareSplitVertical,
+        onClick: () => {
+          try {
+            splitWithTerminal("below", props.api.id);
+          } catch { /* dock layout may not support split in all contexts */ }
+        },
+      },
     ]);
   };
 
@@ -840,25 +911,15 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         </div>
       )}
 
-      {/* Split terminal button */}
-      <button
-        className="absolute right-2 top-1 z-[var(--lx-z-local)] flex items-center justify-center rounded border border-edge bg-bar/80 p-1 text-muted transition-colors hover:bg-raised hover:text-strong"
-        title={t("term.split", "Split terminal")}
-        aria-label={t("term.split", "Split terminal")}
-        onClick={() => {
-          try {
-            splitWithTerminal("right", props.api.id);
-          } catch { /* dock layout may not support split in all contexts */ }
-        }}
-      >
-        <SplitSquareHorizontal size={13} />
-      </button>
+      {/* Splitting moved to the group header and the context menu: a button
+          floating over the top-right corner covered the shell's own output
+          (prompts, progress bars, TUIs). */}
 
       {/* Stop button — appears while a foreground process is running
           (shell tree has children). Sends Ctrl+C. */}
-      {treeStats !== null && treeStats.processes > 1 && exited === null && (
+      {treeStats !== null && treeStats.processes > 1 && exited === null && !searchOpen && (
         <button
-          className="absolute right-9 top-1 z-[var(--lx-z-local)] flex items-center justify-center rounded border border-danger-soft-strong bg-danger-soft p-1 text-danger transition-colors hover:bg-danger-soft-strong"
+          className="absolute right-3 top-1.5 z-[var(--lx-z-local)] flex items-center justify-center rounded border border-danger-soft-strong bg-danger-soft p-1 text-danger opacity-80 transition-[opacity,background-color] hover:bg-danger-soft-strong hover:opacity-100"
           title={t("Stop process (Ctrl+C)")}
           aria-label={t("Stop process (Ctrl+C)")}
           onClick={interruptProcess}

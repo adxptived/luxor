@@ -84,7 +84,7 @@ export function ChromeQuickActions({ compact = false }: { compact?: boolean }) {
       {
         label: t("New terminal"),
         icon: SquareTerminal,
-        hint: "Ctrl+`",
+        hint: hintFor("terminal.new", config),
         onClick: () => addTerminal({ cwd: activeCwd() }),
       },
       { separator: true },

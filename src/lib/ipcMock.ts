@@ -10,6 +10,23 @@
  */
 
 import { logsAsText } from "./logBuffer";
+import {
+  DEMO_GIT_STATUS,
+  demoCopy,
+  demoCreateDir,
+  demoCreateFile,
+  demoDelete,
+  demoGrep,
+  demoList,
+  demoRead,
+  demoRename,
+  demoSearch,
+  demoWrite,
+  inDemo,
+} from "./ipcMockFs";
+import { mockPtyKill, mockPtySpawn, mockPtyWrite } from "./ipcMockShell";
+
+export { mockListen } from "./ipcMockShell";
 import type {
   AppConfig,
   LayoutPreset,
@@ -366,14 +383,19 @@ export async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>)
       mockState.presets = mockState.presets.filter((p) => p.id !== a["id"]);
       return undefined as T;
     case "pty_spawn":
-      return { session_id: `mock-${Date.now()}`, shell: "mock-shell", cwd: null, pid: 4242 } as T;
+      return mockPtySpawn(a["opts"] as { cwd?: string | null } | undefined) as T;
     case "pty_write":
-    case "pty_resize":
+      mockPtyWrite(a["sessionId"] as string, a["dataB64"] as string);
+      return undefined as T;
     case "pty_kill":
+      mockPtyKill(a["sessionId"] as string);
+      return undefined as T;
+    case "pty_resize":
       return undefined as T;
     case "pty_list":
       return [] as T;
     case "git_status":
+      if (inDemo(a["repoPath"])) return DEMO_GIT_STATUS as T;
       return {
         branch: "main",
         head_detached: false,
@@ -430,23 +452,37 @@ export async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>)
     // NOTE: `project_add_blank` is handled earlier in this same switch; a second
     // case here was unreachable (Vite flagged the duplicate) and has been removed.
     case "fs_list_dir":
+      if (inDemo(a["path"])) return demoList(a["path"]) as T;
       return [
         { name: "src", path: "/mock/src", is_dir: true, size: 0, modified: null },
         { name: "README.md", path: "/mock/README.md", is_dir: false, size: 1240, modified: null },
       ] as T;
     case "fs_search":
+      if (inDemo(a["root"])) return demoSearch(a["root"], String(a["query"] ?? ""), Number(a["limit"] ?? 120)) as T;
       return [
         { name: "README.md", path: "/mock/README.md", is_dir: false, size: 1240, modified: null },
         { name: "main.tsx", path: "/mock/src/main.tsx", is_dir: false, size: 2048, modified: null },
       ] as T;
     case "fs_read_text":
+      if (inDemo(a["path"])) return demoRead(a["path"]) as T;
       return { content: "# Mock file\n\nBrowser dev mode.", truncated: false } as T;
     case "fs_write_text":
+      if (inDemo(a["path"])) return demoWrite(a["path"], String(a["content"] ?? "")) as T;
+      return undefined as T;
     case "fs_create_file":
+      if (inDemo(a["path"])) demoCreateFile(a["path"]);
+      return undefined as T;
     case "fs_create_dir":
+      if (inDemo(a["path"])) demoCreateDir(a["path"]);
+      return undefined as T;
     case "fs_rename":
+      if (inDemo(a["from"]) && inDemo(a["to"])) demoRename(a["from"], a["to"]);
+      return undefined as T;
     case "fs_copy":
+      if (inDemo(a["from"]) && inDemo(a["to"])) demoCopy(a["from"], a["to"]);
+      return undefined as T;
     case "fs_delete":
+      if (inDemo(a["path"])) demoDelete(a["path"]);
       return undefined as T;
     case "fs_read_base64":
       return "" as T;
@@ -530,13 +566,14 @@ export async function mockInvoke<T>(cmd: string, args?: Record<string, unknown>)
       return [
         { name: "v0.5.0", target_id: "a".repeat(40), short_target: "aaaaaaa", message: "release", annotated: true },
       ] as T;
+    case "search_in_project":
+      if (inDemo(a["root"]))
+        return demoGrep(a["root"], String(a["query"] ?? ""), Boolean(a["useRegex"]), Boolean(a["caseSensitive"])) as T;
+      return { hits: [], files_scanned: 0, truncated: false } as T;
     case "git_reflog":
     case "git_submodules":
     case "git_conflict_paths":
-    case "search_in_project":
-      return (cmd === "search_in_project"
-        ? { hits: [], files_scanned: 0, truncated: false }
-        : []) as T;
+      return [] as T;
     case "replace_in_project":
       return { files_changed: 0, replacements: 0 } as T;
     case "git_stage":

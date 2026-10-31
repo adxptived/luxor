@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { HOTKEY_ACTIONS, actionForEvent, hotkeyLookup, normalizeChord } from "./hotkeys";
+import { HOTKEY_ACTIONS, actionForEvent, chordSkipsShell, findHotkeyConflicts, hotkeyLookup, normalizeChord } from "./hotkeys";
 
 describe("normalizeChord", () => {
   test("normalizes modifier order", () => {
@@ -25,7 +25,11 @@ describe("actionForEvent", () => {
     expect(actionForEvent(ev({ ctrlKey: true, shiftKey: true, code: "KeyP" }), null)).toBe(
       "palette",
     );
-    expect(actionForEvent(ev({ ctrlKey: true, code: "Backquote" }), null)).toBe("terminal.new");
+    expect(actionForEvent(ev({ ctrlKey: true, code: "Backquote" }), null)).toBe("terminal.toggle");
+    expect(actionForEvent(ev({ ctrlKey: true, shiftKey: true, code: "Backquote" }), null)).toBe("terminal.new");
+    expect(actionForEvent(ev({ ctrlKey: true, code: "KeyP" }), null)).toBe("file.quickOpen");
+    expect(actionForEvent(ev({ ctrlKey: true, code: "KeyB" }), null)).toBe("sidebar.toggle");
+    expect(actionForEvent(ev({ ctrlKey: true, code: "Backslash" }), null)).toBe("editor.split");
     expect(actionForEvent(ev({ ctrlKey: true, code: "KeyW" }), null)).toBe("tab.close");
   });
 
@@ -51,5 +55,32 @@ describe("actionForEvent", () => {
     for (const action of HOTKEY_ACTIONS) {
       expect([...lookup.values()]).toContain(action.id);
     }
+  });
+});
+
+describe("default bindings", () => {
+  test("no two default actions share a chord", () => {
+    expect(findHotkeyConflicts(null)).toEqual({});
+  });
+});
+
+describe("chordSkipsShell", () => {
+  test("app chords with Shift/Alt and non-letter keys leave the terminal", () => {
+    expect(chordSkipsShell("Ctrl+Shift+P", "palette")).toBe(true);
+    expect(chordSkipsShell("Ctrl+`", "terminal.toggle")).toBe(true);
+    expect(chordSkipsShell("Ctrl+PageDown", "tab.next")).toBe(true);
+    expect(chordSkipsShell("Ctrl+Alt+PageUp", "group.focusPrev")).toBe(true);
+  });
+
+  test("plain Ctrl+letter stays with the shell (readline, tmux, TUIs)", () => {
+    expect(chordSkipsShell("Ctrl+P", "file.quickOpen")).toBe(false);
+    expect(chordSkipsShell("Ctrl+B", "sidebar.toggle")).toBe(false);
+    expect(chordSkipsShell("Ctrl+R", "projects.switch")).toBe(false);
+  });
+
+  test("Ctrl+W never leaves the terminal, and unbound keys are ignored", () => {
+    expect(chordSkipsShell("Ctrl+W", "tab.close")).toBe(false);
+    expect(chordSkipsShell("Ctrl+Shift+K", undefined)).toBe(false);
+    expect(chordSkipsShell(null, "palette")).toBe(false);
   });
 });
