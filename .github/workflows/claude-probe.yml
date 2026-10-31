@@ -1,0 +1,58 @@
+name: Claude probe (temporary)
+
+# Temporary verification workflow used while developing on this branch.
+# Runs the frontend checks + screenshots and publishes the raw output to the
+# `claude/probe-out` branch. Not part of the PR.
+on:
+  push:
+    branches: ["claude/probe-ui"]
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+      - name: Install
+        run: |
+          mkdir -p probe-out/shots
+          bun install --frozen-lockfile > probe-out/install.txt 2>&1 || echo "install failed" >> probe-out/install.txt
+      - name: Checks
+        run: |
+          set +e
+          run() { name=$1; shift; ( "$@" ) > "probe-out/$name.txt" 2>&1; echo "exit=$?" >> "probe-out/$name.txt"; }
+          run typecheck bun run typecheck
+          run lint bun run lint
+          run unit bun test src
+          run build bun run build
+          tail -n 3 probe-out/*.txt > probe-out/SUMMARY.txt
+      - name: Playwright
+        run: bunx playwright install --with-deps chromium > probe-out/pw-install.txt 2>&1 || true
+      - name: Screenshots
+        run: |
+          set +e
+          bunx vite --port 5173 --strictPort > probe-out/vite.txt 2>&1 &
+          VITE_PID=$!
+          for i in $(seq 1 40); do curl -sSf http://localhost:5173 > /dev/null 2>&1 && break; sleep 1; done
+          timeout 600 node probe/shots.mjs > probe-out/shots.txt 2>&1; echo "exit=$?" >> probe-out/shots.txt
+          kill $VITE_PID || true
+      - name: E2E
+        if: ${{ !contains(github.event.head_commit.message, '[no-e2e]') }}
+        run: |
+          set +e
+          timeout 1500 bunx playwright test --reporter=line > probe-out/e2e.txt 2>&1; echo "exit=$?" >> probe-out/e2e.txt
+      - name: Publish
+        if: always()
+        run: |
+          cp -r probe-out /tmp/out && cd /tmp/out
+          echo "${GITHUB_SHA}" > SHA.txt
+          git init -q && git checkout -q -b out
+          git add -A
+          git -c user.name=probe -c user.email=probe@users.noreply.github.com commit -qm "probe ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" out:claude/probe-out
