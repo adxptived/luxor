@@ -24,6 +24,17 @@ how you arranged it, and stays out of the way when you just want to type.
 
 ## Features
 
+### One window instead of three
+- **IDE-style workbench**: the project's file tree in a resizable side bar on the left
+  (`Ctrl+B`), editor tabs in the middle, a terminal panel along the bottom (``Ctrl+` ``) — the
+  explorer + VS Code + terminal setup in one window, per project tab.
+- Single click in the explorer opens a **preview tab** (italic) that the next file replaces;
+  double click, an edit or "Keep open" keeps it. **Go to file** with `Ctrl+P`.
+- Files never land between terminal tabs (and terminals never between files): new terminals
+  join the terminal panel, files open in the editor area. Any group can be maximized
+  (double-click its tab bar or `Ctrl+Shift+M`), and everything is still free-form dockview —
+  drag tabs anywhere, split, float.
+
 ### Terminals
 - **Real PTY shells** (ConPTY on Windows, openpty on Unix) rendered with xterm.js + WebGL.
   Split, stack and arrange them freely (dockview).
@@ -35,6 +46,10 @@ how you arranged it, and stays out of the way when you just want to type.
   always asks first.
 - Command-finished and "AI agent is waiting for you" notifications, per-terminal CPU/RAM badge,
   clickable `file:line` paths, in-terminal search, command history (`Ctrl+Shift+R`).
+- Tabs are named after what runs in them (folder, program, AI agent) instead of "Terminal";
+  `Ctrl+Shift+C` / `Ctrl+Shift+V` copy and paste (`Ctrl+C` copies a selection, `Ctrl+V` pastes
+  on Windows); other installed shells (PowerShell 7, Git Bash, WSL, zsh, …) are one click away
+  in the tab-strip "+" menu.
 
 ### Projects and Git
 - **Project tabs** (top bar or side bar), per-project layouts, recent projects, blank
@@ -45,8 +60,12 @@ how you arranged it, and stays out of the way when you just want to type.
 - **GitHub**: issues, pull requests and CI runs for the repository you have open.
 
 ### Files and code
-- File explorer with a built-in CodeMirror 6 editor (autosave, on-disk conflict guard,
-  encodings), search & replace across the project, image / PDF / SQLite viewers, HTML and
+- Explorer with inline create / rename (`F2`, "a/b/c.ts" creates the folders), cut / copy /
+  paste, drag & drop, git-coloured names, indent guides, and the active file revealed as you
+  switch tabs.
+- CodeMirror 6 editor: multiple cursors (`Ctrl+D`, `Ctrl+click`, `Alt+drag`), indentation
+  detected per file, project-relative breadcrumbs, optional autosave, on-disk conflict guard,
+  encodings; search & replace across the project, image / PDF / SQLite viewers, HTML and
   Markdown preview.
 
 ### AI agents
@@ -83,12 +102,18 @@ All of these can be rebound in Settings → Hotkeys. On macOS `Ctrl` means `⌘`
 | Chord | Action |
 | --- | --- |
 | `Ctrl+Shift+P` | Command palette |
-| `Ctrl+P` | Switch project |
+| `Ctrl+P` | Go to file |
+| `Ctrl+R` | Switch project |
 | `Ctrl+O` | Open project folder |
-| ``Ctrl+` `` | New terminal |
+| `Ctrl+B` | Show / hide the side bar |
+| `Ctrl+Shift+E` | Explorer (side bar) |
+| `Ctrl+Shift+F` | Search in project (side bar) |
+| ``Ctrl+` `` | Show / focus / hide the terminal panel |
+| ``Ctrl+Shift+` `` | New terminal |
+| `Ctrl+J` | Show / hide the terminal panel without moving focus |
+| `Ctrl+\` | Move the tab to a new group on the right |
+| `Ctrl+Shift+M` | Maximize / restore the group |
 | `Ctrl+Shift+G` | Git explorer |
-| `Ctrl+Shift+E` | File explorer |
-| `Ctrl+Shift+F` | Search in project |
 | `Ctrl+,` | Settings |
 | `Ctrl+Shift+Z` | Zen mode |
 | `Ctrl+PageDown` / `Ctrl+PageUp` | Next / previous tab |
@@ -96,7 +121,12 @@ All of these can be rebound in Settings → Hotkeys. On macOS `Ctrl` means `⌘`
 | `Ctrl+Shift+T` | Reopen closed tab |
 | `Ctrl+Alt+S` | Save all files |
 
-In a terminal: `Ctrl+F` search, `Ctrl+Shift+R` command history.
+In a terminal: `Ctrl+F` search, `Ctrl+Shift+R` command history, `Ctrl+Shift+C` / `Ctrl+Shift+V`
+copy / paste. App chords with `Shift`/`Alt` (and ``Ctrl+` ``) work while a terminal has focus;
+plain `Ctrl+letter` chords (`Ctrl+P`, `Ctrl+B`, `Ctrl+R`, `Ctrl+W`, …) stay with the shell.
+
+In the editor: `Ctrl+D` / `Ctrl+Shift+L` add the next / all occurrences, `Ctrl+click` adds a
+cursor, `Alt+drag` selects a column, `Ctrl+G` goes to a line.
 
 ## Privacy and network
 

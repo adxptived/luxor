@@ -38,7 +38,9 @@ server or webkit.
 - All commands are registered in `src-tauri/src/lib.rs`; `src-tauri/tests/commands_registered.rs`
   fails if a command exists but is not in the handler list.
 - Params are snake_case structs mirrored in `src/lib/types.ts` / `src/lib/ipc.ts`; the browser
-  mock backend lives in `src/lib/ipcMock.ts` so `bun run dev` works without Tauri.
+  mock backend lives in `src/lib/ipcMock.ts` so `bun run dev` works without Tauri. Paths under
+  `/home/dev/aurora-shop` are served from an in-memory demo project (`ipcMockFs.ts`) and
+  terminals talk to a small simulated shell (`ipcMockShell.ts`, events via `mockListen`).
 - Git commands run on `spawn_blocking` (libgit2 is synchronous).
 - PTY output: core pushes bytes → shell emits `luxor://pty-output` `{ session_id, data_b64 }`;
   exits emit `luxor://pty-exit`. Base64 keeps arbitrary bytes intact across IPC. The frontend
@@ -57,6 +59,19 @@ server or webkit.
   persistence (`localStorage["luxor.layout.{projectId}"]`).
 - `uiStore` — context menus and the single-slot confirm/prompt dialogs (use these instead of
   `window.confirm`).
+- `workbenchStore` — the Explorer/Search side bar (open, view, width; `luxor.workbench.v1`), the
+  file shown by each dock's active tab, and "reveal in explorer" / focus requests.
+
+### Workbench
+
+The side bar (`components/ExplorerSidebar.tsx`) sits outside dockview and follows the active
+project. The dock stays free-form, but `layout/workbenchLogic.ts` (pure, unit-tested) gives it
+IDE behaviour: groups holding only terminals are the *terminal panel* — Ctrl+` shows / focuses /
+hides them via `group.api.setVisible`, new terminals join them or create one along the bottom
+edge — and files open in a document group (above a focused terminal group when there is none).
+Single-click previews carry `params.preview`; the next preview replaces that tab in place.
+`dockStore` turns those decisions into dockview calls (`toggleTerminalPanel`,
+`toggleMaximizeGroup`, `splitActivePanel`, `ensureVisibleContent`).
 - Every localStorage key is registered in `src/lib/storageKeys.ts`; a test fails on
   unregistered keys.
 
@@ -69,6 +84,7 @@ server or webkit.
 | Layout presets | `{data_dir}/luxor/presets/*.json` |
 | Activity analytics | `{config_dir}/luxor/local_stats.db` (never leaves the machine) |
 | Per-project window layout | `localStorage["luxor.layout.*"]` |
+| Side bar (open / view / width) | `localStorage["luxor.workbench.v1"]` |
 | Terminal restore state | `localStorage["luxor.term.<dockKey>:<panelId>"]` (scrollback, unsent input, cwd; ≤1.5 MB total; opt-out in Settings → Terminal) |
 | Secrets | OS keychain only |
 

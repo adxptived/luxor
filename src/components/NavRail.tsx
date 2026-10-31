@@ -26,6 +26,7 @@ import { getNavAction, getNavActionNew } from "@/lib/navActions";
 import { setDragGhost } from "@/lib/dragGhost";
 import { useAppStore } from "@/state/appStore";
 import { openContextMenu } from "@/state/uiStore";
+import { useWorkbenchStore } from "@/state/workbenchStore";
 
 const PANEL_BY_NAV_ID: Partial<Record<string, Exclude<PanelKind, "terminal" | "diff" | "editor" | "image" | "db" | "pdf">>> = {
   git: "git",
@@ -67,6 +68,9 @@ function NavRailImpl() {
     if (id.startsWith("panel-")) return id.replace("panel-", "");
     return null;
   });
+
+  // Files / Search light up while their side-bar view is showing.
+  const sidebarView = useWorkbenchStore((s) => (s.sidebarOpen ? s.sidebarView : null));
 
   // How many icons fit in the rail at the current window height. Everything
   // past that goes into the "⋯" menu — without this the extra buttons were
@@ -190,7 +194,10 @@ function NavRailImpl() {
         }}
       >
         {railButtons.map((def) => {
-          const isActive = activePanelId !== null && PANEL_BY_NAV_ID[def.id] === activePanelId;
+          const isActive =
+            (def.id === "files" && sidebarView === "explorer") ||
+            (def.id === "search" && sidebarView === "search") ||
+            (activePanelId !== null && PANEL_BY_NAV_ID[def.id] === activePanelId);
           // Surface the keyboard shortcut in the tooltip (matches TopBar):
           // rail buttons are icon-only, so this is the only discovery point.
           const hotkey = navHotkeys[def.id];

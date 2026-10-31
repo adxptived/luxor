@@ -24,7 +24,7 @@ describe("nextSidebarState", () => {
 
 describe("parseWorkbench", () => {
   it("defaults to an open explorer for new installs and corrupt data", () => {
-    const fallback = { sidebarOpen: true, sidebarView: "explorer", sidebarWidth: SIDEBAR_DEFAULT_WIDTH };
+    const fallback = { sidebarOpen: true, sidebarView: "explorer" as const, sidebarWidth: SIDEBAR_DEFAULT_WIDTH };
     expect(parseWorkbench(null)).toEqual(fallback);
     expect(parseWorkbench("{not json")).toEqual(fallback);
   });
