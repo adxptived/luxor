@@ -14,6 +14,21 @@ export interface EditorHandle {
   reveal: (line: number, col?: number) => void;
   /** Whether the editor currently holds unsaved changes. */
   isDirty: () => boolean;
+  /** Ask for a line number and jump to it (status bar "Ln, Col"). */
+  goToLine?: () => void;
+  /** Open the syntax language menu at a screen position (status bar). */
+  pickLanguage?: (x: number, y: number) => void;
+  /** Move keyboard focus into the editor. */
+  focus?: () => void;
+  /** The selected text, or the line under the cursor when nothing is selected. */
+  selectionOrLine?: () => string;
+  /** Run the file in the terminal (saving it first); false when it has no runner. */
+  runFile?: () => boolean;
+}
+
+/** The live handle of an open editor panel, if any. */
+export function editorHandle(id: string | null | undefined): EditorHandle | undefined {
+  return id ? editors.get(id) : undefined;
 }
 
 const editors = new Map<string, EditorHandle>();

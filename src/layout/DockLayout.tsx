@@ -94,6 +94,7 @@ import type { DetectedProgram } from "@/lib/types";
 import { useAppStore } from "@/state/appStore";
 import { openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
+import { useEditorStatus } from "@/state/editorStatusStore";
 
 import { WelcomePanel } from "@/panels/WelcomePanel";
 import { EmptyDock } from "@/panels/EmptyDock";
@@ -716,6 +717,11 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
       if (removedPath && wb.activeFileByDock[dockKey] === removedPath) {
         wb.setActiveFile(dockKey, filePathOf(event.api.activePanel));
       }
+      const es = useEditorStatus.getState();
+      if (es.activeByDock[dockKey] === panel.id) {
+        const next = event.api.activePanel;
+        es.setActive(dockKey, next && panelComponent(next) === "editor" ? next.id : null);
+      }
     });
     // Remember which group last held a file / terminal so the next "open file"
     // or "new terminal" lands there instead of in whichever group is active.
@@ -725,8 +731,17 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
       // only another document changes it.
       const path = filePathOf(panel);
       if (path) useWorkbenchStore.getState().setActiveFile(dockKey, path);
+      // Same for the editor status in the app status bar (Ln/Col, language):
+      // it follows the last active editor; another document type clears it.
+      if (panel && path) {
+        useEditorStatus.getState().setActive(dockKey, panelComponent(panel) === "editor" ? panel.id : null);
+      }
     });
     useWorkbenchStore.getState().setActiveFile(dockKey, filePathOf(event.api.activePanel));
+    {
+      const p = event.api.activePanel;
+      useEditorStatus.getState().setActive(dockKey, p && panelComponent(p) === "editor" ? p.id : null);
+    }
     cleanupRef.current = () => {
       if (timer) clearTimeout(timer);
       disposable.dispose();

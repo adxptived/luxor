@@ -8,6 +8,7 @@ import type { LayoutPreset, PanelTerminal } from "@/lib/types";
 import { errorMessage } from "@/lib/types";
 import { pushClosedTab, type ReopenInfo } from "@/lib/closedTabs";
 import { revealInEditor } from "@/lib/editorBus";
+import { runInTerminalPanel, terminalHandle } from "@/lib/terminalBus";
 import { useAppStore } from "@/state/appStore";
 import { useUiStore } from "@/state/uiStore";
 import { isPanelDirty } from "@/lib/dirtyGuard";
@@ -810,7 +811,7 @@ export function addTerminalPanel(
   params: TerminalPanelParams = {},
   position?: AddPanelPositionOptions,
   initialHeight?: number,
-) {
+): string | null {
   try {
     const id = nextId("terminal");
     // Panels created here are direct user actions (launcher click, split,
@@ -826,8 +827,10 @@ export function addTerminalPanel(
       ...(position ? { position } : {}),
       ...(initialHeight ? { initialHeight } : {}),
     });
+    return id;
   } catch (e) {
     console.warn("addTerminalPanel failed", e);
+    return null;
   }
 }
 
@@ -920,5 +923,125 @@ function markWorkbenchMigrated(dockKey: string): boolean {
     return true;
   } catch {
     return false;
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Terminals across projects: switcher and "run in terminal"
+// ---------------------------------------------------------------------------
+
+export interface TerminalRef {
+  dockKey: string;
+  panelId: string;
+  title: string;
+  /** False while its terminal panel is hidden (Ctrl+J). */
+  visible: boolean;
+  /** The tab currently shown in its group. */
+  front: boolean;
+}
+
+/** Every terminal tab of every project dock that is open this session. */
+export function listTerminals(): TerminalRef[] {
+  const out: TerminalRef[] = [];
+  for (const [dockKey, api] of Object.entries(useDockStore.getState().apis)) {
+    try {
+      for (const panel of api.panels) {
+        if (panelComponent(panel) !== "terminal") continue;
+        out.push({
+          dockKey,
+          panelId: panel.id,
+          title: panel.title ?? t("panel.terminal", PANEL_TITLES.terminal),
+          visible: panel.group.api.isVisible,
+          front: panel.group.activePanel?.id === panel.id,
+        });
+      }
+    } catch {
+      /* dock mid-teardown */
+    }
+  }
+  return out;
+}
+
+/** Bring a terminal tab of the ACTIVE dock on screen and make it the active tab. */
+function showTerminalPanel(api: DockviewApi, panelId: string): boolean {
+  const panel = api.getPanel(panelId);
+  if (!panel) return false;
+  revealGroups(api, [panel.group.id]);
+  try {
+    panel.api.setActive();
+  } catch {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Switch to the project that owns a terminal and focus it there. The dock of a
+ * project is mounted when the project becomes active, so the focus step waits
+ * a frame for it.
+ */
+export function focusTerminal(dockKey: string, panelId: string, setActiveProject: (id: string) => void): void {
+  if (useDockStore.getState().activeKey !== dockKey && dockKey !== WELCOME_KEY) setActiveProject(dockKey);
+  let tries = 0;
+  const attempt = () => {
+    const { apis, activeKey } = useDockStore.getState();
+    const api = apis[dockKey];
+    if (!api || activeKey !== dockKey) {
+      if (++tries < 20) requestAnimationFrame(attempt);
+      return;
+    }
+    if (showTerminalPanel(api, panelId)) {
+      requestAnimationFrame(() => terminalHandleFocus(dockKey, panelId));
+    }
+  };
+  attempt();
+}
+
+function terminalHandleFocus(dockKey: string, panelId: string): void {
+  terminalHandle(dockKey, panelId)?.focus();
+}
+
+/**
+ * The terminal "run in terminal" commands use in the active dock: the active
+ * tab of the terminal group used last, else of any terminal group; null when
+ * the project has no terminal yet.
+ */
+function targetTerminal(api: DockviewApi, dockKey: string): string | null {
+  const groups = api.groups.filter((g) => groupRole(g.panels.map((p) => panelComponent(p))) === "terminal");
+  const remembered = rememberedGroup(dockKey, "terminal");
+  const group = groups.find((g) => g.id === remembered) ?? groups.find((g) => g.api.isVisible) ?? groups[0];
+  if (group) return (group.activePanel ?? group.panels[0])?.id ?? null;
+  // A terminal sharing a group with other panels still counts.
+  return api.panels.find((p) => panelComponent(p) === "terminal")?.id ?? null;
+}
+
+/**
+ * Type `text` into the active project's terminal and run it, creating a
+ * terminal in the terminal panel when there is none. The terminal panel is
+ * shown, but keyboard focus is handed back to `restoreFocus` (the editor the
+ * command came from) so you can keep editing.
+ */
+export function runInActiveTerminal(
+  text: string,
+  opts: { cwd?: string | null; restoreFocus?: () => void; focusTerminal?: boolean } = {},
+): void {
+  const api = activeApi();
+  if (!api || !text.trim()) return;
+  const dockKey = useDockStore.getState().activeKey;
+  let panelId = targetTerminal(api, dockKey);
+  if (panelId) {
+    showTerminalPanel(api, panelId);
+  } else {
+    const placement = terminalPlacement(groupSnapshots(api), api.activeGroup?.id ?? null, rememberedGroup(dockKey, "terminal"));
+    panelId = addTerminalPanel(api, opts.cwd ? { cwd: opts.cwd } : {}, ...placementOptions(api, placement, "terminal"));
+  }
+  if (!panelId) return;
+  runInTerminalPanel(dockKey, panelId, text);
+  if (opts.focusTerminal) {
+    const id = panelId;
+    requestAnimationFrame(() => terminalHandleFocus(dockKey, id));
+  } else if (opts.restoreFocus) {
+    const restore = opts.restoreFocus;
+    requestAnimationFrame(() => requestAnimationFrame(restore));
   }
 }

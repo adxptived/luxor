@@ -14,6 +14,7 @@ import { attachPty, ensurePtyBus, forgetPty } from "@/lib/ptyBus";
 import { appendHistory, emptyLine, feedInput, loadHistory } from "@/lib/cmdHistory";
 import { logActivity } from "@/lib/activityLog";
 import { gateAutorun } from "@/lib/autorunGuard";
+import { registerTerminal, runPayload } from "@/lib/terminalBus";
 import { captureBuffer, suggestOutputFilename } from "@/lib/terminalBuffer";
 import { shellQuote } from "@/lib/shellQuote";
 import { CommandTracker, type TrackerNotice } from "@/lib/commandTracker";
@@ -105,6 +106,41 @@ export function TerminalPanel(props: IDockviewPanelProps) {
   const termRef = useRef<Terminal | null>(null);
   const openHistoryRef = useRef<(() => void) | null>(null);
   const sessionRef = useRef<string | null>(null);
+  // "Run in terminal" requests wait until the shell has printed its prompt
+  // (first output, then a short quiet spell) so they are not swallowed by a
+  // shell that is still starting up.
+  const shellReadyRef = useRef(false);
+  const runQueueRef = useRef<string[]>([]);
+  const readyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sendRun = (text: string) => {
+    const id = sessionRef.current;
+    if (!id) return;
+    const bracketed = termRef.current?.modes.bracketedPasteMode ?? false;
+    void ipc.ptyWrite(id, ipc.strToB64(runPayload(text, bracketed))).catch(() => {});
+  };
+  const flushRunQueue = () => {
+    if (!sessionRef.current || !shellReadyRef.current) return;
+    for (const text of runQueueRef.current.splice(0)) sendRun(text);
+  };
+  const flushRunQueueRef = useRef(flushRunQueue);
+  flushRunQueueRef.current = flushRunQueue;
+  useEffect(
+    () =>
+      registerTerminal(dockKey, props.api.id, {
+        run: (text) => {
+          runQueueRef.current.push(text);
+          flushRunQueueRef.current();
+        },
+        focus: () => termRef.current?.focus(),
+      }),
+    [dockKey, props.api.id],
+  );
+  useEffect(
+    () => () => {
+      if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+    },
+    [],
+  );
   const [pid, setPid] = useState<number | null>(null);
   const [treeStats, setTreeStats] = useState<import("@/lib/types").TreeStats | null>(null);
   // What the shell reports about itself, for the tab title (see terminalTitle).
@@ -528,6 +564,15 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               trackerRef.current?.output(Date.now());
               writeTerminal(ipc.b64ToBytes(dataB64));
               scheduleSave();
+              if (!shellReadyRef.current) {
+                if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
+                readyTimerRef.current = setTimeout(() => {
+                  readyTimerRef.current = null;
+                  if (sessionId !== id) return;
+                  shellReadyRef.current = true;
+                  flushRunQueueRef.current();
+                }, 350);
+              }
               // Put the saved input line back once the shell has gone quiet,
               // i.e. it is sitting at its prompt.
               if (pendingDraft) {
@@ -536,6 +581,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               }
             },
             onExit: (exitCode) => {
+              shellReadyRef.current = false;
               writeTerminal(`\r\n\x1b[90m[process exited ${exitCode ?? ""}]\x1b[0m\r\n`);
               if (sessionId === id) {
                 sessionId = null;
@@ -557,6 +603,7 @@ export function TerminalPanel(props: IDockviewPanelProps) {
     };
 
     restartRef.current = () => {
+      shellReadyRef.current = false;
       // Drop listeners from the previous session before spawning a new one.
       unlisteners.splice(0).forEach((u) => u());
       if (opened) term.clear();

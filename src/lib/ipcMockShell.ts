@@ -11,7 +11,7 @@
  * Only imported by `ipcMock.ts` (never part of the desktop build).
  */
 
-import { DEMO_GIT_STATUS, DEMO_ROOT, demoList, demoRead, inDemo } from "./ipcMockFs";
+import { DEMO_GIT_STATUS, DEMO_ROOT, demoList, demoRead, demoWrite, inDemo } from "./ipcMockFs";
 
 type Handler = (payload: unknown) => void;
 
@@ -105,8 +105,38 @@ const lines = (text: string) => text.replace(/\r?\n/g, "\r\n");
 function run(s: Session, raw: string): string {
   const cmd = raw.trim();
   if (!cmd) return "";
+  // `echo text > file` / `>> file`: lets the preview change a file "outside"
+  // the editor (like an AI agent or a formatter would) to show the reload.
+  const redirect = /^echo\s+(.*?)\s*(>>?)\s*(\S+)$/.exec(cmd);
+  if (redirect) {
+    const path = resolve(s.cwd, redirect[3]);
+    if (!inDemo(path)) return `echo: ${redirect[3]}: read-only outside the demo project\r\n`;
+    const text = `${redirect[1].replace(/^["']|["']$/g, "")}\n`;
+    let prev = "";
+    try {
+      prev = redirect[2] === ">>" ? demoRead(path).content : "";
+    } catch {
+      prev = "";
+    }
+    demoWrite(path, prev + text);
+    return "";
+  }
   const [name, ...args] = cmd.split(/\s+/);
   switch (name) {
+    case "bash":
+    case "sh":
+    case "python":
+    case "python3":
+    case "node": {
+      const file = args[0]?.replace(/^"|"$/g, "");
+      if (!file) return `${name}: interactive mode is not available in the demo shell\r\n`;
+      try {
+        demoRead(resolve(s.cwd, file));
+      } catch {
+        return `${name}: can't open file '${file}': No such file or directory\r\n`;
+      }
+      return lines(`${ESC}[90m(demo) ${name} ${file}${ESC}[0m\nDeploying aurora-shop…\n${ESC}[32m✓${ESC}[0m done\n`);
+    }
     case "help":
       return lines(
         "Simulated shell (browser preview). Try: ls, cd <dir>, pwd, cat <file>, git status, bun test, bun run dev, clear\n",

@@ -166,3 +166,104 @@ test.describe("workbench: go to file", () => {
     await expect(tab(page, "Cart.tsx")).toBeVisible();
   });
 });
+
+test.describe("workbench: editor ↔ terminal", () => {
+  test("the status bar shows the active editor's cursor and language", async ({ page }) => {
+    await openApp(page);
+    await openDemoProject(page);
+    await row(page, "src").click();
+    await row(page, "App.tsx").dblclick();
+    await expect(page.locator(".cm-content").first()).toBeVisible();
+    const status = page.getByTestId("statusbar-editor");
+    await expect(status).toBeVisible();
+    await expect(page.getByTestId("statusbar-editor-cursor")).toContainText("Ln 1, Col 1");
+    await expect(page.getByTestId("statusbar-editor-lang")).toContainText("TypeScript");
+    // Moving the cursor updates it.
+    await page.locator(".cm-content").first().click();
+    await page.keyboard.press("Control+End");
+    await expect(page.getByTestId("statusbar-editor-cursor")).not.toContainText("Ln 1,");
+  });
+
+  test("a file changed on disk (e.g. by an agent in the terminal) reloads in the editor", async ({ page }) => {
+    await openApp(page);
+    await openDemoProject(page);
+    await row(page, "README.md").dblclick();
+    // Markdown opens in preview; switch to the source view.
+    await page.getByTestId("md-toggle").click();
+    await expect(page.locator(".cm-content").first()).toContainText("Aurora Shop");
+
+    await page.keyboard.press("Control+Backquote");
+    await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
+    await page.locator(".xterm-helper-textarea").first().focus();
+    await page.keyboard.type("echo Rewritten by an agent > README.md");
+    await page.keyboard.press("Enter");
+
+    await expect(page.locator(".cm-content").first()).toContainText("Rewritten by an agent", { timeout: 10_000 });
+    await expect(page.locator(".cm-content").first()).not.toContainText("Aurora Shop");
+  });
+
+  test("unsaved edits are not overwritten: a banner offers both versions", async ({ page }) => {
+    await openApp(page);
+    await openDemoProject(page);
+    await row(page, "src").click();
+    await row(page, "main.tsx").dblclick();
+    const editor = page.locator(".cm-content").first();
+    await expect(editor).toBeVisible();
+    await editor.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.type("// my edit");
+
+    await page.keyboard.press("Control+Backquote");
+    await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
+    await page.locator(".xterm-helper-textarea").first().focus();
+    await page.keyboard.type("echo changed > src/main.tsx");
+    await page.keyboard.press("Enter");
+
+    await expect(page.getByTestId("editor-disk-conflict")).toBeVisible({ timeout: 10_000 });
+    await expect(editor).toContainText("// my edit");
+    await page.getByTestId("editor-disk-reload").click();
+    await expect(editor).toContainText("changed");
+    await expect(editor).not.toContainText("// my edit");
+    await expect(page.getByTestId("editor-disk-conflict")).toHaveCount(0);
+  });
+
+  test("▶ Run runs a script in the terminal panel", async ({ page }) => {
+    await openApp(page);
+    await openDemoProject(page);
+    await row(page, "scripts").click();
+    await row(page, "deploy.sh").dblclick();
+    await expect(page.locator(".cm-content").first()).toBeVisible();
+    await page.getByTestId("editor-run-file").click();
+    await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
+    await expect.poll(() => terminalText(page), { timeout: 10_000 }).toContain("Deploying aurora-shop");
+  });
+
+  test("Ctrl+Shift+Enter runs the current line in the terminal", async ({ page }) => {
+    await openApp(page);
+    await openDemoProject(page);
+    await page.keyboard.press("Control+Backquote");
+    await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
+    await row(page, "README.md").dblclick();
+    await page.getByTestId("md-toggle").click();
+    const editor = page.locator(".cm-content").first();
+    await editor.click();
+    await page.keyboard.press("Control+End");
+    await page.keyboard.type("\necho hello-from-editor");
+    await page.keyboard.press("Control+Shift+Enter");
+    await expect.poll(() => terminalText(page), { timeout: 10_000 }).toContain("hello-from-editor\r\n");
+  });
+});
+
+test.describe("workbench: switcher", () => {
+  test("Ctrl+R lists projects with their terminals", async ({ page }) => {
+    await openApp(page);
+    await openDemoProject(page);
+    await page.keyboard.press("Control+Backquote");
+    await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
+    await page.locator("body").click({ position: { x: 700, y: 300 } });
+    await page.keyboard.press("Control+KeyR");
+    const row0 = page.getByTestId("switcher-terminal").first();
+    await expect(row0).toBeVisible();
+    await expect(row0).toContainText("aurora-shop");
+  });
+});

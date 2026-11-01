@@ -48,6 +48,9 @@ import { useAppStore } from "@/state/appStore";
 import { fmtClock, useFocusRemaining, useFocusTimer } from "@/state/focusTimerStore";
 import { openContextMenu } from "@/state/uiStore";
 import { useActiveProject } from "@/state/projectsStore";
+import { useEditorStatus } from "@/state/editorStatusStore";
+import { editorHandle } from "@/lib/editorBus";
+import { langLabel } from "@/lib/editorStatus";
 import pkg from "../../package.json";
 
 const APP_VERSION: string = (pkg as { version: string }).version;
@@ -490,7 +493,10 @@ Click: Git explorer · right-click: fetch / pull / push`}
       <div
         className="absolute inset-y-0 flex min-w-0 items-center gap-3 overflow-hidden"
         data-testid="statusbar-segments"
-        style={{ left: reserved, right: reserved, justifyContent: alignToJustify(align) }}
+        // Only centred segments need the right cluster's width mirrored on the
+        // left (to stay on the window's axis); otherwise the left edge stays
+        // free, so a wide cluster (editor Ln/Col, language) costs no room there.
+        style={{ left: align === "center" ? reserved : 12, right: reserved, justifyContent: alignToJustify(align) }}
       >
       {order.map((id) => {
         if (id === SPACER_ID) {
@@ -552,6 +558,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
         className="absolute right-2 top-1/2 z-[var(--lx-z-local)] flex -translate-y-1/2 items-center gap-1 pl-1"
         data-testid="statusbar-meta"
       >
+        <EditorStatusItems />
         <button
           className="shrink-0 rounded px-1 text-2xs tabular-nums text-muted hover:bg-raised hover:text-strong"
           title={t("About Luxor — click for version & updates")}
@@ -598,6 +605,57 @@ Click: Git explorer · right-click: fetch / pull / push`}
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Cursor position, indentation, line endings and language of the active
+ * editor in the active project (VS Code's editor status items). Its own
+ * component so cursor moves re-render only these few spans.
+ */
+function EditorStatusItems() {
+  const activeId = useActiveProject()?.id ?? null;
+  const panelId = useEditorStatus((s) => (activeId ? s.activeByDock[activeId] ?? null : null));
+  const status = useEditorStatus((s) => (panelId ? s.byPanel[panelId] : undefined));
+  if (!panelId || !status) return null;
+  const item = "shrink-0 rounded px-1 text-2xs text-muted hover:bg-raised hover:text-strong";
+  const indent =
+    status.indent === null ? null : status.indent === "tab" ? t("Tabs") : t("Spaces: {0}").replace("{0}", String(status.indent));
+  return (
+    <span className="mr-1 flex items-center gap-0.5" data-testid="statusbar-editor">
+      <button
+        className={`${item} tabular-nums`}
+        title={t("Go to line (Ctrl+G)")}
+        onClick={() => editorHandle(panelId)?.goToLine?.()}
+        data-testid="statusbar-editor-cursor"
+      >
+        {t("Ln {0}, Col {1}").replace("{0}", String(status.line)).replace("{1}", String(status.col))}
+        {status.selChars > 0 &&
+          status.selRanges > 0 &&
+          ` ${(status.selRanges > 1 ? t("({0} selected in {1} ranges)") : t("({0} selected)"))
+            .replace("{0}", String(status.selChars))
+            .replace("{1}", String(status.selRanges))}`}
+      </button>
+      {indent && (
+        <span className={`${item} cursor-default hover:bg-transparent hover:text-muted`} title={t("Indentation (detected from the file)")}>
+          {indent}
+        </span>
+      )}
+      <span className={`${item} cursor-default hover:bg-transparent hover:text-muted`} title={t("Line endings")}>
+        {status.eol}
+      </span>
+      <button
+        className={item}
+        title={t("Select the syntax language")}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          editorHandle(panelId)?.pickLanguage?.(r.left, r.top - 4);
+        }}
+        data-testid="statusbar-editor-lang"
+      >
+        {langLabel(status.lang)}
+      </button>
+    </span>
   );
 }
 

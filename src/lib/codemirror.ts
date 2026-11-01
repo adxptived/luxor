@@ -17,7 +17,7 @@
  */
 
 import type { Extension } from "@codemirror/state";
-import { EditorState, Compartment } from "@codemirror/state";
+import { EditorState, Compartment, Text, Transaction } from "@codemirror/state";
 import * as codeMirrorView from "@codemirror/view";
 import {
   EditorView,
@@ -157,6 +157,27 @@ export interface MountedEditor {
   isDirty(): boolean;
   getValue(): string;
   setValue(value: string): void;
+  /** The current text (or `value`) is what is on disk now: resets the dirty flag. */
+  markSaved(value?: string): void;
+  /** Replace the text with a newer on-disk version, keeping cursor and scroll. */
+  reload(value: string): void;
+}
+
+/**
+ * The smallest single change turning `a` into `b`: the differing middle after
+ * the common prefix and suffix. Pure (unit-tested).
+ */
+export function minimalChange(a: string, b: string): { from: number; to: number; insert: string } {
+  const max = Math.min(a.length, b.length);
+  let start = 0;
+  while (start < max && a.charCodeAt(start) === b.charCodeAt(start)) start++;
+  let endA = a.length;
+  let endB = b.length;
+  while (endA > start && endB > start && a.charCodeAt(endA - 1) === b.charCodeAt(endB - 1)) {
+    endA--;
+    endB--;
+  }
+  return { from: start, to: endA, insert: b.slice(start, endB) };
 }
 
 export async function mountEditor(
@@ -194,7 +215,10 @@ export async function mountEditor(
   pushStructured("DEBUG", "editor", "language resolved", { id: opts.languageId, ms: langMs, extCount: Array.isArray(initialLang) ? initialLang.length : 1 });
 
   const initialTheme = buildEditorTheme(opts.themeId, opts.isLightTheme);
-  let lastDoc = opts.doc;
+  // The text as it is on disk (set on load, save and reload). Kept as a
+  // CodeMirror `Text` so the dirty check per edit is a structural compare, not
+  // a full `toString()` of the document on every keystroke.
+  let lastDoc: Text = Text.of(opts.doc.split(/\r\n?|\n/));
   let dirty = false;
   let lastDirty = false;
   const viewStart = performance.now();
@@ -257,7 +281,7 @@ export async function mountEditor(
         whitespaceCompartment.of([]),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) {
-            dirty = u.state.doc.toString() !== lastDoc;
+            dirty = !u.state.doc.eq(lastDoc);
             if (dirty !== lastDirty) { lastDirty = dirty; opts.onDirtyChange?.(dirty); }
           }
           if (u.selectionSet || u.docChanged) {
@@ -369,13 +393,41 @@ export async function mountEditor(
     isDirty() { return dirty; },
     getValue() { return view.state.doc.toString(); },
     setValue(value) {
-      lastDoc = value;
+      lastDoc = Text.of(value.split(/\r\n?|\n/));
       dirty = false;
       lastDirty = false;
       opts.onDirtyChange?.(false);
       view.dispatch({
         changes: { from: 0, to: view.state.doc.length, insert: value },
       });
+    },
+    markSaved(value) {
+      lastDoc = value === undefined ? view.state.doc : Text.of(value.split(/\r\n?|\n/));
+      dirty = !view.state.doc.eq(lastDoc);
+      if (dirty !== lastDirty) {
+        lastDirty = dirty;
+        opts.onDirtyChange?.(dirty);
+      }
+    },
+    reload(value) {
+      // Replace only the span that differs, so the cursor, selection and
+      // scroll position stay where they were (CodeMirror maps them through
+      // the change) — a file touched by a formatter or an AI agent usually
+      // changes a few lines, not the whole document.
+      const next = Text.of(value.split(/\r\n?|\n/));
+      const cur = view.state.doc;
+      lastDoc = next;
+      if (!cur.eq(next)) {
+        const a = cur.toString();
+        const b = next.toString();
+        const change = minimalChange(a, b);
+        view.dispatch({ changes: change, annotations: Transaction.addToHistory.of(true) });
+      }
+      dirty = false;
+      if (lastDirty) {
+        lastDirty = false;
+        opts.onDirtyChange?.(false);
+      }
     },
   };
 }

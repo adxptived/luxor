@@ -8,7 +8,8 @@ import * as ipc from "@/lib/ipc";
 import { useDelayedUnmount } from "@/lib/dismiss";
 import { errorMessage, type SessionSnapshot } from "@/lib/types";
 import { fuzzyFilter, fuzzyPositions } from "@/lib/fuzzy";
-import { saveAllEditors } from "@/lib/editorBus";
+import { editorHandle, saveAllEditors } from "@/lib/editorBus";
+import { useEditorStatus } from "@/state/editorStatusStore";
 import { applyRecents, loadRecents, recordRecent } from "@/lib/paletteRecents";
 import { THEMES } from "@/lib/themes";
 import { ZOOM_STEP } from "@/lib/zoom";
@@ -18,6 +19,7 @@ import {
   moveTabToNeighbourGroup,
   splitActivePanel,
   toggleMaximizeGroup,
+  runInActiveTerminal,
   toggleTerminalPanel,
   useDockStore,
 } from "@/layout/dockStore";
@@ -134,6 +136,29 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
     const cmds: Command[] = [
       { id: "terminal.new", label: t("cmd.terminal.new", "Terminal: New terminal"), hint: "Ctrl+Shift+`", run: close(() => dock.addTerminal()) },
       { id: "terminal.toggle", label: t("View: Show / hide terminal panel"), hint: "Ctrl+`", run: close(() => toggleTerminalPanel()) },
+      {
+        id: "terminal.runFile",
+        label: t("Terminal: Run active file"),
+        run: close(() => {
+          const handle = editorHandle(useEditorStatus.getState().activeByDock[dock.activeKey]);
+          if (!handle?.runFile?.()) appStore.toast(t("Open a script (Python, JS, shell, Go…) in the editor to run it"), "info");
+        }),
+      },
+      {
+        id: "terminal.runSelection",
+        label: t("Terminal: Run selection / line in terminal"),
+        run: close(() => {
+          const handle = editorHandle(useEditorStatus.getState().activeByDock[dock.activeKey]);
+          const text = handle?.selectionOrLine?.() ?? "";
+          if (!text.trim()) return;
+          runInActiveTerminal(text, { restoreFocus: () => handle?.focus?.() });
+        }),
+      },
+      {
+        id: "terminal.switch",
+        label: t("View: Switch to a project or terminal"),
+        run: close(() => appStore.setSwitcherOpen(true)),
+      },
       { id: "panel.toggle", label: t("View: Toggle terminal panel visibility"), hint: "Ctrl+J", run: close(() => toggleTerminalPanel("visibility")) },
       { id: "sidebar.toggle", label: t("View: Toggle side bar"), hint: "Ctrl+B", run: close(() => useWorkbenchStore.getState().toggleSidebar()) },
       { id: "group.maximize", label: t("View: Maximize / restore group"), hint: "Ctrl+Shift+M", run: close(() => toggleMaximizeGroup()) },
@@ -395,6 +420,8 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
     // fallback for commands with no corresponding remappable action.
     const cmdToAction: Record<string, string> = {
       "terminal.new": "terminal.new",
+      "terminal.runSelection": "terminal.runSelection",
+      "terminal.switch": "projects.switch",
       "terminal.toggle": "terminal.toggle",
       "panel.toggle": "panel.toggle",
       "sidebar.toggle": "sidebar.toggle",

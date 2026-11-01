@@ -5,7 +5,7 @@
 
 import { formatTime } from "@/lib/format";
 import type { IDockviewPanelProps } from "dockview";
-import { AlignLeft, CheckSquare, ChevronRight, ClipboardPaste, Code2, Copy, CornerDownLeft, Eye, Keyboard, MoreHorizontal, Palette, Pilcrow, Redo2, Replace, Save, Scissors, Search, Type, Undo2, WrapText, ZoomIn, ZoomOut } from "lucide-react";
+import { AlignLeft, CheckSquare, ChevronRight, ClipboardPaste, Code2, Copy, CornerDownLeft, Eye, Keyboard, MoreHorizontal, Palette, Pilcrow, Play, Redo2, Replace, Save, Scissors, Search, SquareTerminal, Type, Undo2, WrapText, ZoomIn, ZoomOut } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import * as ipc from "@/lib/ipc";
@@ -18,10 +18,14 @@ import { HexView } from "@/components/HexView";
 import { errorMessage } from "@/lib/types";
 import { cursorLabel, langLabel, selectionLabel } from "@/lib/editorStatus";
 import { EDITOR_LANGUAGE_OPTIONS, detectLanguage, languageForPath, languageLabel } from "@/lib/editorLanguage";
-import { fileName, useDockStore } from "@/layout/dockStore";
+import { fileName, runInActiveTerminal, useDockStore } from "@/layout/dockStore";
+import { canRunFile, runFileCommand } from "@/lib/runFile";
+import { isWindows } from "@/lib/platform";
+import { hintFor } from "@/lib/hotkeys";
 import { useDockKey } from "@/layout/DockKeyContext";
 import { useProjectsStore } from "@/state/projectsStore";
 import { useWorkbenchStore } from "@/state/workbenchStore";
+import { indentFromUnit, useEditorStatus } from "@/state/editorStatusStore";
 import { breadcrumbs } from "@/lib/breadcrumbs";
 import { CODEMIRROR_THEMES } from "@/lib/codemirrorThemeMeta";
 import type { MountedEditor } from "@/lib/codemirror";
@@ -147,6 +151,16 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
   const [autosaveStatus, setAutosaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [lastSaved, setLastSaved] = useState<number | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // On-disk modification time the editor's text is based on (set on load,
+  // save, reload). Polled while the editor is on screen so files changed by an
+  // AI agent, a formatter or `git checkout` show up without reopening them.
+  const diskMtimeRef = useRef<number | null>(null);
+  const onScreenRef = useRef(false);
+  const checkingDiskRef = useRef(false);
+  const savingRef = useRef(0);
+  /** The file changed (or vanished) on disk while there are unsaved edits. */
+  const [diskConflict, setDiskConflict] = useState<null | "changed" | "deleted">(null);
+  const [reloadedAt, setReloadedAt] = useState<number | null>(null);
   const [renderWhitespace, setRenderWhitespace] = useState(() => {
     try {
       return localStorage.getItem("luxor.editor.renderWhitespace") === "all";
@@ -192,15 +206,41 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
     editorRef.current?.revealLine(line);
   };
 
+  // Handles for the app status bar ("Ln 12, Col 5" → go to line; language →
+  // language picker), reached through the editor bus by panel id.
+  const goToLineRef = useRef<() => void>(() => {});
+  const selectionOrLineRef = useRef<() => string>(() => "");
+  const runFileRef = useRef<() => boolean>(() => false);
+  const pickLanguageRef = useRef<(x: number, y: number) => void>(() => {});
   useEffect(
     () =>
       registerEditor(panelId, {
         save: () => saveRef.current(),
         reveal: revealLine,
         isDirty: () => dirtyRef.current,
+        goToLine: () => goToLineRef.current(),
+        pickLanguage: (x, y) => pickLanguageRef.current(x, y),
+        focus: () => editorRef.current?.view.focus(),
+        selectionOrLine: () => selectionOrLineRef.current(),
+        runFile: () => runFileRef.current(),
       }),
     [panelId],
   );
+
+  // Publish cursor / language for the app status bar (not for the small
+  // editor embedded in the explorer, which keeps its own footer).
+  useEffect(() => {
+    if (embedded) return;
+    useEditorStatus.getState().set(panelId, {
+      line: cursor.line,
+      col: cursor.col,
+      selChars: sel.chars,
+      selRanges: sel.ranges,
+      lang,
+      readOnly: truncated,
+    });
+  }, [embedded, panelId, cursor, sel, lang, truncated]);
+  useEffect(() => () => useEditorStatus.getState().clear(panelId), [panelId]);
 
   const doUndo = () => {
     import("@codemirror/commands").then(({ undo: undoCmd }) => {
@@ -277,6 +317,33 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
     v.dispatch({ selection: { anchor: 0, head: v.state.doc.length } });
     v.focus();
   };
+  /** Selected text, or the current line when the selection is empty. */
+  const selectionOrLine = (): string => {
+    const v = editorRef.current?.view;
+    if (!v) return "";
+    const text = selectedText();
+    if (text.trim()) return text;
+    return v.state.doc.lineAt(v.state.selection.main.head).text;
+  };
+  /** Ctrl+Shift+Enter: run the selection / current line in the terminal panel. */
+  const runSelection = () => {
+    const text = selectionOrLine();
+    if (!text.trim()) return;
+    runInActiveTerminal(text, { cwd: project?.path || null, restoreFocus: () => editorRef.current?.view.focus() });
+  };
+  const runnable = !embedded && canRunFile(path);
+  /** ▶ Run: save, then run the file with its interpreter in the terminal panel. */
+  const runFile = (): boolean => {
+    const cmd = runFileCommand(path, null, isWindows);
+    if (!cmd) return false;
+    void (async () => {
+      if (dirtyRef.current && !truncated) await saveRef.current();
+      runInActiveTerminal(cmd, { cwd: project?.path || null, focusTerminal: true });
+    })();
+    return true;
+  };
+  selectionOrLineRef.current = selectionOrLine;
+  runFileRef.current = runFile;
   const runEditorAction = (actionId: string) => {
     if (actionId === "actions.find") {
       import("@codemirror/search").then(({ openSearchPanel }) => {
@@ -365,6 +432,8 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
     const mountStart = performance.now();
     setLang(languageForPath(path));
     setShortcutsOpen(false);
+    setDiskConflict(null);
+    diskMtimeRef.current = null;
 
     // Log mount start with container dimensions for debugging blank-editor issues
     const containerEl = containerRef.current;
@@ -412,15 +481,17 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         // Last known on-disk mtime — sent with every save so the backend can
         // detect external modifications (git checkout, formatter, another
         // editor) and refuse to silently overwrite them (audit 8.1).
-        let knownMtimeMs: number | null = file.mtime_ms ?? null;
+        diskMtimeRef.current = file.mtime_ms ?? null;
 
         const save = async (silent: boolean) => {
           const saveStart = performance.now();
+          // The disk poll must not mistake our own write for an external one.
+          savingRef.current += 1;
           try {
             const content = editorRef.current?.getValue() ?? file.content;
             let newMtimeMs: number | null;
             try {
-              newMtimeMs = await ipc.fsWriteText(path, content, knownMtimeMs);
+              newMtimeMs = await ipc.fsWriteText(path, content, diskMtimeRef.current);
             } catch (e) {
               const kind = (e as { kind?: string } | null)?.kind;
               if (kind !== "conflict") throw e;
@@ -451,18 +522,25 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
               if (!overwrite) return;
               newMtimeMs = await ipc.fsWriteText(path, content, null);
             }
-            knownMtimeMs = newMtimeMs ?? null;
+            diskMtimeRef.current = newMtimeMs ?? null;
+            setDiskConflict(null);
+            // What was written is the new baseline: later edits mark the tab
+            // dirty again (before, the baseline stayed at the text first
+            // loaded, so after one save the dirty dot and autosave went quiet).
+            editorRef.current?.markSaved(content);
             if (isHtmlPath(path)) {
               setPreviewHtml(content);
               setPreviewReloadKey((k) => k + 1);
               void ipc.fileSrc(path).then(setPreviewSrc, () => setPreviewSrc(null));
             }
-            setDirty(false);
+            if (!editorRef.current?.isDirty()) setDirty(false);
             pushStructured("DEBUG", "editor", "save ok", { path, silent, bytes: content.length, ms: Math.round(performance.now() - saveStart) });
             if (!silent) useAppStore.getState().toast(`${t("editor.saved", "Saved")} ${fileName(path)}`, "success");
           } catch (e) {
             pushStructured("ERROR", "editor", "save failed", { path, silent, error: errorMessage(e) });
             useAppStore.getState().toast(`${t("editor.save_failed", "Save failed:")} ${errorMessage(e)}`, "error");
+          } finally {
+            savingRef.current -= 1;
           }
         };
         saveRef.current = () => save(true);
@@ -489,8 +567,14 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         }
 
         const mountInnerStart = performance.now();
-        const { mountEditor } = await import("@/lib/codemirror");
+        const { mountEditor, detectIndentUnit } = await import("@/lib/codemirror");
         if (disposed || !containerRef.current) return;
+        if (!embedded) {
+          useEditorStatus.getState().set(panelId, {
+            indent: indentFromUnit(detectIndentUnit(file.content)),
+            eol: file.content.includes("\r\n") ? "CRLF" : "LF",
+          });
+        }
         const editor = await mountEditor(containerRef.current, {
           doc: file.content,
           languageId: detectedLang,
@@ -603,8 +687,12 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         if (typeof IntersectionObserver !== "undefined" && containerRef.current) {
           const obs = new IntersectionObserver((entries) => {
             for (const e of entries) {
-              if (e.isIntersecting && e.boundingClientRect.height > 0) {
+              const shown = e.isIntersecting && e.boundingClientRect.height > 0;
+              onScreenRef.current = shown;
+              if (shown) {
                 editorRef.current?.refresh();
+                // Back on screen (tab switch): catch up with the disk.
+                void checkDiskRef.current();
               }
             }
           });
@@ -650,6 +738,111 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [path]);
+
+  /**
+   * Compare the file on disk with what the editor is based on. A clean editor
+   * reloads in place (cursor and scroll kept); one with unsaved edits shows a
+   * banner instead of silently losing either version.
+   */
+  const checkDisk = async () => {
+    const editor = editorRef.current;
+    if (!editor || truncated || checkingDiskRef.current || savingRef.current > 0 || diskMtimeRef.current === null) return;
+    checkingDiskRef.current = true;
+    try {
+      let stat: { mtime_ms?: number | null };
+      try {
+        // max_bytes 0: only the metadata, not the content.
+        stat = await ipc.fsReadText(path, 0);
+      } catch (e) {
+        const msg = errorMessage(e).toLowerCase();
+        if (msg.includes("does not exist") || msg.includes("not found") || msg.includes("no such file")) {
+          setDiskConflict("deleted");
+        }
+        return;
+      }
+      const mtime = stat.mtime_ms ?? null;
+      if (mtime === null || mtime === diskMtimeRef.current) {
+        setDiskConflict((c) => (c === "deleted" ? null : c));
+        return;
+      }
+      if (editorRef.current !== editor || savingRef.current > 0) return;
+      if (dirtyRef.current) {
+        setDiskConflict("changed");
+        return;
+      }
+      const file = await ipc.fsReadText(path);
+      if (editorRef.current !== editor || dirtyRef.current) return;
+      if (file.truncated) return;
+      diskMtimeRef.current = file.mtime_ms ?? mtime;
+      contentRef.current = file.content;
+      if (editor.getValue() !== file.content.replace(/\r\n?/g, "\n")) {
+        editor.reload(file.content);
+        setReloadedAt(Date.now());
+        pushStructured("INFO", "editor", "reloaded from disk", { path });
+        if (isMarkdownPath(path)) void renderMarkdown(file.content).then(setPreviewHtml);
+        if (isHtmlPath(path)) {
+          setPreviewHtml(file.content);
+          setPreviewReloadKey((k) => k + 1);
+        }
+      }
+      setDiskConflict(null);
+    } finally {
+      checkingDiskRef.current = false;
+    }
+  };
+  const checkDiskRef = useRef(checkDisk);
+  checkDiskRef.current = checkDisk;
+
+  /** Banner action: take the disk version, dropping unsaved edits. */
+  const reloadFromDisk = async () => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    try {
+      const file = await ipc.fsReadText(path);
+      diskMtimeRef.current = file.mtime_ms ?? null;
+      contentRef.current = file.content;
+      editor.reload(file.content);
+      setDiskConflict(null);
+      setReloadedAt(Date.now());
+    } catch (e) {
+      useAppStore.getState().toast(`${t("Reload failed")}: ${errorMessage(e)}`, "error");
+    }
+  };
+
+  /** Banner action: keep the editor's text; the next save overwrites the disk. */
+  const keepMine = async () => {
+    try {
+      const stat = await ipc.fsReadText(path, 0);
+      diskMtimeRef.current = stat.mtime_ms ?? null;
+    } catch {
+      // Deleted: saving recreates the file.
+      diskMtimeRef.current = null;
+    }
+    setDiskConflict(null);
+  };
+
+  // Poll while on screen and the window is in use; check right away when the
+  // window regains focus (back from another app or terminal).
+  useEffect(() => {
+    if (embedded) return;
+    const tick = () => {
+      if (document.visibilityState !== "visible" || !onScreenRef.current) return;
+      void checkDiskRef.current();
+    };
+    const id = window.setInterval(tick, 2000);
+    window.addEventListener("focus", tick);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", tick);
+    };
+  }, [embedded, path]);
+
+  // "Reloaded" hint fades after a moment.
+  useEffect(() => {
+    if (reloadedAt === null) return;
+    const id = setTimeout(() => setReloadedAt(null), 2500);
+    return () => clearTimeout(id);
+  }, [reloadedAt]);
 
   const toggleWrap = () => {
     setWrap((w) => {
@@ -714,6 +907,9 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       })),
     );
 
+  goToLineRef.current = () => void goToLine();
+  pickLanguageRef.current = openLanguageMenu;
+
   const openThemeMenu = (x: number, y: number) =>
     menuAt(
       x,
@@ -747,6 +943,16 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       items.push({ label: t("Copy"), icon: Copy, hint: "Ctrl+C", disabled: !hasSelection, onClick: copySelection });
       items.push({ label: t("Paste"), icon: ClipboardPaste, hint: "Ctrl+V", disabled: truncated, onClick: pasteClipboard });
       items.push({ label: t("Select all"), icon: CheckSquare, hint: "Ctrl+A", onClick: selectAllEditor });
+      items.push({ separator: true });
+    }
+    if (!preview && !embedded) {
+      items.push({
+        label: t("Run selection in terminal"),
+        icon: SquareTerminal,
+        hint: hintFor("terminal.runSelection", useAppStore.getState().config) || undefined,
+        onClick: runSelection,
+      });
+      if (runnable) items.push({ label: t("Run file in terminal"), icon: Play, onClick: () => void runFile() });
       items.push({ separator: true });
     }
     if (!preview && !truncated) {
@@ -796,6 +1002,37 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
           {t("File is too large — opened read-only (truncated preview).")}
         </div>
       )}
+      {diskConflict && (
+        <div
+          className="flex flex-wrap items-center gap-2 border-b border-warning-soft-strong bg-warning-soft px-3 py-1 text-xs text-warning"
+          role="alert"
+          data-testid="editor-disk-conflict"
+        >
+          <span className="min-w-0 flex-1">
+            {diskConflict === "deleted"
+              ? t("This file was deleted on disk. Saving will create it again.")
+              : t("This file changed on disk while you have unsaved edits.")}
+          </span>
+          {diskConflict === "changed" && (
+            <button
+              type="button"
+              className="rounded px-2 py-0.5 font-medium hover:bg-warning-soft-strong"
+              onClick={() => void reloadFromDisk()}
+              data-testid="editor-disk-reload"
+            >
+              {t("Load disk version")}
+            </button>
+          )}
+          <button
+            type="button"
+            className="rounded px-2 py-0.5 hover:bg-warning-soft-strong"
+            onClick={() => void keepMine()}
+            data-testid="editor-disk-keep"
+          >
+            {t("Keep my version")}
+          </button>
+        </div>
+      )}
       <div className="lx-editor-toolbar flex items-center gap-1 border-b border-edge/50 bg-surface px-2.5 py-1.5 text-xs text-muted">
         {/* Breadcrumbs: project-relative; a click reveals the folder/file in the Explorer. */}
         <nav className="flex min-w-0 flex-1 items-center gap-0.5 overflow-hidden" aria-label={t("Breadcrumbs")} data-testid="editor-breadcrumbs">
@@ -816,6 +1053,11 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
             );
           })}
         </nav>
+        {reloadedAt !== null && (
+          <span className="shrink-0 text-3xs text-muted/70 lx-fade-in" data-testid="editor-reloaded" title={t("The file changed on disk and was reloaded")}>
+            {t("Reloaded from disk")}
+          </span>
+        )}
         {/* Autosave indicator */}
         {!preview && !truncated && autosaveStatus !== "idle" && (
           <span className="shrink-0 text-3xs text-muted/70" data-testid="autosave-indicator">
@@ -823,16 +1065,22 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
             {autosaveStatus === "saved" && <span className="text-success/80">{t("editor.autosaved", "Saved")}</span>}
           </span>
         )}
-        {!preview && !truncated && (
-          <span className="hidden shrink-0 items-center gap-1 font-mono text-3xs text-muted/70 @sm:flex" title={t("Syntax highlighting language")}>
-            <Type size={11} className="text-muted/60" />
-            {languageLabel(lang)}
-          </span>
+        {runnable && !preview && (
+          <button
+            className="flex items-center gap-1 rounded-lg px-2 py-1 text-muted transition-colors hover:bg-raised hover:text-strong"
+            title={`${t("Run file in terminal")} — ${runFileCommand(path, null, isWindows) ?? ""}`}
+            aria-label={t("Run file in terminal")}
+            data-testid="editor-run-file"
+            onClick={() => void runFile()}
+          >
+            <Play size={13} className="text-success" />
+            <span className="hidden @md:inline">{t("Run")}</span>
+          </button>
         )}
         {previewable && (
           <button
             className={`flex items-center gap-1 rounded-lg px-2 py-1 transition-colors hover:bg-raised ${preview ? "text-accent" : "text-muted hover:text-strong"}`}
-            data-testid="md-toggle-top"
+            data-testid="md-toggle"
             title={preview ? t("Edit source") : html ? t("Preview as a web page") : t("Preview rendered Markdown")}
             onClick={() => (preview ? setPreview(false) : showPreview())}
           >
@@ -939,7 +1187,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
           dangerouslySetInnerHTML={{ __html: previewHtml }}
         />
       )}
-      <div className="lx-editor-statusbar flex items-center justify-between gap-2 border-t border-edge px-3 py-[3px] text-2xs text-muted">
+      {embedded && <div className="lx-editor-statusbar flex items-center justify-between gap-2 border-t border-edge px-3 py-[3px] text-2xs text-muted">
         <span className="min-w-0 truncate" title={path}>
           {path}
         </span>
@@ -949,7 +1197,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
               className={`flex items-center gap-1 rounded px-1.5 py-0.5 hover:bg-raised ${
                 preview ? "text-accent" : "hover:text-strong"
               }`}
-              data-testid="md-toggle"
+              data-testid="md-toggle-footer"
               title={preview ? t("Edit source") : html ? t("Preview as a web page") : t("Preview rendered Markdown")}
               onClick={() => (preview ? setPreview(false) : showPreview())}
             >
@@ -1012,7 +1260,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
             </span>
           )}
         </span>
-      </div>
+      </div>}
     </div>
   );
 }

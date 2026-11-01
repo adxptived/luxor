@@ -38,6 +38,7 @@ import {
   splitActivePanel,
   toggleMaximizeGroup,
   toggleTerminalPanel,
+  runInActiveTerminal,
   useDockStore,
 } from "@/layout/dockStore";
 import { showSidebarView } from "@/lib/navActions";
@@ -49,7 +50,8 @@ import { pushStructured } from "@/lib/logBuffer";
 import { ensurePtyBus } from "@/lib/ptyBus";
 import { actionForEvent, hintFor } from "@/lib/hotkeys";
 import { DEFAULT_NAV_HIDDEN } from "@/lib/navButtons";
-import { saveAllEditors } from "@/lib/editorBus";
+import { editorHandle, saveAllEditors } from "@/lib/editorBus";
+import { useEditorStatus } from "@/state/editorStatusStore";
 import { ZOOM_STEP } from "@/lib/zoom";
 import {
   getLanguageVersion,
@@ -539,6 +541,7 @@ export default function App() {
         "project.open",
         "file.saveAll",
         "tab.reopen",
+        "terminal.runSelection",
       ]);
       if (action && NO_REPEAT.has(action) && e.repeat) {
         e.preventDefault();
@@ -554,6 +557,21 @@ export default function App() {
           return fire(() => (app.paletteOpen ? app.setPaletteOpen(false) : app.openPalette("files")));
         case "terminal.new":
           return fire(() => dock.addTerminal());
+        case "terminal.runSelection": {
+          // From the editor only: in a terminal the chord belongs to the shell.
+          const target = e.target as HTMLElement | null;
+          if (!target?.closest?.(".cm-editor")) return;
+          const panelId = useEditorStatus.getState().activeByDock[dock.activeKey];
+          const handle = editorHandle(panelId);
+          const text = handle?.selectionOrLine?.() ?? "";
+          if (!text.trim()) return;
+          return fire(() =>
+            runInActiveTerminal(text, {
+              cwd: useProjectsStore.getState().projects.find((p) => p.id === dock.activeKey)?.path || null,
+              restoreFocus: () => handle?.focus?.(),
+            }),
+          );
+        }
         case "terminal.toggle":
           return fire(() => toggleTerminalPanel());
         case "panel.toggle":

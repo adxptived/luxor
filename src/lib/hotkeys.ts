@@ -13,10 +13,11 @@ export const HOTKEY_ACTIONS: HotkeyAction[] = [
   // VS Code muscle memory: Ctrl+P finds a file, Ctrl+R switches the
   // "recent workspace" (here: project tab).
   { id: "file.quickOpen", label: "Go to file", default: "Ctrl+P" },
-  { id: "projects.switch", label: "Switch project", default: "Ctrl+R" },
+  { id: "projects.switch", label: "Switch project or terminal", default: "Ctrl+R" },
   { id: "project.open", label: "Open project folder", default: "Ctrl+O" },
   { id: "terminal.toggle", label: "Show / hide terminal panel", default: "Ctrl+`" },
   { id: "terminal.new", label: "New terminal", default: "Ctrl+Shift+`" },
+  { id: "terminal.runSelection", label: "Run selection / line in terminal", default: "Ctrl+Shift+Enter" },
   { id: "panel.toggle", label: "Toggle terminal panel visibility", default: "Ctrl+J" },
   { id: "sidebar.toggle", label: "Toggle side bar", default: "Ctrl+B" },
   { id: "git.open", label: "Git explorer", default: "Ctrl+Shift+G" },
@@ -222,7 +223,8 @@ export function formatChord(chord: string, isMac: boolean = IS_MAC): string {
  */
 export function chordSkipsShell(chord: string | null, action: string | undefined): boolean {
   if (!chord || !action) return false;
-  if (action === "tab.close") return false;
+  // Editor-only actions: in a terminal the chord stays with the shell.
+  if (action === "tab.close" || action === "terminal.runSelection") return false;
   const parts = normalizeChord(chord).split("+");
   const key = parts[parts.length - 1];
   const mods = new Set(parts.slice(0, -1));
