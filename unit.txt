@@ -1,0 +1,755 @@
+bun test v1.4.4 (38afee6c8)
+
+::group::src/panels/BrowserPanel.test.ts:
+(pass) normalizeUrl > keeps absolute http(s) URLs untouched [0.10ms]
+(pass) normalizeUrl > adds https:// to bare domains [0.06ms]
+(pass) normalizeUrl > keeps localhost/dev servers on http [0.04ms]
+(pass) normalizeUrl > falls back to a DuckDuckGo search for free text [0.02ms]
+(pass) normalizeUrl > empty input yields empty string [0.01ms]
+(pass) toEmbeddable > rewrites YouTube watch links to the embeddable player [0.10ms]
+(pass) toEmbeddable > rewrites youtu.be short links [0.02ms]
+(pass) toEmbeddable > rewrites YouTube shorts [0.01ms]
+(pass) toEmbeddable > leaves non-YouTube URLs unchanged
+(pass) toEmbeddable > returns malformed input unchanged [0.03ms]
+(pass) isLikelyBlocked > DuckDuckGo — the default search target — is detected as blocked [0.11ms]
+(pass) isLikelyBlocked > major framing-blockers are detected (incl. www. and subdomains) [0.08ms]
+(pass) isLikelyBlocked > the YouTube embed player is NOT blocked (only the main site is) [0.02ms]
+(pass) isLikelyBlocked > embeddable-friendly sites are not blocked [0.05ms]
+(pass) isLikelyBlocked > malformed URLs are treated as not blocked [0.02ms]
+(pass) resolveNavigation > empty input resolves to null [0.06ms]
+(pass) resolveNavigation > window mode sends everything to the native window [0.04ms]
+(pass) resolveNavigation > embedded mode embeds framing-friendly sites [0.02ms]
+(pass) resolveNavigation > embedded mode promotes framing-blocked sites to the native window [0.03ms]
+(pass) resolveNavigation > force always embeds, even for blocked sites ("try anyway") [0.02ms]
+(pass) resolveNavigation > applies the YouTube embed rewrite to the resolved URL [0.02ms]
+(pass) resolveNavigation > a YouTube watch link in embedded mode resolves to the embeddable player inline [0.02ms]
+(pass) browser history > pushHistory appends and advances the cursor [0.07ms]
+(pass) browser history > pushHistory treats the same URL as a reload (no new entry) [0.02ms]
+(pass) browser history > stepHistory moves back then forward [0.04ms]
+(pass) browser history > navigating after going back truncates the forward stack [0.02ms]
+(pass) browser history > stepHistory is a no-op at the edges [0.01ms]
+(pass) faviconUrl > returns a favicon service URL for the host of a web page [0.03ms]
+(pass) faviconUrl > returns null for non-web or invalid URLs [0.02ms]
+
+::endgroup::
+
+::group::src/panels/panelsSmoke.test.tsx:
+(pass) critical panel component contracts > Files renders a safe empty state without an active project [7.71ms]
+(pass) critical panel component contracts > Git renders a safe empty state without an active project [0.60ms]
+(pass) critical panel component contracts > Database renders its empty table state and SQL action [2.70ms]
+(pass) critical panel component contracts > Editor renders the requested file shell before IPC loading [3.55ms]
+(pass) critical panel component contracts > Terminal renders its host surface before spawning a PTY [0.84ms]
+
+::endgroup::
+
+::group::src/state/focusTimerStore.test.ts:
+(pass) fmtClock > formats mm:ss zero-padded [0.05ms]
+(pass) remainingOf > running: derives seconds from the deadline [0.04ms]
+(pass) remainingOf > running but past the deadline clamps to 0 [0.01ms]
+(pass) remainingOf > paused: uses pausedLeft [0.06ms]
+(pass) remainingOf > never returns a negative value [0.03ms]
+
+::endgroup::
+
+::group::src/state/editorStatusStore.test.ts:
+(pass) editor status store > maps indent units [0.04ms]
+(pass) editor status store > keeps the same state object when nothing changes [0.21ms]
+(pass) editor status store > tracks the active editor per project [0.06ms]
+
+::endgroup::
+
+::group::src/state/workbenchStore.test.ts:
+(pass) nextSidebarState > opens a hidden side bar on the requested (or current) view [0.11ms]
+(pass) nextSidebarState > switches views without closing, and closes on the view already shown [0.03ms]
+(pass) parseWorkbench > defaults to an open explorer for new installs and corrupt data [0.04ms]
+(pass) parseWorkbench > keeps valid values and clamps the width [0.08ms]
+(pass) parseWorkbench > clampSidebarWidth rounds and survives NaN [0.02ms]
+
+::endgroup::
+
+::group::src/lib/analyticsActivity.test.ts:
+(pass) isUserActive — OS input counter is the authority, focus is the fallback > an unfocused Luxor window with recent OS input is still active work [0.03ms]
+(pass) isUserActive — OS input counter is the authority, focus is the fallback > OS input idle past the AFK threshold is idle even while focused [0.01ms]
+(pass) isUserActive — OS input counter is the authority, focus is the fallback > exactly at the threshold counts as AFK [0.01ms]
+(pass) isUserActive — OS input counter is the authority, focus is the fallback > without an OS counter (Linux) it falls back to window focus [0.01ms]
+(pass) isUserActive — OS input counter is the authority, focus is the fallback > the AFK threshold matches the Rust AFK_THRESHOLD_SECONDS (5 min)
+(pass) classifyActivity — activity category pushed to telemetry > active without an agent is plain coding [0.03ms]
+(pass) classifyActivity — activity category pushed to telemetry > an agent detected while unfocused still produces the AI frame [0.01ms]
+(pass) classifyActivity — activity category pushed to telemetry > a stale agent never leaks into an idle classification [0.01ms]
+(pass) classifyActivity — activity category pushed to telemetry > no focus and no OS counter is idle [0.01ms]
+
+::endgroup::
+
+::group::src/lib/terminalTitle.test.ts:
+(pass) cleanShellTitle > reduces executable paths to their name [0.24ms]
+(pass) cleanShellTitle > keeps the folder of a user@host prompt title [0.06ms]
+(pass) cleanShellTitle > keeps a program's own title and drops control characters [0.03ms]
+(pass) terminalTitle > prefers a meaningful shell title, then the folder, then the shell name [0.09ms]
+(pass) terminalTitle > names the AI agent running in the terminal [0.02ms]
+(pass) terminalTitle > clips long titles [0.03ms]
+
+::endgroup::
+
+::group::src/lib/diagnostics.test.ts:
+(pass) developer diagnostics > redacts common credentials without hiding useful context [0.20ms]
+(pass) developer diagnostics > creates a support-friendly summary [0.32ms]
+
+::endgroup::
+
+::group::src/lib/cmdHistory.test.ts:
+(pass) feedInput > commits a typed line on Enter [0.23ms]
+(pass) feedInput > accumulates across chunks (per-keystroke input) [0.05ms]
+(pass) feedInput > backspace deletes characters [0.02ms]
+(pass) feedInput > empty and whitespace-only lines are not committed [0.02ms]
+(pass) feedInput > Ctrl+C discards the pending line [0.02ms]
+(pass) feedInput > escape sequences poison the line until the next Enter [0.06ms]
+(pass) feedInput > \r\n is treated as a single Enter [0.05ms]
+(pass) feedInput > large pasted printable bursts are captured as one command [0.23ms]
+(pass) feedInput > flushes printable bursts before backspace and control chars [0.05ms]
+(pass) history storage > appends newest first and dedupes [0.20ms]
+(pass) history storage > caps at HISTORY_LIMIT [0.33ms]
+(pass) history storage > dedupes a batch without repeatedly filtering existing history [0.06ms]
+(pass) history storage > corrupt storage yields empty history [0.02ms]
+
+::endgroup::
+
+::group::src/lib/ideActions.test.ts:
+(pass) IDE actions > merges custom IDEs before detected IDEs and dedupes by command [0.04ms]
+(pass) IDE actions > keeps system fallbacks available when requested [0.06ms]
+(pass) IDE actions > resolves configured defaults even if they are not currently detected [0.22ms]
+
+::endgroup::
+
+::group::src/lib/navButtons.test.ts:
+(pass) resolveNavOrder > empty saved order falls back to defaults [0.06ms]
+(pass) resolveNavOrder > saved prefix wins, missing ids appended in default order [0.04ms]
+(pass) resolveNavOrder > unknown and duplicate ids are dropped [0.07ms]
+(pass) moveNavButton > moves drag id to target position [0.05ms]
+(pass) moveNavButton > no-op for unknown ids [0.02ms]
+(pass) nudgeNavButton > moves one step and clamps at edges [0.05ms]
+(pass) visibleNavButtons > filters hidden ids [0.20ms]
+(pass) visibleNavButtons > every default button has a definition [0.08ms]
+
+::endgroup::
+
+::group::src/lib/fileIcons.test.ts:
+(pass) extensionOf > returns the last extension, lower-cased [0.06ms]
+(pass) extensionOf > treats dotfiles and trailing dots as extension-less where sensible [0.03ms]
+(pass) fileBadge > maps common extensions [0.07ms]
+(pass) fileBadge > prefers special file names over extensions [0.08ms]
+(pass) fileBadge > recognises .env variants [0.02ms]
+(pass) fileBadge > works on paths, not just names [0.02ms]
+(pass) fileBadge > falls back to a neutral badge labelled with the extension [0.02ms]
+(pass) fileBadge > gives every badge a label no longer than 3 characters and a colour [0.09ms]
+(pass) folderColor > colours well-known folders and defaults the rest [0.03ms]
+(pass) folderColor > dims generated and vendored folders [0.02ms]
+
+::endgroup::
+
+::group::src/lib/runFile.test.ts:
+(pass) runFileCommand > picks the interpreter by extension [0.22ms]
+(pass) runFileCommand > uses a path relative to the terminal folder and quotes spaces [0.12ms]
+
+::endgroup::
+
+::group::src/lib/dbHelpers.test.ts:
+(pass) nextSort > cycles none → asc → desc → none on the same column [0.05ms]
+(pass) nextSort > switching columns starts at ascending [0.01ms]
+(pass) pageCount > rounds up and never goes below 1 [0.03ms]
+(pass) formatRange > formats a 1-based clamped range [1.81ms]
+(pass) formatRange > handles an empty table [0.02ms]
+(pass) csvField > quotes fields with comma, quote or newline [0.07ms]
+(pass) toCsv > renders header + rows with CRLF [0.06ms]
+(pass) toCsv > header only when no rows [0.01ms]
+(pass) toJson > maps rows to objects keyed by column [0.11ms]
+(pass) exportName > sanitises to a safe stem [0.06ms]
+
+::endgroup::
+
+::group::src/lib/zoom.test.ts:
+(pass) clampZoom > clamps to [ZOOM_MIN, ZOOM_MAX] [0.04ms]
+(pass) clampZoom > non-finite input resets to 1 [0.01ms]
+(pass) clampZoom > rounds to two decimals (no float drift) [0.01ms]
+(pass) zoomIn / zoomOut > steps by 0.1 and clamps [0.03ms]
+(pass) zoomIn / zoomOut > repeated steps stay stable [0.06ms]
+
+::endgroup::
+
+::group::src/lib/configShare.test.ts:
+(pass) config export / import > round-trip preserves the config [0.46ms]
+(pass) config export / import > envelope metadata is included [0.04ms]
+(pass) config export / import > imports known keys, drops junk, keeps missing keys [0.08ms]
+(pass) config export / import > accepts a bare config object (no envelope) [0.04ms]
+(pass) config export / import > type mismatches are rejected per-field [0.10ms]
+(pass) config export / import > old terminal imports keep defaults for new terminal fields [0.09ms]
+(pass) config export / import > nullable string fields accept strings and nulls only [0.08ms]
+(pass) config export / import > known arrays reject invalid item shapes [0.09ms]
+(pass) config export / import > garbage input throws a friendly error [0.18ms]
+
+::endgroup::
+
+::group::src/lib/format.test.ts:
+(pass) formatNumber > groups thousands per the app language, not the OS [9.02ms]
+(pass) formatNumber > passes Intl options through [0.16ms]
+(pass) formatDate > renders month names in the app language [5.60ms]
+(pass) unix helpers > treat the input as seconds, not milliseconds [0.42ms]
+(pass) formatClock > omits seconds [0.16ms]
+(pass) formatBytes > scales through the unit ladder [0.24ms]
+(pass) formatBytes > keeps bytes integral but scaled units fractional [0.11ms]
+(pass) formatBytes > handles negatives and non-finite input [0.09ms]
+
+::endgroup::
+
+::group::src/lib/paletteCategories.test.ts:
+(pass) palette categories > groups by command id, so translated labels keep their category [0.08ms]
+(pass) palette categories > falls back to the English label prefix for unknown ids [0.08ms]
+(pass) palette categories > does not dump translated commands into the generic group [0.25ms]
+
+::endgroup::
+
+::group::src/lib/storageKeys.test.ts:
+(pass) storage key registry > has no duplicate keys [0.08ms]
+(pass) storage key registry > covers every luxor.* localStorage key used in src [6.30ms]
+
+::endgroup::
+
+::group::src/lib/ipcMockFs.test.ts:
+(pass) browser demo project > lists folders first, then files, case-insensitively [0.69ms]
+(pass) browser demo project > creates, writes, renames, copies and deletes [0.55ms]
+(pass) browser demo project > refuses to overwrite on create / rename [0.03ms]
+(pass) browser demo project > searches names and contents [0.43ms]
+(pass) browser demo project > only claims paths inside the demo project [0.04ms]
+
+::endgroup::
+
+::group::src/lib/statusSegments.test.ts:
+(pass) resolveSegmentOrder > empty saved order falls back to defaults (with spacer) [0.07ms]
+(pass) resolveSegmentOrder > partial saved order keeps all segments exactly once [0.04ms]
+(pass) moveSegment / nudgeSegment > drag reorder moves segment to target slot [0.08ms]
+(pass) moveSegment / nudgeSegment > segments can cross the spacer [0.03ms]
+(pass) moveSegment / nudgeSegment > nudge clamps at edges [0.06ms]
+(pass) segment metadata > every non-spacer segment has a visibility toggle [0.03ms]
+(pass) segment metadata > spacer has no toggle and labels resolve [0.08ms]
+
+::endgroup::
+
+::group::src/lib/ipc.test.ts:
+(pass) strToB64 / b64ToBytes > matches the reference encoding for ASCII, empty and UTF-8 [0.64ms]
+(pass) strToB64 / b64ToBytes > handles input far larger than the 0x8000 chunk boundary [6.82ms]
+(pass) strToB64 / b64ToBytes > round-trips str → b64 → bytes losslessly [0.20ms]
+(pass) strToB64 / b64ToBytes > b64ToBytes decodes raw (non-UTF-8) bytes [0.07ms]
+
+::endgroup::
+
+::group::src/lib/projectRun.test.ts:
+(pass) topCommands > interleaves toolchains and respects the limit [0.17ms]
+(pass) topCommands > drops duplicate commands and handles no groups [0.04ms]
+
+::endgroup::
+
+::group::src/lib/agentContext.test.ts:
+(pass) agentContext > paths prompt lists every file [0.06ms]
+(pass) agentContext > empty selection produces empty prompts [0.15ms]
+(pass) agentContext > contents prompt embeds fenced code with language [0.08ms]
+(pass) agentContext > fences grow when content contains backticks [0.03ms]
+(pass) agentContext > binary files are listed path-only [0.02ms]
+(pass) agentContext > fenceLang maps common extensions [0.02ms]
+
+::endgroup::
+
+::group::src/lib/fuzzy.test.ts:
+(pass) fuzzyScore > substring matches still match (superset of includes) [0.17ms]
+(pass) fuzzyScore > subsequence matches (skipped characters) [0.03ms]
+(pass) fuzzyScore > non-matching query returns null [0.02ms]
+(pass) fuzzyScore > is case-insensitive [0.02ms]
+(pass) fuzzyScore > empty query matches everything with zero-ish score [0.01ms]
+(pass) fuzzyScore > multi-word queries are order-free [0.03ms]
+(pass) fuzzyScore > word-boundary match scores higher than mid-word scatter [0.02ms]
+(pass) fuzzyFilter > empty query keeps original order [0.13ms]
+(pass) fuzzyFilter > filters out non-matches [0.04ms]
+(pass) fuzzyFilter > ranks the intuitive hit first [0.09ms]
+(pass) fuzzyFilter > prefix beats later occurrence [0.07ms]
+(pass) fuzzyFilter > stable for equal scores [0.06ms]
+(pass) fuzzyFilter > works with object keys [0.05ms]
+(pass) fuzzyFilter > limit returns only the best ranked matches [0.04ms]
+(pass) fuzzyFilter > blank query with limit keeps the visible prefix only [0.02ms]
+
+::endgroup::
+
+::group::src/lib/terminalBuffer.test.ts:
+(pass) captureBuffer > joins plain lines with newlines [0.12ms]
+(pass) captureBuffer > re-joins hard-wrapped continuation lines [0.03ms]
+(pass) captureBuffer > drops trailing blank lines but keeps inner ones [0.04ms]
+(pass) captureBuffer > empty buffer gives empty string [0.01ms]
+(pass) suggestOutputFilename > formats a sortable timestamped name [0.13ms]
+
+::endgroup::
+
+::group::src/lib/commandTracker.test.ts:
+(pass) CommandTracker — OSC 133 > reports duration and exit code from C/D marks [0.10ms]
+(pass) CommandTracker — OSC 133 > D without C is ignored (prompt printed at startup) [0.02ms]
+(pass) CommandTracker — OSC 133 > OSC disables the process-tree fallback [0.07ms]
+(pass) CommandTracker — OSC 133 > agent sessions suppress command_done from OSC [0.02ms]
+(pass) CommandTracker — process-tree fallback > tree grows then shrinks → command_done with duration [0.05ms]
+(pass) CommandTracker — process-tree fallback > agent processes do not count as plain commands [0.02ms]
+(pass) CommandTracker — agent responses > output burst then silence → agent_done [0.06ms]
+(pass) CommandTracker — agent responses > typing echoes never count as a response [0.06ms]
+(pass) CommandTracker — agent responses > short bursts (spinner redraws) are ignored [0.05ms]
+(pass) CommandTracker — agent responses > agent exiting mid-burst finishes the response [0.03ms]
+(pass) CommandTracker — agent responses > no agent in tree → no agent tracking [0.04ms]
+
+::endgroup::
+
+::group::src/lib/tooltip.test.ts:
+(pass) placeTooltip > centres below the target by default [0.15ms]
+(pass) placeTooltip > flips above when there is no room below [0.03ms]
+(pass) placeTooltip > clamps horizontally to the viewport edges [0.02ms]
+(pass) placeTooltip > places nav-rail tooltips to the right, vertically centred [0.02ms]
+(pass) placeTooltip > falls back below when the right side would overflow [0.01ms]
+
+::endgroup::
+
+::group::src/lib/tabIcon.test.ts:
+(pass) parseTabIcon > null/empty → no icon [0.05ms]
+(pass) parseTabIcon > lucide round-trip for every curated icon [0.07ms]
+(pass) parseTabIcon > unknown lucide id degrades to no icon (not raw text) [0.01ms]
+(pass) parseTabIcon > plain emoji stays emoji (legacy format) [0.02ms]
+
+::endgroup::
+
+::group::src/lib/shellQuote.test.ts:
+(pass) shellQuote > leaves simple paths untouched [0.02ms]
+(pass) shellQuote > quotes paths with spaces [0.05ms]
+(pass) shellQuote > escapes quotes and shell specials [0.02ms]
+
+::endgroup::
+
+::group::src/lib/settingsPresets.test.ts:
+(pass) settingsPresets > has unique ids and non-empty patches [0.11ms]
+(pass) settingsPresets > round-trips a shared preset [0.45ms]
+(pass) settingsPresets > round-trips unicode names [0.16ms]
+(pass) settingsPresets > rejects non-preset strings [0.06ms]
+(pass) settingsPresets > rejects presets without a name or config [0.08ms]
+(pass) settingsPresets > caps oversized names and descriptions [0.25ms]
+
+::endgroup::
+
+::group::src/lib/terminalActivity.test.ts:
+(pass) activityOf > exit codes win over process counts [0.02ms]
+(pass) activityOf > more than the shell itself means something is running [0.01ms]
+
+::endgroup::
+
+::group::src/lib/editorBus.test.ts:
+(pass) editorBus > registers and unregisters handles [0.13ms]
+(pass) editorBus > counts only dirty editors [0.08ms]
+(pass) editorBus > saveAllEditors saves only dirty ones and returns the count [0.24ms]
+(pass) editorBus > keeps saving even if one editor throws [0.15ms]
+(pass) editorBus > revealInEditor forwards to the matching editor and is a no-op otherwise [0.10ms]
+
+::endgroup::
+
+::group::src/lib/editorLanguage.test.ts:
+(pass) editor language detection > detects common web and systems languages [0.07ms]
+(pass) editor language detection > detects IDE-important extensionless/config files [0.03ms]
+(pass) editor language detection > recognises git hook scripts (with or without .sample) [0.05ms]
+(pass) editor language detection > falls back to plaintext with a readable label [0.06ms]
+(pass) editor language detection > maps shebang lines to a language [0.12ms]
+(pass) editor language detection > detectLanguage prefers the path, then the shebang [0.12ms]
+
+::endgroup::
+
+::group::src/lib/onboarding.test.ts:
+(pass) onboarding completion latch > survives a missing progress blob [0.80ms]
+(pass) onboarding completion latch > survives a corrupted progress blob [0.28ms]
+(pass) onboarding completion latch > honours a well-formed progress blob [0.30ms]
+(pass) onboarding completion latch > still reports first run when nothing is stored [0.27ms]
+(pass) onboarding completion latch > treats an unfinished tour as still needed [0.24ms]
+
+::endgroup::
+
+::group::src/lib/editorStatus.test.ts:
+(pass) langLabel > maps known Monaco ids to pretty names [0.04ms]
+(pass) langLabel > falls back to a capitalised id for unknown languages [0.01ms]
+(pass) langLabel > treats an empty id as plain text
+(pass) cursorLabel > formats a 1-based line/column [0.03ms]
+(pass) selectionLabel > is empty with no selection [0.07ms]
+(pass) selectionLabel > summarises a single range [0.01ms]
+(pass) selectionLabel > summarises multiple ranges
+
+::endgroup::
+
+::group::src/lib/i18nCoverage.test.ts:
+(pass) russian dictionary coverage > covers every static t() string [7.69ms]
+(pass) russian dictionary coverage > covers the literal label=/help= props of Settings rows (Row translates them) [0.72ms]
+
+::endgroup::
+
+::group::src/lib/hotkeys.test.ts:
+(pass) normalizeChord > normalizes modifier order [0.15ms]
+(pass) normalizeChord > treats Meta as the cross-platform Ctrl alias [0.02ms]
+(pass) normalizeChord > trims whitespace and ignores empty parts [0.02ms]
+(pass) actionForEvent > resolves a default binding [0.35ms]
+(pass) actionForEvent > returns undefined for unbound and modifier-only events [0.04ms]
+(pass) actionForEvent > honours a user override and drops the replaced default [0.07ms]
+(pass) actionForEvent > matches the whole action registry, not just a hand-picked subset [0.11ms]
+(pass) default bindings > no two default actions share a chord [0.08ms]
+(pass) chordSkipsShell > app chords with Shift/Alt and non-letter keys leave the terminal [0.10ms]
+(pass) chordSkipsShell > plain Ctrl+letter stays with the shell (readline, tmux, TUIs) [0.06ms]
+(pass) chordSkipsShell > Ctrl+W never leaves the terminal, and unbound keys are ignored [0.03ms]
+
+::endgroup::
+
+::group::src/lib/closedTabs.test.ts:
+(pass) isReopenable > accepts real panels [0.03ms]
+(pass) isReopenable > rejects welcome and empty [0.01ms]
+(pass) reopenKey > keys file-backed tabs by component + path [0.03ms]
+(pass) reopenKey > has no path segment for path-less tabs [0.02ms]
+(pass) pushClosedTab > adds most-recent first [0.10ms]
+(pass) pushClosedTab > ignores non-reopenable tabs [0.02ms]
+(pass) pushClosedTab > dedupes the same file (moves it to the top, no growth) [0.04ms]
+(pass) pushClosedTab > keeps multiple path-less tabs (terminals are all distinct) [0.02ms]
+(pass) pushClosedTab > caps the stack length [0.27ms]
+
+::endgroup::
+
+::group::src/lib/paletteRecents.test.ts:
+(pass) loadRecents > empty storage gives empty list [0.11ms]
+(pass) loadRecents > corrupt JSON gives empty list [0.05ms]
+(pass) loadRecents > non-string entries are dropped [0.03ms]
+(pass) recordRecent > newest first, deduplicated [0.08ms]
+(pass) recordRecent > capped at RECENTS_LIMIT [0.15ms]
+(pass) recordRecent > setItem failure is swallowed (best effort) [0.05ms]
+(pass) applyRecents > no recents keeps original order [0.07ms]
+(pass) applyRecents > recents float to the top in recency order [0.05ms]
+(pass) applyRecents > unknown ids (removed commands) are ignored [0.04ms]
+(pass) applyRecents > no duplicates when a recent id exists [0.03ms]
+
+::endgroup::
+
+::group::src/lib/i18n.test.ts:
+(pass) i18n > defaults to english fallback [0.08ms]
+(pass) i18n > returns russian translation when available [0.16ms]
+(pass) i18n > falls back to english for unknown keys [0.14ms]
+(pass) i18n > the russian dictionary has no corrupted (U+FFFD) characters [0.51ms]
+(pass) i18n > unknown languages map to english [0.06ms]
+(pass) i18n > getLocale tracks the active language, not the OS [0.51ms]
+
+::endgroup::
+
+::group::src/lib/cssColor.test.ts:
+(pass) computedColorToHex > handles the formats browsers return for computed colours [0.18ms]
+(pass) computedColorToHex > returns null for anything it cannot read [0.02ms]
+(pass) resolveCssColor > falls back without a scope element [0.10ms]
+
+::endgroup::
+
+::group::src/lib/dirtyGuard.test.ts:
+(pass) dirtyGuard > unknown panels are clean [0.03ms]
+(pass) dirtyGuard > reports the probe value [0.09ms]
+(pass) dirtyGuard > unregister removes the probe [0.05ms]
+(pass) dirtyGuard > unregister does not remove a replacement probe [0.03ms]
+(pass) dirtyGuard > a throwing probe counts as clean [0.03ms]
+
+::endgroup::
+
+::group::src/lib/logBuffer.test.ts:
+(pass) pushLog records lines newest-last with ids [0.25ms]
+(pass) ring buffer caps the number of retained lines [1.08ms]
+(pass) logsAsText joins entries with timestamps [0.08ms]
+(pass) clearLogs empties the buffer [0.02ms]
+(pass) subscribeLogs notifies on push and unsubscribes [0.08ms]
+(pass) latestStartup parses the most recent STARTUP line [0.15ms]
+(pass) latestStartup returns null with no startup line [0.03ms]
+
+::endgroup::
+
+::group::src/lib/terminalState.test.ts:
+(pass) terminalState save/load > round-trips a snapshot [0.40ms]
+(pass) terminalState save/load > returns null for missing, corrupt or foreign-version entries [0.07ms]
+(pass) terminalState save/load > scopes ids by dock so a preset applied twice does not collide [0.12ms]
+(pass) terminalState save/load > evicts the oldest snapshots when the total budget is exceeded [2.92ms]
+(pass) terminalState save/load > survives a full storage without throwing, keeping at least the draft [0.09ms]
+(pass) terminalState save/load > deleteTerminalState and purge remove entries [0.11ms]
+(pass) drafts and secrets > sanitizeDraft strips control characters and caps length [0.03ms]
+(pass) drafts and secrets > detects no-echo prompts but not ordinary commands [0.14ms]
+(pass) parseOsc7Cwd > parses posix and windows file URLs [0.08ms]
+(pass) parseOsc7Cwd > rejects anything else [0.03ms]
+(pass) pruneTerminalStates > collects terminal ids per dock from saved layouts [0.22ms]
+(pass) pruneTerminalStates > removes snapshots of closed terminals but keeps live and recent ones [0.21ms]
+(pass) pruneTerminalStates > prunes nothing when a layout cannot be read [0.07ms]
+(pass) isRestoreEnabled > defaults on and is switched off only by '0' [0.09ms]
+
+::endgroup::
+
+::group::src/lib/codemirror.test.ts:
+(pass) languageExtensionForId > resolves a non-null extension for every language id the app uses [81.91ms]
+(pass) languageExtensionForId > plaintext is the safe default for unknown ids [0.07ms]
+(pass) languageExtensionForId > isKnownLanguageId recognises every packed language [0.08ms]
+(pass) getCodeMirror > resolves the @codemirror/view module [0.06ms]
+(pass) getCodeMirror > returns the same promise on repeated calls [0.04ms]
+(pass) detectIndentUnit > follows the file's own indentation [0.12ms]
+(pass) detectIndentUnit > defaults to two spaces when there is nothing to learn from [0.02ms]
+(pass) minimalChange > replaces only the differing middle [0.07ms]
+(pass) minimalChange > handles appends, deletions and identical text [0.10ms]
+
+::endgroup::
+
+::group::src/lib/searchHistory.test.ts:
+(pass) pushSearchHistory > prepends new queries [0.08ms]
+(pass) pushSearchHistory > deduplicates and moves the repeated query to the front [0.02ms]
+(pass) pushSearchHistory > ignores blank queries [0.01ms]
+(pass) pushSearchHistory > caps the history at 20 entries [0.06ms]
+
+::endgroup::
+
+::group::src/lib/settingsSearch.test.ts:
+(pass) searchSettings > empty query matches nothing (caller shows all sections) [0.09ms]
+(pass) searchSettings > finds settings by content, not just section names [0.13ms]
+(pass) searchSettings > finds by keyword synonyms [0.21ms]
+(pass) searchSettings > multi-word queries require every word [0.18ms]
+(pass) searchSettings > case-insensitive [0.10ms]
+(pass) searchSettings > finds terminal shell argument settings [0.29ms]
+(pass) searchSettings > limits hint titles per section [0.11ms]
+(pass) searchSettings > index covers every section [0.07ms]
+
+::endgroup::
+
+::group::src/lib/ptyBus.test.ts:
+(pass) PtyRouter > buffers output emitted before attach and replays it in order [0.20ms]
+(pass) PtyRouter > delivers live output directly after attach [0.04ms]
+(pass) PtyRouter > replays a buffered exit (shell died before panel attached) [0.07ms]
+(pass) PtyRouter > does not cross sessions [0.03ms]
+(pass) PtyRouter > detach stops delivery; events buffer again for a new owner [0.04ms]
+(pass) PtyRouter > detach is a no-op when another handler took over [0.02ms]
+(pass) PtyRouter > caps buffered chunks, keeping the most recent output [0.55ms]
+(pass) PtyRouter > caps buffered bytes [0.61ms]
+(pass) PtyRouter > forget drops buffered state [0.06ms]
+(pass) PtyRouter > stale unclaimed sessions are swept after the TTL [0.06ms]
+
+::endgroup::
+
+::group::src/lib/breadcrumbs.test.ts:
+(pass) breadcrumbs > is relative to the project, starting with its name [0.06ms]
+(pass) breadcrumbs > handles Windows paths [0.03ms]
+(pass) breadcrumbs > falls back to the absolute path outside the project [0.04ms]
+
+::endgroup::
+
+::group::src/lib/navDrag.test.ts:
+(pass) nextNavDropConfig > moves a topbar button into the sidebar zone [0.11ms]
+(pass) nextNavDropConfig > moves a sidebar button back to topbar and removes it from other zones [0.07ms]
+(pass) nextNavDropConfig > keeps zones exclusive when moving into right chrome [0.03ms]
+(pass) nextNavDropConfig > aligns a topbar button to the left group [0.03ms]
+(pass) nextNavDropConfig > moving to topbar-right clears any left/center alignment [0.03ms]
+
+::endgroup::
+
+::group::src/lib/runDetect.test.ts:
+(pass) detectPackageManager > prefers bun, then pnpm, then yarn, else npm [0.07ms]
+(pass) detectPackageManager > is case-insensitive [0.01ms]
+(pass) pmRun > always produces a valid `<pm> run` prefix [0.02ms]
+(pass) parsePackageScripts > returns string-valued script names in order [0.09ms]
+(pass) parsePackageScripts > tolerates missing scripts and invalid JSON [0.03ms]
+(pass) parseCargoBins > extracts each [[bin]] name once [0.13ms]
+(pass) parseCargoBins > returns [] when no [[bin]] tables exist [0.02ms]
+(pass) parseCargoBins > does not leak a sibling table's name [0.01ms]
+(pass) parseMakeTargets > collects real targets, skips .PHONY and assignments [0.07ms]
+(pass) buildRunGroups > offers the cargo dev loop for a single-bin crate [0.20ms]
+(pass) buildRunGroups > uses --bin per binary for multi-bin crates [0.05ms]
+(pass) buildRunGroups > maps package.json scripts through the detected package manager [0.10ms]
+(pass) buildRunGroups > combines multiple toolchains in a polyglot repo [0.07ms]
+(pass) buildRunGroups > returns nothing for an unrecognized project [0.02ms]
+(pass) exe helpers > infers profile from the path [0.10ms]
+(pass) exe helpers > takes the basename for display [0.04ms]
+
+::endgroup::
+
+::group::src/lib/tabGroups.test.ts:
+(pass) buildTabLayout > passes ungrouped tabs through in order [0.14ms]
+(pass) buildTabLayout > clusters group members at the first member's position [0.10ms]
+(pass) buildTabLayout > emits each group exactly once [0.03ms]
+(pass) buildTabLayout > treats tabs of a deleted group as ungrouped [0.04ms]
+(pass) buildTabLayout > keeps two groups in first-seen order with interleaved tabs [0.06ms]
+(pass) buildTabLayout > does not mutate inputs [0.04ms]
+(pass) buildTabLayout > retains the collapsed flag on the group object [0.02ms]
+(pass) nextGroupColor > returns the first palette color when none used [0.05ms]
+(pass) nextGroupColor > skips already-used colors [0.03ms]
+(pass) nextGroupColor > is case-insensitive about used colors [0.02ms]
+(pass) nextGroupColor > cycles when the palette is exhausted [0.05ms]
+(pass) newGroupId > produces unique ids [0.25ms]
+(pass) activeGroupCount > counts only groups with a live member [0.09ms]
+(pass) activeGroupCount > ignores assignments to missing groups [0.02ms]
+(pass) pruneGroups > drops assignments for closed tabs and now-empty groups [0.10ms]
+(pass) pruneGroups > removes a group once its last member is gone [0.04ms]
+(pass) pruneGroups > reports no change when everything is live [0.02ms]
+
+::endgroup::
+
+::group::src/lib/terminalLinks.test.ts:
+(pass) matchPathLinks > finds rust-style path:line:col [0.18ms]
+(pass) matchPathLinks > finds ts-style path:line [0.04ms]
+(pass) matchPathLinks > finds msvc-style path(line,col) [0.05ms]
+(pass) matchPathLinks > finds plain paths without line numbers [0.02ms]
+(pass) matchPathLinks > ignores URLs [0.05ms]
+(pass) matchPathLinks > returns nothing for plain words and versions [0.01ms]
+(pass) resolveMatchedPath > keeps absolute paths [0.06ms]
+(pass) resolveMatchedPath > joins relative paths to the root and strips ./ [0.03ms]
+(pass) resolveMatchedPath > returns the path as-is without a root [0.02ms]
+
+::endgroup::
+
+::group::src/lib/pasteNames.test.ts:
+(pass) pasteName > keeps a free name [0.06ms]
+(pass) pasteName > numbers copies and keeps the extension [0.03ms]
+(pass) pasteName > treats folders and dotfiles as having no extension [0.02ms]
+
+::endgroup::
+
+::group::src/lib/useEnterExit.test.ts:
+(pass) useEnterExit module contract > is exported as a function taking (open, options) [0.02ms]
+
+::endgroup::
+
+::group::src/lib/quitGuard.test.ts:
+(pass) quitWarning > is null when nothing would be lost [0.04ms]
+(pass) quitWarning > names unsaved files and busy terminals [0.03ms]
+
+::endgroup::
+
+::group::src/lib/statusBarPrefs.test.ts:
+(pass) alignToJustify > maps each alignment to a CSS justify-content value [0.03ms]
+(pass) alignToJustify > every advertised option produces a non-empty justify value [0.03ms]
+(pass) alignToJustify > falls back to flex-start for an unknown value [0.01ms]
+
+::endgroup::
+
+::group::src/lib/shellArgs.test.ts:
+(pass) shellArgs > parses empty and whitespace-only input [0.11ms]
+(pass) shellArgs > splits simple whitespace-separated args [0.02ms]
+(pass) shellArgs > keeps quoted whitespace together [0.03ms]
+(pass) shellArgs > supports escaped characters [0.04ms]
+(pass) shellArgs > preserves empty quoted arguments [0.01ms]
+(pass) shellArgs > reports unclosed quotes without changing settings [0.02ms]
+(pass) shellArgs > formats args so they can be edited and parsed back [0.12ms]
+(pass) effectiveShellArgs > PowerShell gets the startup flags plus the cwd prompt hook [0.08ms]
+(pass) effectiveShellArgs > explicit args win and other shells get nothing injected [0.02ms]
+
+::endgroup::
+
+::group::src/lib/cpu.test.ts:
+(pass) machineCpuPct > converts core-relative CPU into a machine-relative percentage [0.05ms]
+(pass) machineCpuPct > clamps and guards against bad input [0.02ms]
+(pass) fmtCpu > formats as an integer percentage [0.04ms]
+
+::endgroup::
+
+::group::src/lib/activityLog.test.ts:
+(pass) logActivity > records events newest first [0.27ms]
+(pass) logActivity > ignores blank messages [0.02ms]
+(pass) logActivity > collapses rapid identical duplicates [0.03ms]
+(pass) logActivity > same message with different kind is kept [0.02ms]
+(pass) logActivity > caps the log at MAX_EVENTS [11.18ms]
+(pass) logActivity > notifies subscribers and snapshot identity is stable between writes [0.23ms]
+(pass) filterActivity > filters by query (case-insensitive) and kind set [0.12ms]
+
+::endgroup::
+
+::group::src/lib/replacePreview.test.ts:
+(pass) previewReplacement > returns the raw replacement in literal mode [0.09ms]
+(pass) previewReplacement > expands numbered capture groups in regex mode [0.08ms]
+(pass) previewReplacement > expands Rust-style named groups (${name}) [0.08ms]
+(pass) previewReplacement > is case-insensitive when caseSensitive=false [0.03ms]
+(pass) previewReplacement > returns null when the pattern no longer matches the hit text [0.05ms]
+(pass) previewReplacement > returns null for invalid regex instead of throwing [0.03ms]
+
+::endgroup::
+
+::group::src/lib/gitMarks.test.ts:
+(pass) markOf > prefers the worktree state and ignores ignored files [0.07ms]
+(pass) buildMarks > marks files and tints their parent folders [0.16ms]
+(pass) buildMarks > a folder shows the strongest tone beneath it [0.04ms]
+(pass) buildMarks > uses backslashes for Windows roots [0.02ms]
+
+::endgroup::
+
+::group::src/lib/rightPanelConfig.test.ts:
+(pass) defaults > default config contains every widget exactly once [0.13ms]
+(pass) defaults > default enabled set matches DEFAULT_ENABLED [0.04ms]
+(pass) parse / migrate > round-trips through serialize [0.56ms]
+(pass) parse / migrate > empty blob + empty legacy list = defaults [0.05ms]
+(pass) parse / migrate > invalid JSON falls back to legacy migration [0.12ms]
+(pass) parse / migrate > legacy migration preserves order and drops unknown ids [0.04ms]
+(pass) parse / migrate > duplicate widget entries are ignored [0.10ms]
+(pass) parse / migrate > unknown widget ids in the blob are dropped, missing ones appended disabled [0.09ms]
+(pass) parse / migrate > all-disabled config re-enables the defaults instead of an empty panel [0.11ms]
+(pass) parse / migrate > density falls back to comfortable for unknown values [0.06ms]
+(pass) accents > normalizeAccent lowercases valid hex and rejects everything else [0.06ms]
+(pass) accents > setWidgetAccent stores normalized hex and clears with null [0.07ms]
+(pass) options sanitization > clamps row counts and note height [0.09ms]
+(pass) options sanitization > timer presets are deduped, clamped and capped at 4 [0.05ms]
+(pass) options sanitization > non-boolean flags are stripped [0.03ms]
+(pass) options sanitization > non-object input yields empty options [0.02ms]
+(pass) update helpers > moveWidget reorders and clamps the target index [0.04ms]
+(pass) update helpers > moveWidget is a no-op for same index or unknown id [0.04ms]
+(pass) update helpers > setWidgetOptions merges patches through sanitization [0.09ms]
+(pass) update helpers > update helpers never mutate the input [0.12ms]
+
+::endgroup::
+
+::group::src/layout/placement.test.ts:
+(pass) placementKindOf > classifies documents and terminals, ignores tool panels [0.05ms]
+(pass) pickGroup > sends a file to the editor group even when a terminal group is active [0.08ms]
+(pass) pickGroup > sends a file to the editor group when the explorer group is active [0.02ms]
+(pass) pickGroup > sends a terminal to the terminal group when the editor group is active [0.01ms]
+(pass) pickGroup > keeps the active group when it already fits [0.03ms]
+(pass) pickGroup > returns null when no group holds that kind, so dockview decides [0.03ms]
+(pass) pickGroup > prefers the remembered group over the first one [0.08ms]
+(pass) group memory > remembers the last group per kind and per dock [0.08ms]
+(pass) group memory > overwrites with the most recent group [0.02ms]
+(pass) neighbourGroup > steps forward and back with wrap-around [0.04ms]
+(pass) neighbourGroup > starts from an end when nothing is active and refuses a single group [0.02ms]
+
+::endgroup::
+
+::group::src/layout/builtinLayouts.test.ts:
+(pass) buildLayout > every layout is a valid tree: unique keys, refs point backwards, only the root has no ref [0.22ms]
+(pass) buildLayout > 'all' shows the editor and two terminals when there is a file to open [0.03ms]
+(pass) buildLayout > 'all' and 'code' leave the editor out when there is nothing to open [0.02ms]
+(pass) buildLayout > 'code' has a single, small terminal under the editor [0.02ms]
+(pass) buildLayout > no layout adds a Files tab: the tree is the Explorer side bar [0.04ms]
+(pass) buildLayout > 'terminals' starts from a terminal and puts the editor beside it [0.04ms]
+(pass) buildLayout > passes the project folder to every terminal and the file to the editor [0.05ms]
+(pass) buildLayout > a blank workspace gets terminals with no folder [0.04ms]
+(pass) pickStartFile > prefers the README, then manifests [0.14ms]
+(pass) pickStartFile > ignores folders with a matching name and returns null when nothing fits [0.04ms]
+(pass) BUILTIN_LAYOUTS > covers every layout id once [0.02ms]
+
+::endgroup::
+
+::group::src/layout/workbenchLogic.test.ts:
+(pass) groupRole > classifies groups by their panels [0.06ms]
+(pass) decideTerminalToggle (Ctrl+`) > creates a terminal when there is none [0.12ms]
+(pass) decideTerminalToggle (Ctrl+`) > shows a hidden terminal panel and focuses it [0.07ms]
+(pass) decideTerminalToggle (Ctrl+`) > focuses a visible panel when focus is elsewhere [0.09ms]
+(pass) decideTerminalToggle (Ctrl+`) > hides the panel when a terminal is focused and returns focus to the editors [0.06ms]
+(pass) decideTerminalToggle (Ctrl+`) > never hides when terminals are all the dock has [0.02ms]
+(pass) decideTerminalToggle (Ctrl+`) > 'show' mode never hides [0.02ms]
+(pass) decideTerminalToggle (Ctrl+`) > 'visibility' mode (Ctrl+J) hides a visible panel even from the editor [0.02ms]
+(pass) decideTerminalToggle (Ctrl+`) > prefers the terminal group used last [0.02ms]
+(pass) decideTerminalToggle (Ctrl+`) > ignores floating terminal groups [0.02ms]
+(pass) terminalPlacement > joins an existing terminal group, re-showing it when hidden [0.08ms]
+(pass) terminalPlacement > opens a bottom panel next to documents [0.04ms]
+(pass) terminalPlacement > fills an empty dock or one that only shows Welcome [0.02ms]
+(pass) filePlacement > uses the active document group, else the remembered one [0.09ms]
+(pass) filePlacement > splits above a focused terminal group instead of joining its tabs [0.05ms]
+(pass) filePlacement > keeps dockview's default next to tool panels [0.05ms]
+(pass) previewToReplace > replaces the clean preview tab only [0.05ms]
+
+::endgroup::
+
+ 480 pass
+ 0 fail
+ 1286 expect() calls
+Ran 480 tests across 67 files. [441.00ms]
+exit=0
