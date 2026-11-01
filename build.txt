@@ -1,0 +1,3 @@
+$ tsc --noEmit && vite build
+src/lib/i18n.ru.ts(1733,3): error TS1117: An object literal cannot have multiple properties with the same name.
+exit=2

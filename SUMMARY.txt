@@ -1,0 +1,23 @@
+==> probe-out/build.txt <==
+$ tsc --noEmit && vite build
+src/lib/i18n.ru.ts(1733,3): error TS1117: An object literal cannot have multiple properties with the same name.
+exit=2
+
+==> probe-out/install.txt <==
++ zustand@5.0.14
+
+256 packages installed [799.00ms]
+
+==> probe-out/lint.txt <==
+$ eslint .
+exit=0
+
+==> probe-out/typecheck.txt <==
+$ tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit
+src/lib/i18n.ru.ts(1733,3): error TS1117: An object literal cannot have multiple properties with the same name.
+exit=2
+
+==> probe-out/unit.txt <==
+ 1286 expect() calls
+Ran 480 tests across 67 files. [424.00ms]
+exit=0
