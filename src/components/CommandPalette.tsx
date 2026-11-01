@@ -497,7 +497,8 @@ function CommandPaletteInner({ open, leaving }: { open: boolean; leaving: boolea
     if (open) {
       setQuery("");
       setSelected(0);
-      setMode("commands");
+      // Go to file (Ctrl+P) asks for the file list; everything else opens on commands.
+      setMode(useAppStore.getState().paletteMode);
       setRecents(loadRecents());
       setTimeout(() => inputRef.current?.focus(), 0);
     }

@@ -116,8 +116,8 @@ export function TerminalPanel(props: IDockviewPanelProps) {
   const panelStatusId = props.api.id;
   const activity = activityOf(exited, treeStats?.processes ?? null);
   useEffect(() => {
-    useTerminalStatus.getState().set(panelStatusId, activity);
-  }, [panelStatusId, activity]);
+    useTerminalStatus.getState().set(panelStatusId, activity, dockKey);
+  }, [panelStatusId, activity, dockKey]);
   useEffect(() => () => useTerminalStatus.getState().clear(panelStatusId), [panelStatusId]);
   const showStats = useAppStore((s) => s.config?.terminal.show_stats ?? true);
   const notifyEnabled = useAppStore((s) => s.config?.notifications.enabled ?? true);
@@ -126,6 +126,9 @@ export function TerminalPanel(props: IDockviewPanelProps) {
 
   /** Route a tracker notice to toast/OS notifications (config-gated). */
   const handleNotice = (notice: TrackerNotice) => {
+    // A finished command / agent in a project that is not on screen marks its
+    // project tab (cleared when the project is shown again).
+    if (dockKey && useProjectsStore.getState().activeId !== dockKey) useTerminalStatus.getState().flag(dockKey);
     const cfg = useAppStore.getState().config?.notifications;
     if (!cfg?.enabled) return;
     // The user is staring at this very terminal — nothing to announce.
@@ -262,6 +265,8 @@ export function TerminalPanel(props: IDockviewPanelProps) {
           .catch(() => {});
         return false;
       }
+      // Alt+1…9 switch project tabs (handled by the app, not readline).
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && /^Digit[1-9]$/.test(e.code)) return false;
       // App shortcuts (Ctrl+Shift+P, Ctrl+`, Ctrl+PageDown, …) go to the app;
       // plain Ctrl+letter chords stay with the shell (see chordSkipsShell).
       if (chordSkipsShell(chordFromEvent(e), actionForEvent(e, useAppStore.getState().config))) return false;

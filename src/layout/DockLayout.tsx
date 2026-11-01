@@ -833,6 +833,8 @@ function DockLayoutImpl() {
   useEffect(() => {
     if (!key) return;
     setActiveKey(key);
+    // The project is on screen: its "something finished" badge is read.
+    useTerminalStatus.getState().seen(key);
     setMounted((m) => (m.includes(key) ? m : [...m, key]));
   }, [key, setActiveKey]);
 

@@ -512,6 +512,19 @@ export default function App() {
         if (!e.repeat) useProjectsStore.getState().cycleActive(e.shiftKey ? -1 : 1);
         return;
       }
+      // Alt+1…8 jump to the Nth project tab, Alt+9 to the last one (browser
+      // and terminal-emulator convention). Same order as Ctrl+Tab: pinned first.
+      if (e.altKey && !e.ctrlKey && !e.metaKey && !e.shiftKey && /^Digit[1-9]$/.test(e.code)) {
+        const { projects, setActive } = useProjectsStore.getState();
+        const ordered = [...projects].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+        const n = Number(e.code.slice(5));
+        const target = n === 9 ? ordered[ordered.length - 1] : ordered[n - 1];
+        if (target) {
+          e.preventDefault();
+          if (!e.repeat) setActive(target.id);
+        }
+        return;
+      }
       // Actions that must not auto-repeat while the key is held: each of these
       // toggles or spawns something, so a held key would fire it dozens of times.
       const NO_REPEAT = new Set([

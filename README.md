@@ -116,6 +116,7 @@ All of these can be rebound in Settings → Hotkeys. On macOS `Ctrl` means `⌘`
 | `Ctrl+Shift+G` | Git explorer |
 | `Ctrl+,` | Settings |
 | `Ctrl+Shift+Z` | Zen mode |
+| `Ctrl+Tab` / `Alt+1…9` | Next project tab / project tab N (9 = last) |
 | `Ctrl+PageDown` / `Ctrl+PageUp` | Next / previous tab |
 | `Ctrl+W` | Close tab |
 | `Ctrl+Shift+T` | Reopen closed tab |

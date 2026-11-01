@@ -117,6 +117,9 @@ function formatSize(bytes: number): string {
 const TOOLBAR_BTN =
   "flex h-7 w-7 items-center justify-center rounded-md text-muted transition-colors hover:bg-raised hover:text-strong focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent/40";
 
+/** Open folders per project root, kept for the session (side bar). */
+const EXPANDED_BY_ROOT = new Map<string, Record<string, boolean>>();
+
 /** One row of the virtualized tree: an entry, or the inline "new" row. */
 type TreeRow =
   | { kind: "entry"; entry: FsEntry; depth: number }
@@ -333,14 +336,25 @@ export function FilesPanel({ variant = "panel" }: { variant?: "panel" | "sidebar
   useEffect(() => {
     loadVersionsRef.current.clear();
     setChildren({});
-    setExpanded({});
+    // The side bar follows the active project tab: bring back the folders that
+    // were open last time this project was shown instead of a collapsed tree.
+    const restored = (root && sidebar && EXPANDED_BY_ROOT.get(root)) || {};
+    setExpanded(restored);
     setSelected(new Set());
     setEmbeddedPath(null);
     setEmbeddedDirty(false);
     setInlineEdit(null);
     lastClickedRef.current = null;
-    if (root) void load(root);
-  }, [root, load]);
+    if (root) {
+      void load(root);
+      for (const dir of Object.keys(restored)) if (restored[dir]) void load(dir, true);
+    }
+  }, [root, load, sidebar]);
+
+  // Remember the open folders per project (side bar only; one tree per window).
+  useEffect(() => {
+    if (sidebar && root) EXPANDED_BY_ROOT.set(root, expanded);
+  }, [sidebar, root, expanded]);
 
   const refresh = () => {
     if (!root) return;

@@ -67,6 +67,7 @@ import { BUILTIN_LAYOUTS, type BuiltinLayoutId } from "@/layout/builtinLayouts";
 import { useAppStore } from "@/state/appStore";
 import { confirmDestructive, openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
+import { projectActivity, useTerminalStatus } from "@/state/terminalStatus";
 import { useTabGroups } from "@/state/tabGroupsStore";
 import { QuickActions } from "./QuickActions";
 import { ChromeQuickActions, CommandBarButton, WindowControls } from "./WindowChrome";
@@ -931,6 +932,7 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
         <FolderGit2 size={13} className="shrink-0 opacity-60" />
       )}
       {!leftCollapsed && <span className="max-w-36 truncate">{p.name}</span>}
+      {activeId !== p.id && <ProjectActivityDot projectId={p.id} />}
       {p.pinned && !leftCollapsed && <Pin size={10} className="shrink-0 rotate-45 opacity-60" />}
       {activeId === p.id && !p.pinned && !leftCollapsed && (
         <button
@@ -1323,6 +1325,27 @@ function TopBarImpl({ vertical }: { vertical: boolean }) {
         />
       )}
     </div>
+  );
+}
+
+/**
+ * Background project status on its tab: a pulsing dot while a command runs in
+ * one of its terminals, a solid accent dot once a command / AI agent finished
+ * there (cleared when the project is shown). Lets several projects run side by
+ * side without checking each tab.
+ */
+function ProjectActivityDot({ projectId }: { projectId: string }) {
+  const activity = useTerminalStatus((s) => projectActivity(s, projectId));
+  if (!activity) return null;
+  const label = activity === "attention" ? t("Finished — have a look") : t("Running");
+  return (
+    <span
+      className={`h-1.5 w-1.5 shrink-0 rounded-full ${activity === "attention" ? "bg-accent" : "animate-pulse bg-muted"}`}
+      title={label}
+      aria-label={label}
+      role="status"
+      data-testid={`project-activity-${activity}`}
+    />
   );
 }
 

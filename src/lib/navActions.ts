@@ -4,10 +4,10 @@ import { useProjectsStore } from "@/state/projectsStore";
 import { useWorkbenchStore, type SidebarView } from "@/state/workbenchStore";
 import { launcherOpenIde, openPath } from "./ipc";
 
-/** The side bar exists for project tabs only (not the Welcome screen). */
+/** The side bar exists for projects with a folder (not Welcome / blank workspaces). */
 export function sidebarAvailable(): boolean {
   const { projects, activeId } = useProjectsStore.getState();
-  return projects.some((p) => p.id === activeId);
+  return projects.some((p) => p.id === activeId && p.path !== "");
 }
 
 /**

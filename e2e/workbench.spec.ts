@@ -17,6 +17,19 @@ const row = (page: Page, name: string) =>
   tree(page).getByRole("treeitem").filter({ has: page.getByText(name, { exact: true }) }).first();
 const tab = (page: Page, title: string) => page.locator(".dv-tab", { hasText: title }).first();
 
+/**
+ * Terminal output as the restore snapshot saw it (xterm draws on a WebGL
+ * canvas, so the DOM has no text to read). Saved on a ~2.5 s throttle.
+ */
+async function terminalText(page: Page): Promise<string> {
+  return page.evaluate(() =>
+    Object.keys(localStorage)
+      .filter((k) => k.startsWith("luxor.term."))
+      .map((k) => (JSON.parse(localStorage.getItem(k) as string) as { data?: string }).data ?? "")
+      .join("\n"),
+  );
+}
+
 test.describe("workbench: explorer side bar", () => {
   test("a project opens with its file tree beside an empty editor area", async ({ page }) => {
     await openApp(page);
@@ -89,7 +102,7 @@ test.describe("workbench: explorer side bar", () => {
     await openApp(page);
     await openDemoProject(page);
     await page.getByTestId("sidebar-tab-search").click();
-    const box = page.getByTestId("workbench-sidebar").getByRole("textbox").first();
+    const box = page.getByTestId("workbench-sidebar").locator("input").first();
     await box.fill("formatPrice");
     await box.press("Enter");
     await expect(page.getByTestId("workbench-sidebar").getByText("Cart.tsx").first()).toBeVisible();
@@ -106,8 +119,8 @@ test.describe("workbench: terminal panel", () => {
     await page.keyboard.press("Control+Backquote");
     const xterm = page.locator(".xterm").first();
     await expect(xterm).toBeVisible();
-    // The browser mock runs a tiny simulated shell.
-    await expect(page.locator(".xterm-rows").first()).toContainText("dev@luxor", { timeout: 10_000 });
+    // The browser mock runs a tiny simulated shell; its OSC title names the tab.
+    await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
     const panel = page.getByTestId("statusbar-toggle-panel");
     await expect(panel).toHaveAttribute("aria-pressed", "true");
 
@@ -127,12 +140,15 @@ test.describe("workbench: terminal panel", () => {
     await openApp(page);
     await openDemoProject(page);
     await page.keyboard.press("Control+Backquote");
-    await expect(page.locator(".xterm-rows").first()).toContainText("dev@luxor", { timeout: 10_000 });
+    await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
     await page.locator(".xterm-helper-textarea").first().focus();
     await page.keyboard.type("ls");
     await page.keyboard.press("Enter");
-    await expect(page.locator(".xterm-rows").first()).toContainText("package.json");
-    await expect(page.locator(".dv-tab", { hasText: "aurora-shop" }).first()).toBeVisible();
+    await expect.poll(() => terminalText(page), { timeout: 10_000 }).toContain("package.json");
+    // `cd src` changes the folder the tab is named after.
+    await page.keyboard.type("cd src");
+    await page.keyboard.press("Enter");
+    await expect(tab(page, "src")).toBeVisible();
   });
 });
 

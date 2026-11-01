@@ -232,12 +232,11 @@ export function mockPtySpawn(opts: { cwd?: string | null } | undefined): {
   const cwd = opts?.cwd || HOME;
   const s: Session = { id: `mock-${Date.now()}-${seq}`, cwd, line: "", alive: true };
   sessions.set(s.id, s);
-  // After the spawn promise resolves (the panel attaches through the pty bus,
-  // which buffers anything that arrives first).
-  setTimeout(() => {
-    out(s, `${ESC}[90mLuxor demo shell — commands are simulated in the browser preview. Type 'help'.${ESC}[0m\r\n`);
-    out(s, prompt(s));
-  }, 30);
+  // Emitted right away, like a real shell's banner: the pty bus buffers output
+  // for sessions no panel has attached to yet and replays it on attach, so the
+  // prompt is on screen before the first keystroke can arrive.
+  out(s, `${ESC}[90mLuxor demo shell — commands are simulated in the browser preview. Type 'help'.${ESC}[0m\r\n`);
+  out(s, prompt(s));
   return { session_id: s.id, shell: "demo-sh", cwd, pid: 4242 };
 }
 

@@ -561,6 +561,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
         </button>
         {project && (
           <>
+            {project.path !== "" && (
             <button
               className={`shrink-0 rounded p-0.5 hover:bg-raised hover:text-strong ${sidebarOpen ? "text-strong" : "text-muted"}`}
               title={`${t("Toggle side bar")} (${hintFor("sidebar.toggle", config)})`}
@@ -571,6 +572,7 @@ Click: Git explorer · right-click: fetch / pull / push`}
             >
               <PanelLeft size={13} />
             </button>
+            )}
             <button
               className={`shrink-0 rounded p-0.5 hover:bg-raised hover:text-strong ${terminalPanel === "visible" ? "text-strong" : "text-muted"}`}
               title={`${t("Toggle terminal panel")} (${hintFor("panel.toggle", config)})`}

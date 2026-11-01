@@ -1707,4 +1707,5 @@ export const RU: Record<string, string> = {
   "Three terminals, editor on the side": "Три терминала, редактор сбоку",
   "Explorer side bar (double-click: as a tab)": "Боковая панель «Проводник» (двойной щелчок — вкладкой)",
   "Search in project (double-click: as a tab)": "Поиск по проекту (двойной щелчок — вкладкой)",
+  "Finished — have a look": "Завершилось — загляните",
 };

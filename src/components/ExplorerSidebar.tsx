@@ -45,8 +45,9 @@ function ExplorerSidebarImpl() {
   const width = useWorkbenchStore((s) => s.sidebarWidth);
   const focusSeq = useWorkbenchStore((s) => s.focusSeq);
   const config = useAppStore((s) => s.config);
-  // Only for a real project tab: the Welcome screen has no files to show.
-  const hasProject = useProjectsStore((s) => s.projects.some((p) => p.id === s.activeId));
+  // Only for a project with a folder: the Welcome screen and blank workspaces
+  // have no files to show (their Files tab offers to attach a folder).
+  const hasFolder = useProjectsStore((s) => s.projects.some((p) => p.id === s.activeId && p.path !== ""));
   const asideRef = useRef<HTMLElement>(null);
 
   // Focus requests for the search view (the tree handles its own).
@@ -58,7 +59,7 @@ function ExplorerSidebarImpl() {
     return () => cancelAnimationFrame(id);
   }, [focusSeq, view]);
 
-  if (!open || !hasProject) return null;
+  if (!open || !hasFolder) return null;
 
   const startResize = (e: ReactPointerEvent<HTMLDivElement>) => {
     const aside = asideRef.current;
