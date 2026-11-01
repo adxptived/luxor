@@ -1,29 +1,29 @@
 import { expect, test } from "@playwright/test";
 
-import { clickNav, dockTab, openApp, openCommandPalette } from "./helpers";
+import { clickNav, dockTab, openApp, openCommandPalette, terminalTabs } from "./helpers";
 
 test.describe("splitting & layout discoverability", () => {
   test("group header split buttons create new terminals", async ({ page }) => {
     await openApp(page);
     await clickNav(page, "terminal");
-    await expect(dockTab(page, "Terminal")).toBeVisible();
+    await expect(terminalTabs(page).first()).toBeVisible();
     const actions = page.getByTestId("group-actions").first();
     await actions.getByTitle("Split right with a new terminal").click();
-    await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+    await expect(terminalTabs(page)).toHaveCount(2);
     await actions.getByTitle("Split down with a new terminal").click();
-    await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(3);
+    await expect(terminalTabs(page)).toHaveCount(3);
   });
 
   test("tab-strip plus adds a terminal; right-click lists all panels", async ({ page }) => {
     await openApp(page);
     await clickNav(page, "terminal");
-    await expect(dockTab(page, "Terminal")).toBeVisible();
+    await expect(terminalTabs(page).first()).toBeVisible();
     const add = page.getByTestId("group-add").first().locator("button");
     // The "+" opens a picker now ("New terminal or panel…") instead of adding a
     // terminal directly, so the terminal has to be chosen from the menu.
     await add.click();
     await page.getByTestId("context-menu").getByText("New terminal").click();
-    await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+    await expect(terminalTabs(page)).toHaveCount(2);
     await add.click({ button: "right" });
     const menu = page.getByTestId("context-menu");
     await expect(menu.getByText("New terminal")).toBeVisible();
@@ -38,7 +38,7 @@ test.describe("splitting & layout discoverability", () => {
     const input = page.getByTestId("command-palette").locator("input");
     await input.fill("split right");
     await input.press("Enter");
-    await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+    await expect(terminalTabs(page)).toHaveCount(2);
   });
 
   test("tab context menu offers split actions", async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe("splitting & layout discoverability", () => {
     await expect(menu).toBeVisible();
     await expect(menu.getByText("Split right (new terminal)")).toBeVisible();
     await menu.getByText("Split right (new terminal)").click();
-    await expect(dockTab(page, "Terminal")).toBeVisible();
+    await expect(terminalTabs(page).first()).toBeVisible();
   });
 });
 

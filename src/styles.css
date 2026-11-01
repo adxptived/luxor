@@ -626,6 +626,17 @@ body,
   border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
 }
+/* A bare input inside a styled search box (icon + field + count): the box
+ * shows the focus, not a second rectangle around the text field itself (it
+ * used to draw an offset halo inside the palette's search box). */
+input.bg-transparent:focus-visible {
+  box-shadow: none;
+  border-color: transparent;
+}
+:where(div, label):has(> input.bg-transparent:focus-visible) {
+  border-color: color-mix(in srgb, var(--lx-accent) 55%, var(--lx-edge));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--lx-accent) 26%, transparent);
+}
 /* The terminal and the editor paint their own focus surfaces. */
 .xterm :where(*):focus-visible,
 .cm-editor :where(*):focus-visible {

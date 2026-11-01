@@ -10,7 +10,7 @@
  */
 import { expect, test } from "@playwright/test";
 
-import { clickNav, dockTab, openApp } from "./helpers";
+import { clickNav, dockTab, openApp, terminalTabs } from "./helpers";
 
 /** Nav id -> expected dock tab title (from PANEL_TITLES / NAV_BUTTONS). */
 const PANELS: Array<{ nav: string; tab: string }> = [
@@ -36,7 +36,8 @@ test.describe("panel smoke tests", () => {
     test(`${nav} panel opens and renders without crashing`, async ({ page }) => {
       await openApp(page);
       await clickNav(page, nav);
-      await expect(dockTab(page, tab)).toBeVisible();
+      // Terminals are named after their folder, so they are found by kind.
+      await expect(nav === "terminal" ? terminalTabs(page).first() : dockTab(page, tab)).toBeVisible();
       // The error boundary fallback must NOT be present anywhere in the dock.
       await expect(page.getByTestId("panel-crashed")).toHaveCount(0);
     });

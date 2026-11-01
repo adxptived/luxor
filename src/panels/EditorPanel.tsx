@@ -20,6 +20,7 @@ import { cursorLabel, langLabel, selectionLabel } from "@/lib/editorStatus";
 import { EDITOR_LANGUAGE_OPTIONS, detectLanguage, languageForPath, languageLabel } from "@/lib/editorLanguage";
 import { fileName, runInActiveTerminal, useDockStore } from "@/layout/dockStore";
 import { canRunFile, runFileCommand } from "@/lib/runFile";
+import { onFsPoke } from "@/lib/fsPoke";
 import { isWindows } from "@/lib/platform";
 import { hintFor } from "@/lib/hotkeys";
 import { useDockKey } from "@/layout/DockKeyContext";
@@ -864,11 +865,13 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       if (document.visibilityState !== "visible" || !onScreenRef.current) return;
       void checkDiskRef.current();
     };
-    const id = window.setInterval(tick, 2000);
+    const id = window.setInterval(tick, 2500);
     window.addEventListener("focus", tick);
+    const unpoke = onFsPoke(tick);
     return () => {
       window.clearInterval(id);
       window.removeEventListener("focus", tick);
+      unpoke();
     };
   }, [embedded, path]);
 

@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { clickNav, dockTab, openApp } from "./helpers";
+import { clickNav, dockTab, openApp, terminalTabs } from "./helpers";
 
 /**
  * Regression guard for the audit's P0 finding: `<div key={getLanguage()}>` on the
@@ -19,10 +19,10 @@ test.describe("UI language switch", () => {
 
     // Two terminals, so the assertion also covers layout preservation.
     await clickNav(page, "terminal");
-    await expect(dockTab(page, "Terminal")).toBeVisible();
+    await expect(terminalTabs(page).first()).toBeVisible();
     const actions = page.getByTestId("group-actions").first();
     await actions.getByTitle("Split right with a new terminal").click();
-    await expect(page.locator(".dv-tab", { hasText: "Terminal" })).toHaveCount(2);
+    await expect(terminalTabs(page)).toHaveCount(2);
 
     const xterms = page.locator(".xterm");
     await expect(xterms.first()).toBeVisible();

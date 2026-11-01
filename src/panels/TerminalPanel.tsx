@@ -15,6 +15,7 @@ import { appendHistory, emptyLine, feedInput, loadHistory } from "@/lib/cmdHisto
 import { logActivity } from "@/lib/activityLog";
 import { gateAutorun } from "@/lib/autorunGuard";
 import { registerTerminal, runPayload } from "@/lib/terminalBus";
+import { pokeFs } from "@/lib/fsPoke";
 import { captureBuffer, suggestOutputFilename } from "@/lib/terminalBuffer";
 import { shellQuote } from "@/lib/shellQuote";
 import { CommandTracker, type TrackerNotice } from "@/lib/commandTracker";
@@ -554,8 +555,12 @@ export function TerminalPanel(props: IDockviewPanelProps) {
         setExited(null);
 
         // Check if this is a restored session (pty bus had buffered output)
-        setSessionRestored(true);
-        setTimeout(() => setSessionRestored(false), 2200);
+        // Only when there was a previous session to bring back: every brand
+        // new terminal used to announce "Session restored".
+        if (saved?.data) {
+          setSessionRestored(true);
+          setTimeout(() => setSessionRestored(false), 2200);
+        }
 
         const id = info.session_id;
         unlisteners.push(
@@ -564,6 +569,9 @@ export function TerminalPanel(props: IDockviewPanelProps) {
               trackerRef.current?.output(Date.now());
               writeTerminal(ipc.b64ToBytes(dataB64));
               scheduleSave();
+              // Output that settles often means files were written (a build,
+              // git, an AI agent): let the explorer and editors look now.
+              pokeFs();
               if (!shellReadyRef.current) {
                 if (readyTimerRef.current) clearTimeout(readyTimerRef.current);
                 readyTimerRef.current = setTimeout(() => {

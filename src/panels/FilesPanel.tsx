@@ -31,6 +31,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VList, type VListHandle } from "virtua";
 
 import * as ipc from "@/lib/ipc";
+import { onFsPoke } from "@/lib/fsPoke";
 import { t } from "@/lib/i18n";
 import { buildContentsPrompt, buildPathsPrompt, type AgentFile } from "@/lib/agentContext";
 import type { DetectedIde, FsEntry } from "@/lib/types";
@@ -327,9 +328,19 @@ export function FilesPanel({ variant = "panel" }: { variant?: "panel" | "sidebar
       refresh();
       refreshTree();
     }, 5000);
+    // Terminal output just settled, or the window got focus back (from an
+    // editor or file manager elsewhere): look now rather than in 5 s.
+    const now = () => {
+      refresh();
+      refreshTree();
+    };
+    const unpoke = onFsPoke(now);
+    window.addEventListener("focus", now);
     return () => {
       cancelled = true;
       window.clearInterval(id);
+      unpoke();
+      window.removeEventListener("focus", now);
     };
   }, [root, load]);
 

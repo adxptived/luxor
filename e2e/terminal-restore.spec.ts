@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { clickNav, dockTab, openApp } from "./helpers";
+import { clickNav, openApp, terminalTabs } from "./helpers";
 
 /** Saved terminal snapshots (`luxor.term.*`) currently in localStorage. */
 async function snapshots(page: Page): Promise<Record<string, { draft: string; data: string }>> {
@@ -17,7 +17,7 @@ test.describe("terminal restore", () => {
   test("the unsent input line is saved, and removed when the terminal is closed", async ({ page }) => {
     await openApp(page);
     await clickNav(page, "terminal");
-    await expect(dockTab(page, "Terminal")).toBeVisible();
+    await expect(terminalTabs(page).first()).toBeVisible();
 
     await page.locator(".xterm-helper-textarea").first().focus();
     await page.keyboard.type("git sta");
@@ -25,7 +25,7 @@ test.describe("terminal restore", () => {
     // Saved on a short throttle, without needing an Enter or a reload.
     await expect.poll(async () => Object.values(await snapshots(page)).map((s) => s.draft), { timeout: 8000 }).toEqual(["git sta"]);
 
-    await dockTab(page, "Terminal").getByRole("button").first().click();
+    await terminalTabs(page).first().getByRole("button").first().click();
     await expect.poll(async () => Object.keys(await snapshots(page)), { timeout: 5000 }).toEqual([]);
   });
 

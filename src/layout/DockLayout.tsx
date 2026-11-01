@@ -282,8 +282,49 @@ const components = {
 };
 
 /** Custom dock tab: middle-click close + custom context menu with split actions. */
+/**
+ * 1-based position among the terminal tabs of the same group that carry the
+ * same title ("aurora-shop", "aurora-shop" → 1, 2); null when the title is
+ * unique. Terminals are named after their folder, so two shells in one project
+ * would otherwise be indistinguishable.
+ */
+function useDuplicateIndex(props: IDockviewPanelHeaderProps): number | null {
+  const [index, setIndex] = useState<number | null>(null);
+  const isTerminal = props.api.component === "terminal";
+  useEffect(() => {
+    if (!isTerminal) return;
+    let subs: Array<{ dispose(): void }> = [];
+    const compute = () => {
+      try {
+        const group = props.api.group;
+        const mine = props.api.title ?? "";
+        const same = (group?.panels ?? []).filter(
+          (p) => (p.title ?? "") === mine && panelComponent(p) === "terminal",
+        );
+        setIndex(same.length > 1 ? same.findIndex((p) => p.id === props.api.id) + 1 : null);
+      } catch {
+        /* group mid-teardown */
+      }
+    };
+    const resubscribe = () => {
+      subs.forEach((d) => d.dispose());
+      subs = (props.api.group?.panels ?? []).map((p) => p.api.onDidTitleChange(compute));
+      compute();
+    };
+    resubscribe();
+    const api = props.containerApi;
+    const listeners = [api.onDidAddPanel(resubscribe), api.onDidRemovePanel(resubscribe), api.onDidMovePanel(resubscribe)];
+    return () => {
+      listeners.forEach((d) => d.dispose());
+      subs.forEach((d) => d.dispose());
+    };
+  }, [isTerminal, props.api, props.containerApi]);
+  return index;
+}
+
 function DockTab(props: IDockviewPanelHeaderProps) {
   const [title, setTitle] = useState(props.api.title ?? props.api.id);
+  const duplicate = useDuplicateIndex(props);
   useEffect(() => {
     const d = props.api.onDidTitleChange?.((e: { title: string }) => setTitle(e.title));
     return () => d?.dispose?.();
@@ -316,8 +357,31 @@ function DockTab(props: IDockviewPanelHeaderProps) {
     }
   };
 
+  const groupPanels = () => {
+    try {
+      return [...props.api.group.panels];
+    } catch {
+      return [];
+    }
+  };
+
   const onContextMenu = (e: React.MouseEvent) => {
-    openContextMenu(e, [
+    const relative = (() => {
+      if (!tabFile) return null;
+      const root = useProjectsStore.getState().projects.find((p) => p.id === useDockStore.getState().activeKey)?.path;
+      if (!root) return null;
+      const norm = (p: string) => p.replace(/\\/g, "/");
+      const base = norm(root).replace(/\/+$/, "");
+      return norm(tabFile).startsWith(`${base}/`) ? norm(tabFile).slice(base.length + 1) : null;
+    })();
+    const copy = (text: string) =>
+      void navigator.clipboard
+        ?.writeText(text)
+        .then(() => useAppStore.getState().toast(t("Path copied"), "success"))
+        .catch(() => useAppStore.getState().toast(t("Copy failed"), "error"));
+    // Terminals and tool panels get "split with a new terminal"; documents lead with their
+    // file actions (VS Code order) instead of terminal splits.
+    const splitNew: MenuItem[] = [
       {
         label: t("Split right (new terminal)"),
         icon: SquareSplitHorizontal,
@@ -330,28 +394,26 @@ function DockTab(props: IDockviewPanelHeaderProps) {
         onClick: () =>
           addTerminalPanel(props.containerApi, {}, { referencePanel: props.api.id, direction: "below" }),
       },
+    ];
+    const fileItems: MenuItem[] = tabFile
+      ? [
+          ...(preview ? [{ label: t("Keep open"), icon: Pin, hint: t("double-click"), onClick: pin }] : []),
+          {
+            label: t("Reveal in Explorer"),
+            icon: LocateFixed,
+            onClick: () => useWorkbenchStore.getState().revealInExplorer(tabFile),
+          },
+          { label: t("Copy path"), icon: Copy, onClick: () => copy(tabFile) },
+          ...(relative ? [{ label: t("Copy relative path"), icon: Copy, onClick: () => copy(relative) }] : []),
+          { separator: true },
+        ]
+      : [];
+    openContextMenu(e, [
+      ...fileItems,
+      ...(!tabFile ? splitNew : []),
       { label: t("Move panel to split right"), icon: SquareSplitHorizontal, onClick: () => moveToSplit("right") },
       { label: t("Move panel to split down"), icon: SquareSplitVertical, onClick: () => moveToSplit("below") },
-      ...(preview ? [{ label: t("Keep open"), icon: Pin, hint: t("double-click"), onClick: pin }] : []),
-      ...(tabFile
-        ? [
-            {
-              label: t("Reveal in Explorer"),
-              icon: LocateFixed,
-              onClick: () => useWorkbenchStore.getState().revealInExplorer(tabFile),
-            },
-            {
-              label: t("Copy path"),
-              icon: Copy,
-              onClick: () => {
-                void navigator.clipboard
-                  ?.writeText(tabFile)
-                  .then(() => useAppStore.getState().toast(t("Path copied"), "success"))
-                  .catch(() => useAppStore.getState().toast(t("Copy failed"), "error"));
-              },
-            },
-          ]
-        : []),
+      ...(!tabFile && preview ? [{ label: t("Keep open"), icon: Pin, hint: t("double-click"), onClick: pin }] : []),
       { separator: true },
       {
         label: t("Float panel"),
@@ -393,8 +455,10 @@ function DockTab(props: IDockviewPanelHeaderProps) {
         label: t("tab.close.others", "Close others"),
         icon: Copy,
         onClick: () =>
+          // Others in this group only (as in VS Code): "close others" on an
+          // editor tab used to close every terminal in the project too.
           void closePanelsGuarded(
-            [...props.containerApi.panels]
+            groupPanels()
               .filter((p) => p.id !== props.api.id)
               .map((p) => closableFromPanel(p)),
           ),
@@ -420,9 +484,7 @@ function DockTab(props: IDockviewPanelHeaderProps) {
         label: t("tab.close.all", "Close all"),
         icon: Copy,
         onClick: () =>
-          void closePanelsGuarded(
-            [...props.containerApi.panels].map((p) => closableFromPanel(p)),
-          ),
+          void closePanelsGuarded(groupPanels().map((p) => closableFromPanel(p))),
       },
     ]);
   };
@@ -441,6 +503,7 @@ function DockTab(props: IDockviewPanelHeaderProps) {
   return (
     <div
       className="flex h-full w-full items-center gap-2 px-2.5 text-xs"
+      data-component={props.api.component}
       data-preview={preview || undefined}
       onMouseDown={(e) => {
         if (e.button === 1) {
@@ -463,6 +526,11 @@ function DockTab(props: IDockviewPanelHeaderProps) {
         title={preview ? t("Preview — opening another file replaces this tab. Double-click to keep it open.") : undefined}
       >
         {title}
+        {duplicate !== null && (
+          <span className="ml-1 tabular-nums text-muted" data-testid="tab-duplicate-index">
+            {duplicate}
+          </span>
+        )}
       </span>
       {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot.cls}`} title={dot.label} aria-label={dot.label} />}
       <button

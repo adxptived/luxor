@@ -53,3 +53,11 @@ export async function openCommandPalette(page: Page): Promise<void> {
   await expect(page.getByTestId("command-palette")).toBeVisible();
   await expect(page.getByTestId("palette-input")).toBeVisible();
 }
+
+/**
+ * Terminal tabs of the dock. Terminals are named after what runs in them (the
+ * folder, a program, an AI agent), so they are found by kind, not by title.
+ */
+export function terminalTabs(page: Page) {
+  return page.locator('.dv-tab:has([data-component="terminal"])');
+}
