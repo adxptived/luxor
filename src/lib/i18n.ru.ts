@@ -1730,7 +1730,6 @@ export const RU: Record<string, string> = {
   "Open a script (Python, JS, shell, Go…) in the editor to run it": "Откройте в редакторе скрипт (Python, JS, shell, Go…), чтобы запустить его",
   "Terminal: Run selection / line in terminal": "Терминал: выполнить выделение / строку",
   "View: Switch to a project or terminal": "Вид: перейти к проекту или терминалу",
-  "Idle": "Ожидает",
   "Exited": "Завершён",
   "Failed": "Ошибка",
   "hidden": "скрыт",
@@ -1740,4 +1739,5 @@ export const RU: Record<string, string> = {
   "No matching projects or terminals": "Нет подходящих проектов и терминалов",
   "Search by project name, path or terminal title, or clear the query to see everything.": "Ищите по имени проекта, пути или названию терминала — или очистите запрос, чтобы увидеть всё.",
   "Switch project or terminal": "Перейти к проекту или терминалу",
+  "At prompt": "Ждёт команды",
 };

@@ -46,6 +46,7 @@ import {
 } from "@codemirror/language";
 import {
   autocompletion,
+  completeAnyWord,
   closeBrackets,
   closeBracketsKeymap,
   completionKeymap,
@@ -253,6 +254,9 @@ export async function mountEditor(
         codeFolding(),
         foldGutter(),
         autocompletion(),
+        // Word-based suggestions in every language (VS Code's default): words
+        // already in the document, next to whatever the grammar offers.
+        EditorState.languageData.of(() => [{ autocomplete: completeAnyWord }]),
         keymap.of([
           { key: "Mod-s", run: () => { opts.onSave(); return true; } },
           { key: "Mod-f", run: () => { opts.onFind(); return true; } },

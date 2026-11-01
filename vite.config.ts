@@ -117,8 +117,20 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
     watch: {
-      // Don't reload the webview when Rust sources change.
-      ignored: ["**/src-tauri/**", "**/crates/**"],
+      // Don't reload the webview when Rust sources change — nor when test
+      // runs write their output into the repo: Playwright saves traces to
+      // test-results/ while other tests are still running, and each write
+      // used to full-reload every open page (the e2e suite's "navigated to
+      // http://localhost:4173/" flakes).
+      ignored: [
+        "**/src-tauri/**",
+        "**/crates/**",
+        "**/target/**",
+        "**/test-results/**",
+        "**/playwright-report/**",
+        "**/probe-out/**",
+        "**/dist/**",
+      ],
     },
   },
   build: {

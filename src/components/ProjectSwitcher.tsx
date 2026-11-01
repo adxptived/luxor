@@ -44,7 +44,7 @@ function buildRows(projects: readonly Project[], terminals: readonly TerminalRef
 
 const ACTIVITY_LABEL: Record<TerminalActivity, string> = {
   running: "Running",
-  idle: "Idle",
+  idle: "At prompt",
   exited: "Exited",
   failed: "Failed",
 };

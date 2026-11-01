@@ -51,6 +51,30 @@ async function renderMarkdown(src: string): Promise<string> {
   return DOMPurify.sanitize(marked.parse(src, { async: false, gfm: true }));
 }
 
+/**
+ * Cursor and scroll position per file for this session, so a file opened
+ * again (a preview tab replaced by the next single click, a closed tab) comes
+ * back where you left it instead of at line 1.
+ */
+const VIEW_STATE = new Map<string, { anchor: number; head: number; scrollTop: number }>();
+const VIEW_STATE_LIMIT = 200;
+
+function rememberViewState(path: string, editor: MountedEditor | null): void {
+  if (!editor) return;
+  try {
+    const v = editor.view;
+    const sel = v.state.selection.main;
+    VIEW_STATE.delete(path);
+    VIEW_STATE.set(path, { anchor: sel.anchor, head: sel.head, scrollTop: v.scrollDOM.scrollTop });
+    if (VIEW_STATE.size > VIEW_STATE_LIMIT) {
+      const oldest = VIEW_STATE.keys().next().value;
+      if (oldest !== undefined) VIEW_STATE.delete(oldest);
+    }
+  } catch {
+    /* view already torn down */
+  }
+}
+
 function editorLineHeight(fontSize: number): number {
   return Math.round(fontSize * 1.55);
 }
@@ -708,6 +732,16 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
 
         if (typeof gotoLine === "number" && gotoLine > 0) {
           editor.revealLine(gotoLine);
+        } else {
+          const saved = VIEW_STATE.get(path);
+          if (saved) {
+            const len = editor.view.state.doc.length;
+            const clamp = (n: number) => Math.max(0, Math.min(len, n));
+            editor.view.dispatch({ selection: { anchor: clamp(saved.anchor), head: clamp(saved.head) } });
+            requestAnimationFrame(() => {
+              if (!disposed && editorRef.current === editor) editor.view.scrollDOM.scrollTop = saved.scrollTop;
+            });
+          }
         }
       } catch (e) {
         if (!disposed) {
@@ -732,6 +766,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       resizeRaf = null;
       refreshTimers.forEach(clearTimeout);
       const hadEditor = !!editorRef.current;
+      rememberViewState(path, editorRef.current);
       editorRef.current?.destroy();
       editorRef.current = null;
       pushStructured("DEBUG", "editor", "unmount", { path, hadEditor });

@@ -177,7 +177,7 @@ test.describe("workbench: editor ↔ terminal", () => {
     const status = page.getByTestId("statusbar-editor");
     await expect(status).toBeVisible();
     await expect(page.getByTestId("statusbar-editor-cursor")).toContainText("Ln 1, Col 1");
-    await expect(page.getByTestId("statusbar-editor-lang")).toContainText("TypeScript");
+    await expect(page.getByTestId("statusbar-editor-lang")).toContainText("TSX");
     // Moving the cursor updates it.
     await page.locator(".cm-content").first().click();
     await page.keyboard.press("Control+End");
@@ -260,7 +260,8 @@ test.describe("workbench: switcher", () => {
     await openDemoProject(page);
     await page.keyboard.press("Control+Backquote");
     await expect(tab(page, "aurora-shop")).toBeVisible({ timeout: 10_000 });
-    await page.locator("body").click({ position: { x: 700, y: 300 } });
+    // Ctrl+R inside the terminal belongs to the shell (reverse search).
+    await row(page, "README.md").click();
     await page.keyboard.press("Control+KeyR");
     const row0 = page.getByTestId("switcher-terminal").first();
     await expect(row0).toBeVisible();

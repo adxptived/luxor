@@ -50,7 +50,7 @@ import { openContextMenu } from "@/state/uiStore";
 import { useActiveProject } from "@/state/projectsStore";
 import { useEditorStatus } from "@/state/editorStatusStore";
 import { editorHandle } from "@/lib/editorBus";
-import { langLabel } from "@/lib/editorStatus";
+import { languageLabel } from "@/lib/editorLanguage";
 import pkg from "../../package.json";
 
 const APP_VERSION: string = (pkg as { version: string }).version;
@@ -653,7 +653,7 @@ function EditorStatusItems() {
         }}
         data-testid="statusbar-editor-lang"
       >
-        {langLabel(status.lang)}
+        {languageLabel(status.lang)}
       </button>
     </span>
   );
