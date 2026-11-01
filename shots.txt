@@ -1,0 +1,44 @@
+shot probe-out/shots/01-welcome.png
+ok   open project
+shot probe-out/shots/02-project-default.png
+ok   preview App.tsx
+shot probe-out/shots/03-preview-tab.png
+ok   pin Cart.tsx
+ok   terminal panel
+shot probe-out/shots/04-workbench.png
+ok   second terminal
+shot probe-out/shots/05-two-terminals.png
+ok   go to file
+shot probe-out/shots/06-go-to-file.png
+ok   close palette
+ok   command palette
+shot probe-out/shots/07-palette-terminal.png
+ok   close palette 2
+ok   search view
+shot probe-out/shots/08-sidebar-search.png
+ok   back to explorer + context menu
+shot probe-out/shots/09-context-menu.png
+ok   close menu
+ok   tab context menu
+shot probe-out/shots/10-tab-menu.png
+ok   close menu 2
+ok   second project
+shot probe-out/shots/11-tab-add-menu.png
+ok   close add menu
+ok   switcher
+shot probe-out/shots/12-switcher.png
+ok   close switcher
+ok   run script
+shot probe-out/shots/13-run-script.png
+ok   disk change banner
+shot probe-out/shots/14-disk-conflict.png
+ok   maximize terminal group
+shot probe-out/shots/15-maximized-terminal.png
+ok   restore + hide terminal panel
+shot probe-out/shots/16-terminal-hidden.png
+ok   light theme
+shot probe-out/shots/17-light.png
+ok   narrow
+shot probe-out/shots/18-narrow.png
+console errors: []
+exit=0

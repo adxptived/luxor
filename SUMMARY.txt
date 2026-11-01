@@ -1,0 +1,22 @@
+==> probe-out/build.txt <==
+[2mdist/[22m[2massets/[22m[36mxterm-B8aihQ1a.js                  [39m[1m[2m451.42 kB[22m[1m[22m
+[32m✓ built in 6.94s[39m
+exit=0
+
+==> probe-out/install.txt <==
++ zustand@5.0.14
+
+256 packages installed [776.00ms]
+
+==> probe-out/lint.txt <==
+$ eslint .
+exit=0
+
+==> probe-out/typecheck.txt <==
+$ tsc --noEmit && tsc -p tsconfig.scripts.json --noEmit
+exit=0
+
+==> probe-out/unit.txt <==
+ 1289 expect() calls
+Ran 482 tests across 68 files. [492.00ms]
+exit=0
