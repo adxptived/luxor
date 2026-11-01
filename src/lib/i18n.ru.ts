@@ -1740,4 +1740,6 @@ export const RU: Record<string, string> = {
   "Search by project name, path or terminal title, or clear the query to see everything.": "Ищите по имени проекта, пути или названию терминала — или очистите запрос, чтобы увидеть всё.",
   "Switch project or terminal": "Перейти к проекту или терминалу",
   "At prompt": "Ждёт команды",
+  "These edits were not saved when Luxor closed. Save to keep them, or undo.": "Эти правки не были сохранены, когда Luxor закрылся. Сохраните их или отмените.",
+  "Unsaved changes restored": "Несохранённые правки восстановлены",
 };

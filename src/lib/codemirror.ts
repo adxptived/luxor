@@ -131,6 +131,8 @@ export interface EditorOptions {
    *  changes). The EditorPanel uses this to update the tab title dot, the
    *  dirty-guard, and the editor-bus isDirty flag. */
   onDirtyChange?: (dirty: boolean) => void;
+  /** Every change to the text (typing, undo, reload). */
+  onDocChange?: () => void;
   readOnly?: boolean;
 }
 
@@ -285,6 +287,7 @@ export async function mountEditor(
         whitespaceCompartment.of([]),
         EditorView.updateListener.of((u) => {
           if (u.docChanged) {
+            opts.onDocChange?.();
             dirty = !u.state.doc.eq(lastDoc);
             if (dirty !== lastDirty) { lastDirty = dirty; opts.onDirtyChange?.(dirty); }
           }

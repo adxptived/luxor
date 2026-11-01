@@ -95,6 +95,7 @@ import { useAppStore } from "@/state/appStore";
 import { openContextMenu, useUiStore, type MenuItem } from "@/state/uiStore";
 import { useProjectsStore } from "@/state/projectsStore";
 import { useEditorStatus } from "@/state/editorStatusStore";
+import { clearUnsaved } from "@/lib/unsavedBuffers";
 
 import { WelcomePanel } from "@/panels/WelcomePanel";
 import { EmptyDock } from "@/panels/EmptyDock";
@@ -784,6 +785,13 @@ function ProjectDock({ dockKey, active }: { dockKey: string; active: boolean }) 
       const removedPath = (panel.params as { path?: unknown } | undefined)?.path;
       if (removedPath && wb.activeFileByDock[dockKey] === removedPath) {
         wb.setActiveFile(dockKey, filePathOf(event.api.activePanel));
+      }
+      // A closed editor tab drops its kept unsaved text (hot exit): the edits
+      // were saved or deliberately discarded. Deferred past the editor's own
+      // unmount flush. Quitting the app removes no panels, so edits survive it.
+      if (panelComponent(panel) === "editor" && typeof removedPath === "string") {
+        const gone = removedPath;
+        setTimeout(() => clearUnsaved(gone), 100);
       }
       const es = useEditorStatus.getState();
       if (es.activeByDock[dockKey] === panel.id) {

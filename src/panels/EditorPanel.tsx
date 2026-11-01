@@ -21,6 +21,7 @@ import { EDITOR_LANGUAGE_OPTIONS, detectLanguage, languageForPath, languageLabel
 import { fileName, runInActiveTerminal, useDockStore } from "@/layout/dockStore";
 import { canRunFile, runFileCommand } from "@/lib/runFile";
 import { onFsPoke } from "@/lib/fsPoke";
+import { clearUnsaved, loadUnsaved, saveUnsaved } from "@/lib/unsavedBuffers";
 import { isWindows } from "@/lib/platform";
 import { hintFor } from "@/lib/hotkeys";
 import { useDockKey } from "@/layout/DockKeyContext";
@@ -186,6 +187,22 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
   /** The file changed (or vanished) on disk while there are unsaved edits. */
   const [diskConflict, setDiskConflict] = useState<null | "changed" | "deleted">(null);
   const [reloadedAt, setReloadedAt] = useState<number | null>(null);
+  const [restoredUnsaved, setRestoredUnsaved] = useState(false);
+  const hotExitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Keep (or drop) the unsaved text for "hot exit", shortly after typing stops. */
+  const scheduleHotExit = () => {
+    if (embedded) return;
+    if (hotExitTimerRef.current) clearTimeout(hotExitTimerRef.current);
+    hotExitTimerRef.current = setTimeout(() => {
+      hotExitTimerRef.current = null;
+      const editor = editorRef.current;
+      if (!editor) return;
+      if (dirtyRef.current) saveUnsaved(path, editor.getValue(), diskMtimeRef.current);
+      else clearUnsaved(path);
+    }, 700);
+  };
+  const scheduleHotExitRef = useRef(scheduleHotExit);
+  scheduleHotExitRef.current = scheduleHotExit;
   const [renderWhitespace, setRenderWhitespace] = useState(() => {
     try {
       return localStorage.getItem("luxor.editor.renderWhitespace") === "all";
@@ -414,6 +431,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
     setPanelTitle?.(dirty ? `● ${fileName(path)}` : fileName(path));
     onDirtyChange?.(dirty);
     if (dirty) firstEditRef.current?.();
+    else if (!embedded) clearUnsaved(path);
     // Autosave (Settings → Editor → "Editor autosave"): about a second after
     // the edit. Read the setting at edit time so toggling it applies to open
     // editors immediately. It used to run unconditionally, ignoring the switch.
@@ -592,7 +610,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         }
 
         const mountInnerStart = performance.now();
-        const { mountEditor, detectIndentUnit } = await import("@/lib/codemirror");
+        const { mountEditor, detectIndentUnit, minimalChange } = await import("@/lib/codemirror");
         if (disposed || !containerRef.current) return;
         if (!embedded) {
           useEditorStatus.getState().set(panelId, {
@@ -618,6 +636,7 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
             setSel(s);
           },
           onDirtyChange: (d) => setDirty(d),
+          onDocChange: () => scheduleHotExitRef.current(),
         });
         // Race guard: if the user switched tabs while `mountEditor` was awaiting
         // a lazy language pack, the cleanup callback below has already run and
@@ -731,6 +750,25 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
         editor.reconfigureWrap(wrap);
         editor.reconfigureWhitespace(renderWhitespace ? "all" : "trailing");
 
+        // Hot exit: put back edits that were not saved when the app quit.
+        if (!embedded && !file.truncated) {
+          const kept = loadUnsaved(path);
+          if (kept) {
+            const current = editor.getValue();
+            if (kept.content === current) {
+              clearUnsaved(path);
+            } else {
+              const change = minimalChange(current, kept.content);
+              editor.view.dispatch({ changes: change });
+              setRestoredUnsaved(true);
+              pushStructured("INFO", "editor", "restored unsaved edits", { path });
+              if (kept.baseMtime !== null && file.mtime_ms != null && kept.baseMtime !== file.mtime_ms) {
+                setDiskConflict("changed");
+              }
+            }
+          }
+        }
+
         if (typeof gotoLine === "number" && gotoLine > 0) {
           editor.revealLine(gotoLine);
         } else {
@@ -768,6 +806,14 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
       refreshTimers.forEach(clearTimeout);
       const hadEditor = !!editorRef.current;
       rememberViewState(path, editorRef.current);
+      // Flush a pending hot-exit write (the tab may be going away with edits).
+      if (hotExitTimerRef.current) {
+        clearTimeout(hotExitTimerRef.current);
+        hotExitTimerRef.current = null;
+        if (!embedded && editorRef.current && dirtyRef.current) {
+          saveUnsaved(path, editorRef.current.getValue(), diskMtimeRef.current);
+        }
+      }
       editorRef.current?.destroy();
       editorRef.current = null;
       pushStructured("DEBUG", "editor", "unmount", { path, hadEditor });
@@ -1091,6 +1137,15 @@ export function FileEditorSurface({ path, panelId, gotoLine, embedded = false, s
             );
           })}
         </nav>
+        {restoredUnsaved && dirty && (
+          <span
+            className="shrink-0 rounded bg-accent/12 px-1.5 text-3xs text-accent"
+            data-testid="editor-restored-unsaved"
+            title={t("These edits were not saved when Luxor closed. Save to keep them, or undo.")}
+          >
+            {t("Unsaved changes restored")}
+          </span>
+        )}
         {reloadedAt !== null && (
           <span className="shrink-0 text-3xs text-muted/70 lx-fade-in" data-testid="editor-reloaded" title={t("The file changed on disk and was reloaded")}>
             {t("Reloaded from disk")}

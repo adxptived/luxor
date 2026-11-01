@@ -32,6 +32,7 @@ export const STORAGE_KEYS: readonly StorageKeySpec[] = [
   { key: "luxor.editor.fontSize", version: 1, description: "Editor font size (number)" },
   { key: "luxor.editor.wordWrap", version: 1, description: "Editor word wrap (boolean)" },
   { key: "luxor.editor.renderWhitespace", version: 1, description: "Editor whitespace rendering (boolean)" },
+  { key: "luxor.unsaved.", version: 1, description: "PREFIX luxor.unsaved.<path> — unsaved editor text kept across restarts (hot exit)" },
 
   // Panel state
   { key: "luxor.files.showHidden", version: 1, description: "Files panel: show hidden files" },

@@ -30,6 +30,13 @@ how you arranged it, and stays out of the way when you just want to type.
   explorer + VS Code + terminal setup in one window, per project tab.
 - Single click in the explorer opens a **preview tab** (italic) that the next file replaces;
   double click, an edit or "Keep open" keeps it. **Go to file** with `Ctrl+P`.
+- The editor follows the disk: a file changed by an AI agent, a formatter or `git checkout`
+  reloads in place (cursor kept); unsaved edits get a banner instead of being overwritten, and
+  they survive a restart ("hot exit").
+- **Run from the editor**: `Ctrl+Shift+Enter` runs the selection / current line in the terminal
+  panel; ▶ Run starts a script (Python, JS/TS, shell, Go, …) with its interpreter.
+- `Ctrl+R` lists every project with its terminals and what they are doing — jump straight to
+  the shell you need. Cursor, indentation, line endings and language sit in the status bar.
 - Files never land between terminal tabs (and terminals never between files): new terminals
   join the terminal panel, files open in the editor area. Any group can be maximized
   (double-click its tab bar or `Ctrl+Shift+M`), and everything is still free-form dockview —
@@ -103,13 +110,14 @@ All of these can be rebound in Settings → Hotkeys. On macOS `Ctrl` means `⌘`
 | --- | --- |
 | `Ctrl+Shift+P` | Command palette |
 | `Ctrl+P` | Go to file |
-| `Ctrl+R` | Switch project |
+| `Ctrl+R` | Switch project or terminal |
 | `Ctrl+O` | Open project folder |
 | `Ctrl+B` | Show / hide the side bar |
 | `Ctrl+Shift+E` | Explorer (side bar) |
 | `Ctrl+Shift+F` | Search in project (side bar) |
 | ``Ctrl+` `` | Show / focus / hide the terminal panel |
 | ``Ctrl+Shift+` `` | New terminal |
+| `Ctrl+Shift+Enter` | Run the selection / current line in the terminal (from the editor) |
 | `Ctrl+J` | Show / hide the terminal panel without moving focus |
 | `Ctrl+\` | Move the tab to a new group on the right |
 | `Ctrl+Shift+M` | Maximize / restore the group |
