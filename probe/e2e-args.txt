@@ -1,0 +1,1 @@
+e2e/workbench.spec.ts e2e/splash.spec.ts e2e/features.spec.ts e2e/app.spec.ts e2e/tabs.spec.ts e2e/palette.spec.ts e2e/project-shortcuts.spec.ts
